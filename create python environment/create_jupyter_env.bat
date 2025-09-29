@@ -31,8 +31,7 @@ IF ERRORLEVEL 1 (
     echo:
     echo: --Installing Python %python_version%--
     echo:
-    winget install --id Python.Python.%python_version% -e --force ^
-  --override "InstallAllUsers=0 Include_launcher=0 PrependPath=1 /passive /norestart"
+    winget install --id Python.Python.%python_version% -e --force --override "InstallAllUsers=0 Include_launcher=0 Include_pip=1 PrependPath=1 /passive /norestart" --accept-source-agreements --accept-package-agreements
     :: check if sucessful install:
     py -%python_version% -c "exit()" >nul 2>&1 || goto :fail
     echo:
