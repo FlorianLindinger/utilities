@@ -1,1 +1,3 @@
 add option to have python_version empty which would install newest
+
+add env to conda list for programs to find jt
