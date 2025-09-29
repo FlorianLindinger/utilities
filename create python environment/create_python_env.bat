@@ -23,24 +23,28 @@ for %%F in ("%environment_path%") do set "env_name=%%~nxF"
 :: build full paths for shortcuts
 set "install_lnk=%USERPROFILE%\Desktop\Install package (%env_name%).lnk"
 
-:: If Python x.y not found, try to install. Ignore winget’s non-upgrade code.
-where python%python_version% >nul 2>&1
+:: If Python version x.y not found, try to install
+py -%python_version% -c "exit()" >nul 2>&1
 IF ERRORLEVEL 1 (
     echo:
     echo: --Installing Python %python_version%--
     echo:
-  winget install Python.Python.%python_version% --accept-source-agreements --accept-package-agreements ^
-    || echo winget reported no upgrade or a non-fatal issue.
+    winget install --id Python.Python.%python_version% -e ^
+  --override "InstallAllUsers=0 Include_launcher=0 PrependPath=1 /passive /norestart"
+    :: check if sucessful install:
+    py -%python_version% -c "exit()" >nul 2>&1 || goto :fail
     echo:
     echo: --Finished installing Python %python_version%--
     echo:
+) ELSE (
+  echo: --Correct python version already installed--
+  echo:
 )
-:: Require the interpreter to exist before continuing.
-where python%python_version% >nul 2>&1 || goto :fail
 
 :: --- create & activate venv ---
-python%python_version% -m venv "%environment_path%" || goto :fail
+py -%python_version% -m venv "%environment_path%" || goto :fail
 call "%environment_path%\Scripts\activate.bat" || goto :fail
+echo: --Created and/or activated python environment--
 
 :: --- package installs ---
 echo:
@@ -114,7 +118,7 @@ exit /b 0
 :fail
 echo:
 echo:
-echo Error: Failed python environment setup. See errors above. Press any key to exit.
+echo: Error: Failed python environment setup. See errors above. Press any key to exit.
 echo: If this keeps happening, try deleting the environment folder ("%environment_path%"^) and running this script again.
 pause > nul
 exit /b 1
