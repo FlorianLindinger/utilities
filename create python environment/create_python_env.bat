@@ -115,6 +115,7 @@ exit /b 0
 echo:
 echo:
 echo Error: Failed python environment setup. See errors above. Press any key to exit.
+echo: If this keeps happening, try deleting the environment folder ("%environment_path%"^) and running this script again.
 pause > nul
 exit /b 1
 
