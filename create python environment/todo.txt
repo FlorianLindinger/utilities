@@ -1,3 +1,5 @@
 add option to have python_version empty which would install newest
 
 add env to conda list for programs to find jt
+
+allow for args with default and make relative paths relative to shortcuts 
