@@ -84,6 +84,7 @@ echo:
 :: register the kernel in the system
 python -m ipykernel install --user --name jupyter_env --display-name "%env_name%"
 setx JUPYTER_PATH "%PROGRAMDATA%\jupyter;%APPDATA%\jupyter"
+echo: 
 
 :: --- create folders ---
 mkdir "%USERPROFILE%\Documents\Repositories"
