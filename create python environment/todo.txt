@@ -1,5 +1,4 @@
-add option to have python_version empty which would install newest
 
-add env to conda list for programs to find jt
+propt if to replace vscode settings if would change
 
-allow for args with default and make relative paths relative to shortcuts 
+vscode does not show name of env when selecting env for notebook
