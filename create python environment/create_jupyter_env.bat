@@ -56,7 +56,7 @@ IF ERRORLEVEL 1 (
 )
 
 :: --- create & activate venv ---
-call "%env_path%\Scripts\activate.bat" || goto :create_venv
+call "%env_path%\Scripts\activate.bat" > NUL 2>&1 || goto :create_venv
 ECHO: --Environment already exists--
 GOTO :skip_venv_creation
 :create_venv
@@ -112,7 +112,6 @@ echo:
 :: --- create folders ---
 mkdir "%USERPROFILE%\Documents\Repositories" 2> NUL
 mkdir "%folder%" 2> NUL
-echo: 
 
 :: create Jupyter Notebook shortcut in desktop and environment folder
 set "jupyter_lnk=%USERPROFILE%\Desktop\Jupyter Notebook (%env_name%).lnk"
@@ -142,10 +141,10 @@ if not exist "%conda_list_path%" (
 :: Check if the venv path is already registered:
 findstr /C:"%env_path%" "%conda_list_path%" >nul 2>&1
 if %errorlevel% EQU 0 (
-    echo: --Environment already registered with conda: %env_path%--
+    echo: --Environment already registered with conda: %env_path%
     echo:
 ) else (
-    echo: --Registering environment with conda: %env_path%--
+    echo: --Registering environment with conda: %env_path%
     echo %env_path%>>"%conda_list_path%"
     echo:
 )
@@ -155,7 +154,7 @@ echo:
 echo:
 echo: Code finished.
 echo: Created environment in "%env_path%".
-echo: Created shortcut in Desktop ("Jupyter Notebook (%env_name%)" ^& "Install package (%env_name%)") for installing packages and lunching jupyter notebook. 
+echo: Created shortcut in Desktop ("Jupyter Notebook (%env_name%)" ^& "Install package (%env_name%)") for installing packages and launching jupyter notebook. 
 echo: Press any key to exit.
 pause > nul
 exit /b 0

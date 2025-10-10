@@ -53,7 +53,7 @@ IF ERRORLEVEL 1 (
 echo:
 
 :: --- create & activate venv ---
-call "%env_path%\Scripts\activate.bat" || goto :create_venv
+call "%env_path%\Scripts\activate.bat" > NUL 2>&1 || goto :create_venv
 ECHO: --Environment already exists--
 GOTO :skip_venv_creation
 :create_venv
@@ -106,10 +106,10 @@ if not exist "%conda_list_path%" (
 :: Check if the venv path is already registered:
 findstr /C:"%env_path%" "%conda_list_path%" >nul 2>&1
 if %errorlevel% EQU 0 (
-    echo: --Already registered with conda--
+    echo: --Environment already registered with conda: %env_path%
     echo:
 ) else (
-    echo: --Registered with conda--
+    echo: --Registering environment with conda: %env_path%
     echo %env_path%>>"%conda_list_path%"
     echo:
 )
