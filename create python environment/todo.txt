@@ -1,13 +1,7 @@
-
-
-rerelease fixed version and fix sharepoint instructions
+fix sharepoint instructions
 
 promt if to replace vscode settings if would change
 
 make a global script that acts like conda activate env
-
-test if numpy matplotlib scipy pandas ipykernel are available for auto version and revert otherwiese
-
-allow non default path in vscode script
 
 write readme and instructions ontop of scripts
