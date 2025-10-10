@@ -1,25 +1,10 @@
 @setlocal & @echo off
 REM=r""" <- this is needed for python to ignore the batch code
-
-@REM :: write helper script (ohne Klammerblock)
-@REM ECHO 1
-@REM set "SETTINGS=%APPDATA%\Code\User\settings.json"
-@REM set "DEF_INTERP=%USERPROFILE%\Documents\python_envs\default_env\Scripts\python.exe"
-@REM set "VENV_FOLDER=%USERPROFILE%\Documents\python_envs"
-@REM set "SETTINGS=%APPDATA%\Code\User\settings.json"
-@REM :: Pfade
-@REM set "SETTINGS=%APPDATA%\Code\User\settings.json"
-@REM set "DEF_INTERP=%USERPROFILE%\Documents\python_envs\default_env\Scripts\python.exe"
-@REM set "VENV_FOLDER=%USERPROFILE%\Documents\python_envs"
-:: To define the default vs-code environment, set: @SET "env_path=%USERPROFILE%\Documents\python_envs\default_env"
-
-
 CALL :process_args
 :: ########################
 :: ### Default Settings ###
 :: ########################
 
-SET "def_env_path=%USERPROFILE%\Documents\python_envs\default_env"
 SET "def_version=3"
 SET "def_packages=ipykernel numpy matplotlib scipy ipywidgets pyqt5 pandas pillow pyyaml tqdm openpyxl pyarrow html5lib pyserial tifffile py7zr numba pyautogui nptdms pywinauto scipy-stubs cupy-cuda12x nvmath-python"
 
@@ -27,8 +12,10 @@ SET "def_packages=ipykernel numpy matplotlib scipy ipywidgets pyqt5 pandas pillo
 :: ### Execution starts here ###
 :: #############################
 
+:: not chooseable environment path 
+SET "env_path=%USERPROFILE%\Documents\python_envs\default_env"
+
 :: define undefined args with default settings
-IF "%env_path%"=="" SET "env_path=%def_env_path%"
 IF "%version%"=="" SET "version=%def_version%"
 IF "%packages%"=="" SET "packages=%def_packages%"
 
@@ -54,7 +41,8 @@ IF ERRORLEVEL 1 (
     echo: --Installing Python %version%--
     echo:
     :: Include_launcher=1 sometimes is forbidden by organisation windows settings -> "py" instead of "python"
-    winget install --id Python.Python.%version% -e --force --override "InstallAllUsers=0 Include_launcher=0 Include_pip=1 Prependenv_Path=1 /passive /norestart" --accept-source-agreements --accept-package-agreements
+    winget uninstall --id Python.Python.%version% -e --silent >nul 2>&1
+    winget install --id Python.Python.%version% -e --force --source winget --accept-source-agreements --accept-package-agreements --silent --override "InstallAllUsers=0 Include_pip=1 Include_launcher=0 PrependPath=1 SimpleInstall=1 /quiet /norestart"
     :: check if sucessful install:
     py -%version% -c "import sys" >nul 2>&1 || goto :fail
     echo:
@@ -132,7 +120,10 @@ py -x "%~f0"
 :: --- finish ---
 echo:
 echo:
-echo: Code finished. Created environment named "%env_name%" in   Created shortcut in Desktop ("Install package (%env_name%)"). Press any key to exit.
+echo: Code finished.
+echo: Created environment in "%env_path%".
+echo: Created shortcut in Desktop ("Install package (%env_name%)") for installing packages. 
+echo: Press any key to exit.
 pause > nul
 exit /b 0
 
@@ -143,8 +134,9 @@ exit /b 0
 :fail
   echo:
   echo:
-  echo: Error: Failed python environment setup. See errors above. Press any key to exit.
-  echo: If this keeps happening, try deleting the environment folder ("%env_path%"^) and running this script again.
+  echo: ERROR: Failed python environment setup (See errors above^). 
+  echo: If this keeps happening, try deleting the environment folder ("%env_path%"^) and run this script again.
+  echo: Press any key to exit.
   pause > nul
   exit /b 1
 
@@ -152,10 +144,8 @@ exit /b 0
 
 :process_args
   IF "%~1"=="" GOTO :EOF
-  IF "%~1"=="--path" SET "env_path=%~2" & shift & shift & GOTO process_args
   IF "%~1"=="--version" SET "version=%~2" & shift & shift & GOTO process_args
   IF "%~1"=="--packages" SET "packages=%~2" & shift & shift & GOTO process_args
-  IF "%env_path%"=="" SET "env_path=%~1" & shift & GOTO process_args
   IF "%version%"=="" SET "version=%~1" & shift & GOTO process_args
   IF "%packages%"=="" SET "packages=%~1" & shift & GOTO process_args
   GOTO :EOF
@@ -448,7 +438,7 @@ for folder_key,elem in folder_settings.items():
 # write
 write_text(path, txt)
 
-print(" --Changed VS-Code settings--")
+print(" --Updated VS-Code settings--")
 
 sys.exit(0)
 
