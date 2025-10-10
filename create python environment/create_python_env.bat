@@ -4,7 +4,6 @@
 :: ### Default Settings ###
 :: ########################
 
-:: To define the default vs-code environment, set: @SET "env_path=%USERPROFILE%\Documents\python_envs\default_env"
 SET "def_env_path=%USERPROFILE%\Documents\python_envs\default_env"
 SET "def_version=3"
 SET "def_packages=ipykernel numpy matplotlib scipy ipywidgets pyqt5 pandas pillow pyyaml tqdm openpyxl pyarrow html5lib pyserial tifffile py7zr numba pyautogui nptdms pywinauto scipy-stubs cupy-cuda12x nvmath-python"
@@ -40,7 +39,8 @@ IF ERRORLEVEL 1 (
     echo: --Installing Python %version%--
     echo:
     :: Include_launcher=1 sometimes is forbidden by organisation windows settings -> "py" instead of "python"
-    winget install --id Python.Python.%version% -e --force --override "InstallAllUsers=0 Include_launcher=0 Include_pip=1 Prependenv_Path=1 /passive /norestart" --accept-source-agreements --accept-package-agreements
+    winget uninstall --id Python.Python.%version% -e --silent >nul 2>&1
+    winget install --id Python.Python.%version% -e --force --source winget --accept-source-agreements --accept-package-agreements --silent --override "InstallAllUsers=0 Include_pip=1 Include_launcher=0 PrependPath=1 SimpleInstall=1 /quiet /norestart"
     :: check if sucessful install:
     py -%version% -c "import sys" >nul 2>&1 || goto :fail
     echo:
@@ -115,7 +115,10 @@ if %errorlevel% EQU 0 (
 :: --- finish ---
 echo:
 echo:
-echo: Code finished. Created shortcut in Desktop ("Install package (%env_name%)"). Press any key to exit.
+echo: Code finished.
+echo: Created environment in "%env_path%".
+echo: Created shortcut in Desktop ("Install package (%env_name%)") for installing packages. 
+echo: Press any key to exit.
 pause > nul
 exit /b 0
 
@@ -126,8 +129,9 @@ exit /b 0
 :fail
   echo:
   echo:
-  echo: Error: Failed python environment setup. See errors above. Press any key to exit.
-  echo: If this keeps happening, try deleting the environment folder ("%env_path%"^) and running this script again.
+  echo: ERROR: Failed python environment setup (See errors above^). 
+  echo: If this keeps happening, try deleting the environment folder ("%env_path%"^) and run this script again.
+  echo: Press any key to exit.
   pause > nul
   exit /b 1
 
