@@ -1,6 +1,8 @@
-fix sharepoint instructions
+add and fix path adding from jupyter file to others. maybe again try to have code copy paste same
 
-promt if to replace vscode settings if would change
+prompt to add to global variables?
+
+promt if to replace vscode settings if would change?
 
 make a global script that acts like conda activate env
 
