@@ -1,6 +1,6 @@
 @setlocal & @echo off
 REM=r""" <- this is needed for python to ignore the batch code
-CALL :process_args
+CALL :process_args || goto :fail
 :: ########################
 :: ### Default Settings ###
 :: ########################
@@ -20,7 +20,7 @@ IF "%version%"=="" SET "version=%def_version%"
 IF "%packages%"=="" SET "packages=%def_packages%"
 
 :: convert path to absolute if relative
-CALL :make_absolute_env_path_if_relative "%env_path%"
+CALL :make_absolute_env_path_if_relative "%env_path%" || goto :fail
 SET "env_path=%OUTPUT%"
 
 :: print settings
@@ -33,7 +33,7 @@ echo:
 echo:
 
 :: derive env name from path
-for %%F in ("%env_path%") do set "env_name=%%~nxF"
+for %%F in ("%env_path%") do set "env_name=%%~nxF" || goto :fail
 
 :: If Python version x.y not found, try to install
 py -%version% -c "import sys" >nul 2>&1
@@ -42,7 +42,7 @@ IF ERRORLEVEL 1 (
     echo:
     :: Include_launcher=1 sometimes is forbidden by organisation windows settings -> "py" instead of "python"
     winget uninstall --id Python.Python.%version% -e --silent >nul 2>&1
-    winget install --id Python.Python.%version% -e --force --source winget --accept-source-agreements --accept-package-agreements --silent --override "InstallAllUsers=0 Include_pip=1 Include_launcher=0 PrependPath=1 SimpleInstall=1 /quiet /norestart"
+    winget install --id Python.Python.%version% -e --force --source winget --accept-source-agreements --accept-package-agreements --silent --override "InstallAllUsers=0 Include_pip=1 Include_launcher=0 PrependPath=1 SimpleInstall=1 /quiet /norestart" 
     :: check if sucessful install:
     py -%version% -c "import sys" >nul 2>&1 || goto :fail
     echo:
