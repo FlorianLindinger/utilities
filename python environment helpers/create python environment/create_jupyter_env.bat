@@ -1,4 +1,4 @@
-@setlocal 
+@setlocal enableDelayedExpansion
 @echo off & CALL :process_args
 :: ########################
 :: ### Default Settings ###
@@ -38,22 +38,141 @@ echo:
 :: derive env name from path
 for %%F in ("%env_path%") do set "env_name=%%~nxF"
 
-:: If Python version x.y not found, try to install
+:: If Python version not found, try to install
+:: ==================================================
 py -%version% -c "import sys" >nul 2>&1
 IF ERRORLEVEL 1 (
+    :: Check if winget exists
+    where winget >nul 2>&1
+    if %errorlevel% NEQ 0 (
+      ECHO: [Error] Needs winget to install Python %version% automatically, but winget not found. Please install Python %version% manually (https://www.python.org/downloads/^) or install winget manually (Install the "App Installer": https://learn.microsoft.com/en-us/windows/msix/app-installer/install-update-app-installer^) and re-run this script. Aborting.
+      GOTO :fail
+    )
     echo: --Installing Python %version%--
     echo:
-    :: Include_launcher=1 sometimes is forbidden by organisation windows settings -> "py" instead of "python"
+    :: Include_launcher=1 sometimes is forbidden by organisation windows settings -> "py" instead of "python". Apparently PrependPath=1 can fail for non-interactive installs.
     winget uninstall --id Python.Python.%version% -e --silent >nul 2>&1
     winget install --id Python.Python.%version% -e --force --source winget --accept-source-agreements --accept-package-agreements --silent --override "InstallAllUsers=0 Include_pip=1 Include_launcher=0 PrependPath=1 SimpleInstall=1 /quiet /norestart"
     :: check if sucessful install:
-    py -%version% -c "import sys" >nul 2>&1 || goto :fail
+    py -%version% -c "import sys" >nul 2>&1
+    if %errorlevel% NEQ 0 (
+      ECHO: [Error] Failed to install Python %version% automatically. Please install Python %version% manually (https://www.python.org/downloads/^) and re-run this script. Aborting.
+      ECHO:
+      GOTO :fail
+    )
     echo: --Finished installing Python %version%--
     echo:
 ) ELSE (
   echo: --Correct python version already installed--
   echo:
 )
+:: ==================================================
+
+:: ensure python path is registered in global PATH variable
+:: ==================================================
+
+SET "version=3"
+
+
+:: Parse MAJOR.MINOR
+for /f "tokens=1-2 delims=." %%A in ("%version%") do (
+  set "MAJ=%%A"
+  set "MIN=%%B"
+)
+:: case minor version defined
+set "std_py_path=%LocalAppData%\Programs\Python\"
+if defined MIN (
+  set "pyPath=%std_py_path%Python%MAJ%%MIN%"
+  IF not exist "!pyPath!" (
+    SET "pyPath="
+  )
+  GOTO :skip_folder_search
+)
+:: case minor version undefined -> assume highest findable version 
+set "bestN=-1"
+set "highestDir="
+for /f "delims=" %%D in ('dir /b /ad "%std_py_path%Python%MAJ%*" 2^>nul') do (
+  set "name=%%D"
+  set "digits=!name:Python=!"
+  for /f "tokens=1 delims=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_" %%X in ("!digits!") do set "num=%%X"
+  if defined num (
+    set /a n=num
+    if !n! gtr !bestN! (
+      set "bestN=!n!"
+      set "highestDir=%%D"
+    )
+  )
+)
+if defined highestDir set "pyPath=%std_py_path%%highestDir%"
+:skip_folder_search
+:: print 
+if not defined pyPath (
+  IF NOT DEFINED MIN ( SET "MIN=**")
+  echo [Warning] No "Python%MAJ%!MIN!" folder found under: "%std_py_path%". Therefore can't add path to global Path
+  echo:
+  GOTO :skip_set_Path_variable
+) else ( 
+  echo Found python path: "%pyPath%"
+  echo:
+)
+:: find user Path variable (string where paths are connected with ";")
+for /f "tokens=2,*" %%A in ('reg query HKCU\Environment /v PATH 2^>nul') do set "userpath=%%B" || GOTO :skip_set_Path_variable
+
+:: for python path:
+  :: Convert to lowercase for consistent path comparison
+  set "checkPath=%userpath%"
+  call set "checkPath=%%checkPath:%pyPath%=%%" || GOTO :skip_set_Path_variable
+  :: If unchanged, python path not present → append
+  if "%checkPath%"=="%userpath%" (
+      echo Adding python path...
+      :: remove trailing ";" if there to not have two
+      if "!userpath:~-1!"==";" set "userpath=!userpath:~0,-1!"
+      :: sets user Path variable:
+      setx PATH "!userpath!;%pyPath%"
+  ) else (
+      echo Python path already present.
+  )
+
+@REM If you need to accept both with and without trailing \, check both:
+@REM echo %HAY% | find /i "%NEED%" >nul || echo %HAY% | find /i "%NEED:\=\\%\" >nul
+
+
+@REM   rem normalize: strip trailing backslash
+@REM for %%# in ("%pyPath%") do set "pyPath=%%~f#"
+
+@REM set "HAY=;%userpath%;"
+@REM set "NEED=;%pyPath%;"
+
+@REM echo %HAY% | find /i "%NEED%" >nul
+@REM if errorlevel 1 (
+@REM   rem not present -> append
+@REM   setx PATH "%userpath%;%pyPath%"
+@REM )
+
+
+todo: add /Script path also
+todo: add safer version where substrings are rejected
+
+@REM :: for python script path:
+@REM   :: Convert to lowercase for consistent path comparison
+@REM   set "checkPath=%userpath%"
+@REM   call set "checkPath=%%checkPath:%pyPath%=%%" || GOTO :skip_set_Path_variable
+@REM   :: If unchanged, python path not present → append
+@REM   if "%checkPath%"=="%userpath%" (
+@REM       echo Adding python path...
+@REM       :: remove trailing ";" if there to not have two
+@REM       if "!userpath:~-1!"==";" set "userpath=!userpath:~0,-1!"
+@REM       :: sets user Path variable:
+@REM       setx PATH "!userpath!;%pyPath%"
+@REM   ) else (
+@REM       echo Python path already present.
+@REM   )
+@REM :skip_set_Path_variable
+
+PAUSE
+
+
+:: ==================================================
 
 :: --- create & activate venv ---
 call "%env_path%\Scripts\activate.bat" > NUL 2>&1 || goto :create_venv
@@ -130,6 +249,7 @@ powershell -NoProfile -Command "$s=New-Object -ComObject WScript.Shell;$l=$s.Cre
 copy /Y "%install_lnk%" "%env_path%\" 1> NUL
 
 :: --register env with conda to make it findable with apps like Spyder--
+:: ==================================================
 :: Path to conda environments.txt:
 set conda_list_path=%USERPROFILE%\.conda\environments.txt
 :: Create the file if it does not exist:
@@ -148,6 +268,7 @@ if %errorlevel% EQU 0 (
     echo %env_path%>>"%conda_list_path%"
     echo:
 )
+:: ==================================================
 
 :: --- finish print---
 echo:
