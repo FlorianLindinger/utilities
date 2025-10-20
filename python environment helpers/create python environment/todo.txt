@@ -9,3 +9,6 @@ promt if to replace vscode settings if would change?
 make a global script that acts like conda activate env
 
 write readme and instructions ontop of scripts
+
+make easy possible to update/reset/recreate env
+make at least installing the packages default if already present
