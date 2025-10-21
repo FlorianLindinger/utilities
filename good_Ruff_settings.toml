@@ -3,7 +3,7 @@
 # ===========================
 
 # files to check/correct:
-include = ["*.py", "*.pyi","*.pyw","*.ipynb"]
+include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"]
 exclude = [".git", ".mypy_cache", ".ruff_cache", "__pycache__", "build", "dist"]
 
 line-length = 120 # max line length before wrapping
