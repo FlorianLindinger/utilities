@@ -1,0 +1,105 @@
+# ===========================
+# Ruff (python linter/formatter) configuration file
+# ===========================
+
+# files to check/correct:
+include = ["*.py", "*.pyi","*.pyw","*.ipynb"]
+exclude = [".git", ".mypy_cache", ".ruff_cache", "__pycache__", "build", "dist"]
+
+line-length = 120 # max line length before wrapping
+
+[lint]
+# Rule families to enable:
+select = [
+  "A",     # shadowing Python built-ins
+  "ARG",   # unused function params
+  "ASYNC", # bad async usage
+  "B",     # likely bugs and design problems
+  "BLE",   # no bare "except:" & too broad Exception
+  "C4",    # cleaner comprehensions & generators
+  "COM",   # comma placement
+  "D",     # require docstrings & docstrings style
+  "DTZ",   # timezone-naive datetime usage
+  "E",     # major style issues and syntax correctness
+  "EM",    # uninformative/inconsistent error messages
+  "EXE",   # executable permissions & shebangs
+  "F",     # syntactically valid but logically wrong or unused
+  "FBT",   # Boolean design issues
+  "G",     # Logging misuse
+  "I",     # import sorting
+  "ICN",   # enfores alias conventions for imports
+  "N",     # naming conventions
+  "PERF",  # performance issues
+  "PIE",   # small correctness & simplification checks
+  "PL",    # pylint logic/safety rules
+  "PT",    # good patterns in Pytest tests
+  "Q",     # Enforce single/double quote style 
+  "RET",   # Ensures consistent return patterns in functions
+  "RSE",   # correct raise syntax
+  "RUF",   # Ruff’s improvements & performance rules
+  "S",     # security checks
+  "SIM",   # Simplifies redundant conditionals & loops
+  "SLF",   # access to private attributes of other classes
+  "T10",   # Flag leftover debug statements
+  "T20",   # Flag leftover print statements
+  "TCH",   # move import only needed for type checking
+  "TID",   # Catches circular or disallowed imports
+  "TRY",   # bad exception handling
+  "UP",    # Updates syntax for newer Python versions
+  "W",     # minor style issues
+  "YTT",   # Catch obsolete sys.version comparisons & old idioms
+]
+
+# Ignore specific rules:
+ignore = [
+  "BLE001",  # don't replace "try ... except: pass" #3
+  "COM812",  # require trailing comma (formatter handles)
+  "D401",    # allow non imperative mood in docstrings
+  "E402",    # allow imports not at top
+  "E501",    # max line length handled via formatter
+  "E712",    # allow `== True/False`
+  "EM101",   # allow for strings in error message
+  "EM102",   # allow f-string in exception message
+  "FBT001",  # allow boolean parameters
+  "FBT002",  # allow boolean parameters #2
+  "N801",    # capitalize classes
+  "N802",    # allow for lowercase functions
+  "N803",    # allow for lowercase parameters
+  "N806",    # allow for capitalization inside function variable
+  "N812",    # allow any capitalization when renaming import #2
+  "N813",    # allow any naming convention for import rename
+  "N816",    # allow mixed capitalization in global variable label
+  "PLR0911", # allow too many returns
+  "PLR0912", # too many branches in function/method
+  "PLR0913", # too many function parameters
+  "PLR0915", # too many statements in function/method
+  "PLR1730", # allow for comparison where max/min would have worked
+  "PLR2004", # allow for numbers in comparison
+  "PLR5501", # allow for "else: if" instead of "elif"
+  "PLW0120", # allow for redundant else after for
+  "RET504",  # allow for unnecessary new variable before return
+  "RET505",  # allow for unnecessary else before return
+  "RET506",  # allow for unnecessary else after raise
+  "RET507",  # allow for unnecessary else after continue
+  "RET508",  # allow for unnecessary else after break
+  "RUF005",  # allow for list addition
+  "S101",    # allow for "assert"
+  "S110",    # don't replace "try ... except: pass" #2
+  "S112",    # allow try-except-continue block
+  "S607",    # allow relative paths for starting a process
+  "SIM102",  # allow for if "a: if b" instead of "if a and b"
+  "SIM103",  # allow for explicit "return True/False"
+  "SIM105",  # don't replace "try ... except: pass"
+  "SIM108",  # allow if else in >1 line if one-liner possible
+  "SIM110",  # allow "for+if" instead of "any+for"
+  "T201",    # allow print
+  "TRY002",  # allow for "Exception"
+  "TRY003",  # allow for long error message
+  "TRY300",  # allow unnecessary many line-including try-excepts
+  "TRY301",  # allow for not encapsulated raise in try-except
+  "UP028",   # don't replace for+yield with "yield from"
+
+
+  # temporarily ignore the following rules:
+  "D", # docstring rules
+]
