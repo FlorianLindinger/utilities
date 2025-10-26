@@ -104,7 +104,7 @@
   // Ruff formatter/linter settings (python)
   "ruff.nativeServer": "on",
   "ruff.configuration": "${env:USERPROFILE}\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
-  "ruff.configurationPreference": "filesystemFirst",
+  "ruff.configurationPreference": "filesystemFirst", //"filesystemFirst" "editorFirst"
   "ruff.lint.enable": true,
   "ruff.lint.preview": false,
   "ruff.logLevel": "info",
