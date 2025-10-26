@@ -5,6 +5,15 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 :: process args
 set "PY_VER=%~1"
+set "TARGET_DIR=%~2"
+
+:: make path absolute
+CALL :make_absolute_path_if_relative "%TARGET_DIR%"
+SET "TARGET_DIR=%OUTPUT%"
+
+:: add "portable_python" for delete safety
+set "PYTHON_FOLDER=%TARGET_DIR%\portable_python"
+set "TMP_DIR=%TARGET_DIR%\tmp"
 
 :: find available python full version compatible with specified input and installation method via amd64 folders and .msi files
 set "FULL_VER="
@@ -43,57 +52,88 @@ set "URL=https://www.python.org/ftp/python/%FULL_VER%/amd64/"
 ECHO: Download URL: %URL%
 
 :: (re)create tmp file
-rmdir /s /q tmp > NUL 2>&1
-mkdir tmp
+rmdir /s /q "%TMP_DIR%" > NUL 2>&1
+mkdir "%TMP_DIR%"
 
 :: downlaod files
 powershell -NoLogo -NoProfile -Command ^
   "$base='%URL%';" ^
-  "$out='tmp';" ^
+  "$out='%TMP_DIR%';" ^
   "$links=(Invoke-WebRequest -Uri $base).Links | Where-Object href -ne $null | ForEach-Object { $_.href } |" ^
   " Where-Object {$_ -notmatch '/$'} |" ^
   " ForEach-Object { if($_ -match '^https?://') {$_} else {$base + $_} } |" ^
   " Where-Object { -not ( ([IO.Path]::GetFileNameWithoutExtension( ([IO.Path]::GetFileNameWithoutExtension($_)) )) -match '(_d|_pdb)$' ) };" ^
   "foreach($l in $links){$n=[IO.Path]::GetFileName($l);$p=Join-Path $out $n;Try{Invoke-WebRequest -Uri $l -OutFile $p -UseBasicParsing}catch{Write-Error $l}}"
 
-:: (re)create final installation folder
-set "TARGET_DIR=portable_python"
-CALL :make_absolute_path_if_relative "%TARGET_DIR%"
-SET "TARGET_DIR=%OUTPUT%"
-rmdir /s /q "%TARGET_DIR%" > NUL 2>&1
-mkdir "%TARGET_DIR%" > NUL
+:: === [start] delete old python folder ==================
+
+:: Skip if folder doesn't exist
+if not exist "%PYTHON_FOLDER%\" (
+    goto :skip_delete_old 
+)
+
+:: Check for Python folder markers
+if not exist "%PYTHON_FOLDER%\python.exe" (
+    echo: [Error] folder "%PYTHON_FOLDER%" does not appear to be a Python folder. Delete manually after confirming. Aborting. Press any key to exit.
+    pause > nul
+    exit /b 1
+)
+
+:: delete folder
+rmdir /s /q "%PYTHON_FOLDER%"
+if exist "%PYTHON_FOLDER%\" (
+    echo: [Error] Failed to delete "%PYTHON_FOLDER%". Delete manually after confirming. Aborting. Press any key to exit.
+    pause > nul
+    exit /b 1
+) else (
+    echo: Deleted old python folder.
+)
+
+:: recreate folder
+mkdir "%PYTHON_FOLDER%" > NUL
+
+:skip_delete_old
+:: === [END] delete old python folder ==================
 
 :: install python files
-pushd tmp
+pushd "%TMP_DIR%"
 for %%A in (*.msi) do (
   echo: Processing %%~nxA
-  msiexec /a "%%~fA" TARGETDIR="%TARGET_DIR%" INSTALLDIR="%TARGET_DIR%" /qn
-  del /q "%TARGET_DIR%\%%~nxA" 2>nul
+  msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" INSTALLDIR="%PYTHON_FOLDER%" /qn
+  del /q "%PYTHON_FOLDER%\%%~nxA" 2>nul
 )
 popd
 
 :: verify functioning %local_python_name%
-CALL "%TARGET_DIR%\python.exe" -V || (
+CALL "%PYTHON_FOLDER%\python.exe" -V || (
   echo: [ERROR] Python not runnable. Aborting. Press any key to exit.
   PAUSE > NUL
   EXIT /B 2
 )
 
 :: delete temporariy folder
-rmdir /s /q tmp > NUL 2>&1
+rmdir /s /q "%TMP_DIR%" > NUL 2>&1
 
 :: print success and exit
 echo:
-echo: Sucessfully created portable Python (%FULL_VER%) at "%TARGET_DIR%". Print any key to exit.
-PAUSE > NUL
+echo: Sucessfully created portable Python (%FULL_VER%) at "%PYTHON_FOLDER%".
 exit /b 0
 
+:: ====================
+:: ==== Functions: ====
+:: ====================
 
-
-:: -------------------------------------------------
-:: function that makes relative path (relative to current working directory) to absolute if not already:
-:: -------------------------------------------------
+:: =================================================
+:: function that makes relative path (relative to current working directory) to :: absolute if not already. Works for empty path (relative) path:
+:: Usage:
+::    call :make_absolute_path_if_relative "%some_path%"
+::    set "abs_path=%output%"
+:: =================================================
 :make_absolute_path_if_relative
-	SET "OUTPUT=%~f1"
-	GOTO :EOF
-:: -------------------------------------------------
+    if "%~1"=="" (
+        set "OUTPUT=%CD%"
+    ) else (
+	    set "OUTPUT=%~f1"
+    )
+goto :EOF
+:: =================================================
