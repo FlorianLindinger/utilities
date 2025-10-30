@@ -60,8 +60,9 @@ ignore = [
   "E712",    # allow `== True/False`
   "EM101",   # allow for strings in error message
   "EM102",   # allow f-string in exception message
-  "FBT001",  # allow boolean parameters
-  "FBT002",  # allow boolean parameters #2
+  "FBT001",  # allow boolean parameters when type hinting
+  "FBT002",  # allow boolean parameters when defining
+  "FBT003",  # allow boolean positions args when calling
   "N801",    # capitalize classes
   "N802",    # allow for lowercase functions
   "N803",    # allow for lowercase parameters
@@ -77,6 +78,7 @@ ignore = [
   "PLR2004", # allow for numbers in comparison
   "PLR5501", # allow for "else: if" instead of "elif"
   "PLW0120", # allow for redundant else after for
+  "PLW0603", # allow for use of globals
   "RET504",  # allow for unnecessary new variable before return
   "RET505",  # allow for unnecessary else before return
   "RET506",  # allow for unnecessary else after raise
