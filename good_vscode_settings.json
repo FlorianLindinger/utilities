@@ -8,7 +8,7 @@
   "typescript.tsserver.watchOptions": "vscode",
   // terminal
   "terminal.integrated.inheritEnv": true,
-  "terminal.integrated.defaultProfile.windows": "Command Prompt", 
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
   // explorer
   "explorer.excludeGitIgnore": false,
   "explorer.confirmDelete": false,
@@ -20,6 +20,10 @@
     "**/LICENSE": true,
     "**/*.lnk": true,
     "**/*.lprof": true,
+    "**/*.pid": true,
+    "**/*.ome.tif": true,
+    "**/*.vscode": true,
+    "**/*.tiff": true,
   },
   // default formatters
   "editor.formatOnSave": true,
@@ -38,6 +42,8 @@
   },
   "notebook.defaultFormatter": "charliermarsh.ruff",
   // AI
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
   "github.copilot.enable": {
     "*": true,
     "plaintext": false,
@@ -143,9 +149,5 @@
   ],
   "python.analysis.extraPaths": [
     "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
-  ],
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1", // new settings:
-  
-
+  ], // == new settings below ==
 }
