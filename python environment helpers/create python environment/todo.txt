@@ -1,3 +1,7 @@
+print what full version is actually installed.
+
+Allow for upgrade/dwonagead/change of version/packages by deleting venv
+
 make a version that only makes env and installs python if necessary
 
 add and fix path adding from jupyter file to others. maybe again try to have code copy paste same
