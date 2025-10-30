@@ -35,7 +35,7 @@ select = [
   "PERF",  # performance issues
   "PIE",   # small correctness & simplification checks
   "PL",    # pylint logic/safety rules
-  "PT",    # good patterns in Pytest tests
+  # "PT",    # good patterns in Pytest tests
   "Q",     # Enforce single/double quote style 
   "RET",   # Ensures consistent return patterns in functions
   "RSE",   # correct raise syntax
