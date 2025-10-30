@@ -22,7 +22,6 @@
     "**/*.lprof": true,
     "**/*.pid": true,
     "**/*.ome.tif": true,
-    "**/*.vscode": true,
     "**/*.tiff": true,
   },
   // default formatters
@@ -151,4 +150,9 @@
   "python.analysis.extraPaths": [
     "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
   ], // == new settings below ==
+
+
+
+
+
 }
