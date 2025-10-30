@@ -16,14 +16,18 @@ powershell -NoProfile -ExecutionPolicy Bypass ^
   "$obj = [ordered]@{ recommendations = $exts }; " ^
   "$json = $obj | ConvertTo-Json -Depth 3 | ForEach-Object { $_ -replace '^\s{8}','  ' -replace '^\s{4}','  ' }; " ^
   "New-Item -ItemType Directory -Force -Path '%OUTDIR%' | Out-Null; " ^
-  "Set-Content -Path '%OUTFILE%' -Value $json -Encoding UTF8; " ^
-  "Write-Host 'Wrote %OUTFILE%'"
-
+  "Set-Content -Path '%OUTFILE%' -Value $json -Encoding UTF8; " 
 
 if errorlevel 1 (
   echo Failed to generate %OUTFILE%.
-  exit /b 1
+  echo: Press any key to exit
+  pause > nul
+  exit \b 1
+) else (
+  echo: (Re^)generated .vscode\extensions.json
+  echo: Press any key to exit
+  pause > nul
+  exit \b 0
 )
 
-echo Done.
-endlocal
+
