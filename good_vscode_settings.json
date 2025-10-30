@@ -84,6 +84,7 @@
   "notebook.output.wordWrap": true,
   "notebook.showCellStatusBar": "visible",
   "notebook.variablesView": true,
+    "jupyter.widgetScriptSources": ["jsdelivr.com", "unpkg.com"], //needed for interactive
   "jupyter.askForKernelRestart": false,
   "[jupyter]": {
     "editor.mouseWheelScrollSensitivity": 3.5
