@@ -1,6 +1,8 @@
 print what full version is actually installed.
 
-Allow for upgrade/dwonagead/change of version/packages by deleting venv
+Allow for upgrade/dwonagead/change of version/packages by deleting venv. but that is intrinsicallly unsafe because venv signatures could have been spawned in any folder
+
+checkl waht happens if packages are not available. try to list sucessfull and unsuccesfull installs in end
 
 make a version that only makes env and installs python if necessary
 
