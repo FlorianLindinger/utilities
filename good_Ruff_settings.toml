@@ -8,6 +8,9 @@ exclude = [".git", ".mypy_cache", ".ruff_cache", "__pycache__", "build", "dist"]
 
 line-length = 120 # max line length before wrapping
 
+[lint.per-file-ignores]
+"*.ipynb" = ["F403", "F405"] # allow * import in notebooks
+
 [lint]
 # Rule families to enable:
 select = [
