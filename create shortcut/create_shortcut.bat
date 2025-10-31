@@ -33,12 +33,8 @@ set "ICON=%output%"
 :: strip accidental .lnk from NAME so we control extension
 if /i "%NAME:~-4%"==".lnk" set "NAME=%NAME:~0,-4%"
 
-:: ensure link directory exists
-for %%D in ("%NAME%") do set "LINKDIR=%%~dpD"
-if not exist "%LINKDIR%" (
-    echo Error: Output directory "%LINKDIR%" does not exist.
-    exit /b 2
-)
+:: make link directory if not existing
+for %%D in ("%NAME%") do mkdir "%%~dpD" >nul 2>&1
 
 :: add shortcut ending
 set "LINK=%NAME%.lnk"
