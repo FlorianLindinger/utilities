@@ -55,7 +55,11 @@ if not exist "%PYTHON_FOLDER%\python.exe" (
     exit /b 1
 )
 
+:: create venv parent folder if missing
+mkdir "%TARGET_DIR%" >nul 2>&1
+
 :: create venv
+echo: Creating virtual environment "%venv_path%"
 "%PYTHON_FOLDER%\python.exe" -m venv "%venv_path%"
 if errorlevel 1 (
     echo: [Error] venv creation failed. Aborting. Press any key to exit.
@@ -74,36 +78,37 @@ if errorlevel 1 (
 echo(@echo off
 echo(setlocal
 echo(
+echo(:: get folder of this file with \ at end
+echo(set "VENV_FOLDER=%%~dp0"
+echo(
+echo(:: get where python exe should be 
+echo(set "python_exe_folder=%VENV_FOLDER%..\portable_python"
+echo(:: compute paths relative to this file
+echo(call :make_absolute_path_if_relative "%python_exe_folder%"
+echo(set "python_exe_folder=%OUTPUT%"
+echo(
 echo(:: ================================================
 echo(:: check if portable virtual environment was moved and repair pyvenv.cfg in that case
 echo(
-echo(:: compute paths relative to this file
-echo(set "ROOT=%%~dp0"
-echo(if "%%ROOT:~-1%%"=="\" set "ROOT=%%ROOT:~0,-1%%"
-echo(set "VENV=%%ROOT%%"
-echo(set "BASE=..\%PYTHON_FOLDER%"
-echo(call :make_absolute_path_if_relative "%%BASE%%"
-echo(set "BASE=%%OUTPUT%%"
-echo(
-echo(:: check if "home" in pyvenv.cfg is correct and replace if not
-echo(for /f "tokens=1,* delims==" %%%%A in ('findstr /I /C:"home =" "%%VENV%%\pyvenv.cfg" 2^^^>nul'^) do (
+echo(:: check if "home" setting in pyvenv.cfg is correct and replace if not
+echo(for /f "tokens=1,* delims==" %%%%A in ('findstr /I /C:"home =" "%%VENV_FOLDER%%pyvenv.cfg" 2^^^>nul'^) do (
 echo(  for /f "tokens=* delims= " %%%%Z in ("%%%%B"^) do set "CURRENT_HOME=%%%%~Z"
 echo(^)
-echo(if /I "%%CURRENT_HOME%%"=="%%BASE%%" (
+echo(if /I "%%CURRENT_HOME%%"=="%%python_exe_folder%%" (
 echo(    goto :skip_replace
 echo(^)
-echo(powershell -NoProfile -Command "$cfg='%%VENV%%\pyvenv.cfg'; $newHome=(Resolve-Path '%%BASE%%').Path; $txt=Get-Content -Raw $cfg; if($txt -match '(?m)^home\s*='){ $txt=[regex]::Replace($txt,'(?m)^(home\s*=\s*).+$','${1}'+$newHome) } else { $nl=if($txt -and $txt[-1]-ne [char]10){[environment]::NewLine}else{''}; $txt+=$nl+'home = '+$newHome+[environment]::NewLine }; Set-Content -Encoding UTF8 -NoNewline -Path $cfg -Value $txt"
+echo(powershell -NoProfile -Command "$cfg='%%VENV_FOLDER%%pyvenv.cfg'; $newHome=(Resolve-Path '%%python_exe_folder%%').Path; $txt=Get-Content -Raw $cfg; if($txt -match '(?m)^home\s*='){ $txt=[regex]::Replace($txt,'(?m)^(home\s*=\s*).+$','${1}'+$newHome) } else { $nl=if($txt -and $txt[-1]-ne [char]10){[environment]::NewLine}else{''}; $txt+=$nl+'home = '+$newHome+[environment]::NewLine }; Set-Content -Encoding UTF8 -NoNewline -Path $cfg -Value $txt"
 echo(:skip_replace
 echo(:: ================================================
 echo(
 echo(:: run your command using the venv Python
 echo(if "%%~1"=="" (
-echo(  "%%VENV%%\Scripts\python.exe"
+echo(  "%%VENV_FOLDER%%Scripts\python.exe"
 echo(^) else (
 echo(  if /i "%%~1"=="-m" (
-echo(    "%%VENV%%\Scripts\python.exe" %%*
+echo(    "%%VENV_FOLDER%%Scripts\python.exe" %%*
 echo(  ^) else (
-echo(    "%%VENV%%\Scripts\python.exe" "%%~1" %%*
+echo(    "%%VENV_FOLDER%%Scripts\python.exe" "%%~1" %%*
 echo(  ^)
 echo(^)
 echo(
