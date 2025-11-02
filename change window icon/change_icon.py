@@ -1,3 +1,8 @@
+# Usage: 
+# arg1:          {window name}
+# arg2(optional) {icon_path}
+# arg3(optional) {anything if you want errors to print}
+
 import time
 import win32api  # install as pywin32
 import win32gui  # install as pywin32
