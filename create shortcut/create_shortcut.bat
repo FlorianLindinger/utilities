@@ -1,7 +1,7 @@
 :: =================================================
 :: Usage: 
 :: make_shortcut.bat "<name>" "<target>" "<target-args>" "<working-dir>" "<icon-path>" "<description>"
-:: Add quotations inside an arg as a double single quote ('')
+:: Add quotations inside an arg as a \"
 :: =================================================
 
 @echo off
@@ -50,16 +50,12 @@ powershell -NoProfile -ExecutionPolicy Bypass ^
   "$lnk.Description = '%DESC%';" ^
   "$lnk.Save()" 
 
-:: test if shortcut was created and warn if not
+:: test if shortcut was created and exit
 if not exist "%LINK%" (
-  echo: [Error] Failed to create shortcut (see above^). Aborting. Press any key to exit
-  pause > nul
-  exit /b 4
+    exit /b 2
+) else(
+    EXIT /B 0
 )
-
-:: print and exit
-echo Shortcut created: "%LINK%"
-EXIT /B 0
 
 :: ====================
 :: ==== Functions: ====
