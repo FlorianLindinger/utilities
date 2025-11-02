@@ -1,0 +1,14 @@
+use global python.
+
+find out how to use minimal pyhton. is embedded possible?
+
+install global python if needed
+
+settings:
+-python version
+-requirements list or auto read req. from all files
+-generate venv
+-install packages
+-settings for faster launch or single exe
+-icon path
+-cleanup
