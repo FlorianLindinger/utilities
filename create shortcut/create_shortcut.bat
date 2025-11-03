@@ -53,7 +53,7 @@ powershell -NoProfile -ExecutionPolicy Bypass ^
 :: test if shortcut was created and exit
 if not exist "%LINK%" (
     exit /b 2
-) else(
+) else (
     EXIT /B 0
 )
 
