@@ -1,0 +1,99 @@
+change_icon.exe_LICENSE.txt
+────────────────────────
+
+"change_icon.exe" was created in Python3.13 and bundled with PyInstaller. 
+The souce code is at the end of the file.
+It includes components distributed under the following open-source licenses
+
+────────────────────────
+1. Python Software Foundation License (PSF-2.0)
+────────────────────────
+Copyright © 2001-2024 Python Software Foundation. All rights reserved.
+
+Python and the accompanying standard library are made available under the
+Python Software Foundation License Version 2.0.
+
+A copy of the full license text can be obtained from:
+https://docs.python.org/3/license.html
+
+You must retain this notice in any redistribution of binary or source forms
+containing the Python runtime.
+
+────────────────────────
+2. pywin32
+────────────────────────
+Portions Copyright © Mark Hammond and Contributors.
+
+pywin32 is distributed under the same Python Software Foundation License (PSF-2.0).
+The source and license text are available at:
+https://github.com/mhammond/pywin32
+
+────────────────────────
+3. Application License
+────────────────────────
+
+MIT License
+
+Copyright (c) 2025 Florian Lindinger
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+────────────────────────
+Source code
+────────────────────────
+# Usage:
+# arg1:          {window name}
+# arg2(optional) {icon_path}
+# arg3(optional) {anything if you want errors to print}
+
+import sys
+import time
+
+import win32api  # install as pywin32
+import win32con  # install as pywin32
+import win32gui  # install as pywin32
+
+
+def set_window_icon(window_title: str, icon_path: str, print_warning=False):
+    try:
+        hwnd = win32gui.FindWindow(None, window_title)
+        icon_flags = win32gui.LR_LOADFROMFILE | win32gui.LR_DEFAULTSIZE
+        hicon = win32gui.LoadImage(None, icon_path, win32gui.IMAGE_ICON, 0, 0, icon_flags)
+        win32api.SendMessage(hwnd, win32con.WM_SETICON, win32con.ICON_SMALL, hicon)
+        win32api.SendMessage(hwnd, win32con.WM_SETICON, win32con.ICON_BIG, hicon)
+    except Exception as e:
+        if print_warning:
+            print(e)
+            print(
+                "Error: Use change_icon.exe with command:\nchange_icon {window name} {icon_path} {anything_if_you_want_to_print_errors}"
+            )
+
+
+if len(sys.argv) == 3:
+    set_window_icon(sys.argv[1], sys.argv[2])
+    # needed because windows is slow and otherwise would not do it:
+    time.sleep(0.2)
+elif len(sys.argv) == 4:
+    set_window_icon(sys.argv[1], sys.argv[2], True)
+    # needed because windows is slow and otherwise would not do it:
+    time.sleep(0.2)
+else:
+    print(
+        "Error: Use change_icon.exe with command:\nchange_icon {window name} {icon_path} {anything_if_you_want_to_print_errors}"
+    )
