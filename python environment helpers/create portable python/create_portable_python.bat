@@ -1,16 +1,17 @@
-:: check if fully portable
-:: fix .ruff. in test
-
 :: Usage:
-:: create_portable_python.cbat <py_ver> "<target_dir>" [install_tkinter] [install_tests] [install_docs]
+:: create_portable_python.bat <py_ver> "<target_dir>" <install_tkinter> <install_tests> <install_docs>
 :: 
-:: All args are optionl. 
+:: Args (all optional):
 :: <py_ver>: It picks the most modern python version by default the matches None/x/x.y/x.y.z defined python version.
 :: <target_dir>: If not defined it generates in the file folder. It always names the generated python folder portable_python in the <target_dir>.
-::install_tkinter/install_tests/install_docs can be 1/0 for install/no-install of python sub components.
+:: <install_tkinter>/<install_tests>/<install_docs>: Can be 1/0 for install/no-install of that python sub components. Default 1/1/0
 
-@echo off
-setlocal EnableExtensions EnableDelayedExpansion
+:: =======================
+:: ==== Program Start ====
+:: =======================
+
+:: dont print commands & make variables local & enable needed features
+@echo off & setlocal EnableExtensions EnableDelayedExpansion
 
 :: process args
 set "PY_VER=%~1"
@@ -71,16 +72,16 @@ for /f "usebackq delims=" %%A in (`
 `) do set "FULL_VER=%%A"
 :: abort if fail
 if not defined FULL_VER (
-    echo: [ERROR] Could not determine latest implemented version for specified version (%PY_VER%^) or download method not implemented for this version or no internet connection. This code needs "https://www.python.org/ftp/python/{full-python-version}/amd64/" to exist. Aborting. Press any key to exit.
+    echo [ERROR] Could not determine latest implemented version for specified version (%PY_VER%^) or download method not implemented for this version or no internet connection. This code needs "https://www.python.org/ftp/python/{full-python-version}/amd64/" to exist. Aborting. Press any key to exit.
     PAUSE > NUL
     exit /b 1
 )
 :: print success
-echo: Found (msi-install available) Python version %FULL_VER%
+echo Found (msi-install available) Python version %FULL_VER%
 
 :: define URL based on full version
 set "URL=https://www.python.org/ftp/python/%FULL_VER%/amd64/"
-ECHO: Download URL: %URL%
+ECHO Download URL: %URL%
 
 :: (re)create tmp file
 rmdir /s /q "%TMP_DIR%" > NUL 2>&1
@@ -136,6 +137,11 @@ for %%A in (*.msi) do (
   if not defined skip (
     echo Installing %%~nxA
     msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" INSTALLDIR="%PYTHON_FOLDER%" /qn
+    if "%%~nxA"=="test.msi" (
+      rem disable line in %PYTHON_FOLDER%\Lib\test\.ruff.toml that causes Ruff error message (line: "extend = "../../.ruff.toml"  # Inherit the project-wide settings"^):
+      powershell -NoLogo -NoProfile -Command ^
+      "(Get-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml') | ForEach-Object { if ($_ -match '^\s*extend\s*=') { '# ' + $_ } else { $_ } } | Set-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml'"
+    )
     del /q "%PYTHON_FOLDER%\%%~nxA" 2>nul
   ) else (
     echo [Info] Excluded %%~nxA

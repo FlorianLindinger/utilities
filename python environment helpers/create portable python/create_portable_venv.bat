@@ -1,3 +1,15 @@
+:: Usage:
+:: create_portable_venv.bat "<target_dir>" "<python_folder>"
+::
+:: Args (all optional):
+::   <target_dir>: Destination directory. The script creates "<target_dir>\virtual_environment". Default: current working directory.
+::   <python_folder>: Path to the portable Python runtime containing python.exe. Accepts relative or absolute. Default: "portable_python".
+
+:: =======================
+:: ==== Program Start ====
+:: =======================
+
+:: dont print commands & make variables local
 @echo off
 setlocal
 
@@ -82,10 +94,10 @@ echo(:: get folder of this file with \ at end
 echo(set "VENV_FOLDER=%%~dp0"
 echo(
 echo(:: get where python exe should be 
-echo(set "python_exe_folder=%VENV_FOLDER%..\portable_python"
+echo(set "python_exe_folder=%%VENV_FOLDER%%..\portable_python"
 echo(:: compute paths relative to this file
-echo(call :make_absolute_path_if_relative "%python_exe_folder%"
-echo(set "python_exe_folder=%OUTPUT%"
+echo(call :make_absolute_path_if_relative "%%python_exe_folder%%"
+echo(set "python_exe_folder=%%OUTPUT%%"
 echo(
 echo(:: ================================================
 echo(:: check if portable virtual environment was moved and repair pyvenv.cfg in that case
