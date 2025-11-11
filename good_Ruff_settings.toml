@@ -36,21 +36,21 @@ select = [
   "PIE",   # small correctness & simplification checks
   "PL",    # pylint logic/safety rules
   # "PT",    # good patterns in Pytest tests
-  "Q",   # Enforce single/double quote style 
-  "RET", # Ensures consistent return patterns in functions
-  "RSE", # correct raise syntax
-  "RUF", # Ruff’s improvements & performance rules
-  "S",   # security checks
-  "SIM", # Simplifies redundant conditionals & loops
-  "SLF", # access to private attributes of other classes
-  "T10", # Flag leftover debug statements
-  "T20", # Flag leftover print statements
-  "TC", # move import only needed for type checking
-  "TID", # Catches circular or disallowed imports
-  "TRY", # bad exception handling
-  "UP",  # Updates syntax for newer Python versions
-  "W",   # minor style issues
-  "YTT", # Catch obsolete sys.version comparisons & old idioms
+  "Q",     # Enforce single/double quote style 
+  "RET",   # Ensures consistent return patterns in functions
+  "RSE",   # correct raise syntax
+  "RUF",   # Ruff’s improvements & performance rules
+  "S",     # security checks
+  "SIM",   # Simplifies redundant conditionals & loops
+  "SLF",   # access to private attributes of other classes
+  "T10",   # Flag leftover debug statements
+  "T20",   # Flag leftover print statements
+  "TC",    # move import only needed for type checking
+  "TID",   # Catches circular or disallowed imports
+  "TRY",   # bad exception handling
+  "UP",    # Updates syntax for newer Python versions
+  "W",     # minor style issues
+  "YTT",   # Catch obsolete sys.version comparisons & old idioms
 ]
 
 # Ignore specific rules:
