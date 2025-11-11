@@ -1,9 +1,12 @@
+:: Usage: measure_call_duration.bat <terminal command>
+:: Example: measure_call_duration.bat python main.py 
+:: Example: measure_call_duration.bat batch_file.bat
+:: Warning: For batch files could be that the called batch code needs "exit" instead of "exit \b"
+
 @echo off
-rem Usage: timer.bat <command and args>
-rem Example: timer.bat python main.py
 
 if "%~1"=="" (
-  echo Usage: %~nx0 ^<command and args^>
+  echo Usage: %~nx0 ^<terminal command^>
   exit /b 1
 )
 
@@ -11,7 +14,7 @@ setlocal
 set "ps1=%TEMP%\__timer_run.ps1"
 
 > "%ps1%" echo $sw=[System.Diagnostics.Stopwatch]::StartNew()
->>"%ps1%" echo cmd /c @args
+>>"%ps1%" echo cmd /c call @args
 >>"%ps1%" echo $sw.Stop()
 >>"%ps1%" echo [Math]::Round($sw.Elapsed.TotalSeconds,3)
 >>"%ps1%" echo exit $LASTEXITCODE
