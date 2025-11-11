@@ -1,36 +1,15 @@
+===============================================================================
 change_icon.exe_LICENSE.txt
-────────────────────────
+===============================================================================
 
-"change_icon.exe" was created in Python3.13 and bundled with PyInstaller. 
-The souce code is at the end of the file.
-It includes components distributed under the following open-source licenses
+This application was built with Pyinstaller and bundles components under multiple open-source licenses:
+- Python source code (see end of file): MIT License
+- Python and standard library: Python Software Foundation License Version 2.0
+- pywin32: Python Software Foundation License Version 2.0 (same text)
 
-────────────────────────
-1. Python Software Foundation License (PSF-2.0)
-────────────────────────
-Copyright © 2001-2024 Python Software Foundation. All rights reserved.
-
-Python and the accompanying standard library are made available under the
-Python Software Foundation License Version 2.0.
-
-A copy of the full license text can be obtained from:
-https://docs.python.org/3/license.html
-
-You must retain this notice in any redistribution of binary or source forms
-containing the Python runtime.
-
-────────────────────────
-2. pywin32
-────────────────────────
-Portions Copyright © Mark Hammond and Contributors.
-
-pywin32 is distributed under the same Python Software Foundation License (PSF-2.0).
-The source and license text are available at:
-https://github.com/mhammond/pywin32
-
-────────────────────────
-3. Application License
-────────────────────────
+===============================================================================
+SECTION 1 – Python Source Code (MIT License)
+===============================================================================
 
 MIT License
 
@@ -54,9 +33,69 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-────────────────────────
-Source code
-────────────────────────
+===============================================================================
+SECTION 2 – Python Software Foundation License Version 2.0 (PSF-2.0)
+===============================================================================
+
+PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
+--------------------------------------------
+
+1. This LICENSE AGREEMENT is between the Python Software Foundation ("PSF"), 
+  and the Individual or Organization ("Licensee") accessing and otherwise 
+  using this software ("Python") in source or binary form and its associated 
+  documentation.
+
+2. Subject to the terms and conditions of this License Agreement, PSF hereby 
+  grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce, 
+  analyze, test, perform and/or display publicly, prepare derivative works, 
+  distribute, and otherwise use Python alone or in any derivative version, 
+  provided, however, that PSF's License Agreement and PSF’s notice of copyright, 
+  i.e., "Copyright (c) 2001-2024 Python Software Foundation; All Rights Reserved" 
+  are retained in Python alone or in any derivative version prepared by Licensee.
+
+3. In the event Licensee prepares a derivative work that is based on or incorporates 
+  Python or any part thereof, and wants to make the derivative work available to 
+  others as provided herein, then Licensee hereby agrees to include in any such 
+  work a brief summary of the changes made to Python.
+
+4. PSF is making Python available to Licensee on an “AS IS” basis. PSF MAKES 
+  NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED. BY WAY OF EXAMPLE, 
+  BUT NOT LIMITATION, PSF MAKES NO AND DISCLAIMS ANY REPRESENTATION OR WARRANTY 
+  OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF 
+  PYTHON WILL NOT INFRINGE ANY THIRD-PARTY RIGHTS.
+
+5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON FOR ANY 
+  INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS A RESULT OF 
+  MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON, OR ANY DERIVATIVE THEREOF, 
+  EVEN IF ADVISED OF THE POSSIBILITY THEREOF.
+
+6. This License Agreement will automatically terminate upon a material breach 
+  of its terms and conditions.
+
+7. Nothing in this License Agreement shall be deemed to create any relationship 
+  of agency, partnership, or joint venture between PSF and Licensee. This License 
+  Agreement does not grant permission to use PSF trademarks or trade name in a 
+  trademark sense to endorse or promote products or services of Licensee, or any 
+  third party.
+
+8. By copying, installing or otherwise using Python, Licensee agrees to be bound 
+  by the terms and conditions of this License Agreement.
+
+===============================================================================
+SECTION 3 – pywin32 (PSF-2.0 License)
+===============================================================================
+
+pywin32 © Mark Hammond and Contributors.
+
+Distributed under the Python Software Foundation License Version 2.0 (PSF-2.0),
+identical in text to Section 2 above.
+
+Source: https://github.com/mhammond/pywin32
+
+===============================================================================
+Source Code
+===============================================================================
+
 # Usage:
 # arg1:          {window name}
 # arg2(optional) {icon_path}
