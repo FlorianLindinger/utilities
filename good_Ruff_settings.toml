@@ -102,6 +102,7 @@ ignore = [
   "TRY003",  # allow for long error message
   "TRY300",  # allow unnecessary many line-including try-excepts
   "TRY301",  # allow for not encapsulated raise in try-except
+  "UP009",   # allow python file encoding declaration
   "UP028",   # don't replace for+yield with "yield from"
 
 
