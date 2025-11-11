@@ -1,6 +1,14 @@
 :: check if fully portable
 :: fix .ruff. in test
 
+:: Usage:
+:: create_portable_python.cbat <py_ver> "<target_dir>" [install_tkinter] [install_tests] [install_docs]
+:: 
+:: All args are optionl. 
+:: <py_ver>: It picks the most modern python version by default the matches None/x/x.y/x.y.z defined python version.
+:: <target_dir>: If not defined it generates in the file folder. It always names the generated python folder portable_python in the <target_dir>.
+::install_tkinter/install_tests/install_docs can be 1/0 for install/no-install of python sub components.
+
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
