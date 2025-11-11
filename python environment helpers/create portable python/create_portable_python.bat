@@ -6,6 +6,25 @@ setlocal EnableExtensions EnableDelayedExpansion
 :: process args
 set "PY_VER=%~1"
 set "TARGET_DIR=%~2"
+set "install_tkinter=%~3"
+set "install_tests=%~4"
+set "install_docs=%~5"
+
+:: set default values
+if "%install_tkinter%"=="" (
+  set "install_tkinter=1"
+)
+if "%install_tests%"=="" (
+  set "install_tests=1"
+)
+if "%install_docs%"=="" (
+  set "install_docs=0"
+)
+
+:: exclude not needed files from install:
+if "%install_tkinter%"=="0" ( set "exclude_install=%exclude_install% tcltk.msi" ) rem (~11 MB)
+if "%install_tests%"=="0" ( set "exclude_install=%exclude_install% test.msi" ) rem (~31 MB)
+if "%install_docs%"=="0" ( set "exclude_install=%exclude_install% doc.msi" ) rem (~61 MB)
 
 :: make path absolute
 CALL :make_absolute_path_if_relative "%TARGET_DIR%"
@@ -45,7 +64,7 @@ if not defined FULL_VER (
     exit /b 1
 )
 :: print success
-echo: Found working python version %FULL_VER%
+echo: Found (msi-install available) Python version %FULL_VER%
 
 :: define URL based on full version
 set "URL=https://www.python.org/ftp/python/%FULL_VER%/amd64/"
@@ -74,7 +93,7 @@ if not exist "%PYTHON_FOLDER%\" (
 
 :: Check for Python folder markers
 if not exist "%PYTHON_FOLDER%\python.exe" (
-    echo: [Error] folder "%PYTHON_FOLDER%" does not appear to be a Python folder. Delete manually after confirming. Aborting. Press any key to exit.
+    echo [Error] folder "%PYTHON_FOLDER%" does not appear to be a Python folder. -^> Delete manually after confirming. ^| Aborting. Press any key to exit.
     pause > nul
     exit /b 1
 )
@@ -82,11 +101,11 @@ if not exist "%PYTHON_FOLDER%\python.exe" (
 :: delete folder
 rmdir /s /q "%PYTHON_FOLDER%"
 if exist "%PYTHON_FOLDER%\" (
-    echo: [Error] Failed to delete "%PYTHON_FOLDER%". Delete manually after confirming. Aborting. Press any key to exit.
+    echo [Error] Failed to delete "%PYTHON_FOLDER%". -^> Delete manually after confirming. ^| Aborting. Press any key to exit.
     pause > nul
     exit /b 1
 ) else (
-    echo: Deleted old python folder.
+    echo Deleted old python folder.
 )
 
 :: recreate folder
@@ -95,18 +114,26 @@ mkdir "%PYTHON_FOLDER%" > NUL
 :skip_delete_old
 :: === [END] delete old python folder ==================
 
-:: install python files
+:: install python files that are not in %exclude_install% (via .msi files)
 pushd "%TMP_DIR%"
 for %%A in (*.msi) do (
-  echo: Processing %%~nxA
-  msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" INSTALLDIR="%PYTHON_FOLDER%" /qn
-  del /q "%PYTHON_FOLDER%\%%~nxA" 2>nul
+  set "skip="
+  for %%X in (%exclude_install%) do (
+    echo %%~nxA | findstr /i /c:"%%~X" >nul && set "skip=1"
+  )
+  if not defined skip (
+    echo Installing %%~nxA
+    msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" INSTALLDIR="%PYTHON_FOLDER%" /qn
+    del /q "%PYTHON_FOLDER%\%%~nxA" 2>nul
+  ) else (
+    echo [Info] Excluded %%~nxA
+  )
 )
 popd
 
 :: verify functioning %local_python_name%
-CALL "%PYTHON_FOLDER%\python.exe" -V || (
-  echo: [ERROR] Python not runnable. Aborting. Press any key to exit.
+CALL "%PYTHON_FOLDER%\python.exe" -V > Nul || (
+  echo [ERROR] Python not runnable. Aborting. Press any key to exit.
   PAUSE > NUL
   EXIT /B 2
 )
@@ -115,8 +142,8 @@ CALL "%PYTHON_FOLDER%\python.exe" -V || (
 rmdir /s /q "%TMP_DIR%" > NUL 2>&1
 
 :: print success and exit
-echo:
-echo: Sucessfully created portable Python (%FULL_VER%) at "%PYTHON_FOLDER%".
+echo.
+echo Sucessfully created portable Python (%FULL_VER%) at "%PYTHON_FOLDER%".
 exit /b 0
 
 :: ====================
