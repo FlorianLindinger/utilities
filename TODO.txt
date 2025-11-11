@@ -1,1 +1,11 @@
 copy all utilites from PyApp template and fix if not ready. Add descriptions
+
+
+add single function to add args together starting from i
+
+
+add how to use to all utilities
+
+
+add ready exe generator that makes everything not needed and bundles python in it
+mention common packages where not allowed or where to check waht license they want.
