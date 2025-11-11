@@ -1,4 +1,5 @@
 :: check if fully portable
+:: fix .ruff. in test
 
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
@@ -22,9 +23,12 @@ if "%install_docs%"=="" (
 )
 
 :: exclude not needed files from install:
-if "%install_tkinter%"=="0" ( set "exclude_install=%exclude_install% tcltk.msi" ) rem (~11 MB)
-if "%install_tests%"=="0" ( set "exclude_install=%exclude_install% test.msi" ) rem (~31 MB)
-if "%install_docs%"=="0" ( set "exclude_install=%exclude_install% doc.msi" ) rem (~61 MB)
+::(~11 MB):
+if "%install_tkinter%"=="0" ( set "exclude_install=%exclude_install% tcltk.msi" )
+::(~31 MB):
+if "%install_tests%"=="0" ( set "exclude_install=%exclude_install% test.msi" ) 
+::(~61 MB):
+if "%install_docs%"=="0" ( set "exclude_install=%exclude_install% doc.msi" )
 
 :: make path absolute
 CALL :make_absolute_path_if_relative "%TARGET_DIR%"
