@@ -62,7 +62,7 @@ if exist "%venv_path%\" (
 
 :: check if python exists
 if not exist "%PYTHON_FOLDER%\python.exe" (
-    echo: [Error]"%PYTHON_FOLDER%\python.exe" does not exist. Aborting. Press any key to exit.
+    echo: [Error] "%PYTHON_FOLDER%\python.exe" does not exist. Aborting. Press any key to exit.
     pause > NUL
     exit /b 1
 )
