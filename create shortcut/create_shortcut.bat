@@ -40,15 +40,15 @@ for %%D in ("%NAME%") do mkdir "%%~dpD" >nul 2>&1
 set "LINK=%NAME%.lnk"
 
 :: create shortcut
-powershell -NoProfile -ExecutionPolicy Bypass ^
-  "$ws = New-Object -ComObject WScript.Shell;" ^
-  "$lnk = $ws.CreateShortcut('%LINK%');" ^
-  "$lnk.TargetPath = '%TARGET%';" ^
-  "$lnk.Arguments = '%ARGS%';" ^
-  "$lnk.WorkingDirectory = '%WDIR%';" ^
-  "$lnk.IconLocation = '%ICON%,0';" ^
-  "$lnk.Description = '%DESC%';" ^
-  "$lnk.Save()" 
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$ws=New-Object -ComObject WScript.Shell;" ^
+  "$lnk=$ws.CreateShortcut($env:LINK);" ^
+  "$lnk.TargetPath=$env:TARGET;" ^
+  "$lnk.Arguments=$env:ARGS;" ^
+  "$lnk.WorkingDirectory=$env:WDIR;" ^
+  "$lnk.IconLocation=$env:ICON+',0';" ^
+  "$lnk.Description=$env:DESC;" ^
+  "$lnk.Save()"
 
 :: test if shortcut was created and exit
 if not exist "%LINK%" (
