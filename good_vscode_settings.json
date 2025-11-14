@@ -78,12 +78,15 @@
   "notebook.dragAndDropEnabled": true,
   "notebook.diff.overviewRuler": true,
   "notebook.globalToolbarShowLabel": "dynamic",
-  "notebook.insertToolbarLocation": "hidden",
+  "notebook.insertToolbarLocation": "hidden", // insert cell button
   "notebook.output.scrolling": true,
   "notebook.output.wordWrap": true,
   "notebook.showCellStatusBar": "visible",
   "notebook.variablesView": true,
-    "jupyter.widgetScriptSources": ["jsdelivr.com", "unpkg.com"], //needed for interactive
+  "jupyter.widgetScriptSources": [
+    "jsdelivr.com",
+    "unpkg.com"
+  ], //needed for interactive
   "jupyter.askForKernelRestart": false,
   "[jupyter]": {
     "editor.mouseWheelScrollSensitivity": 3.5
@@ -137,7 +140,7 @@
   "python.analysis.inlayHints.pytestParameters": true,
   "python.analysis.typeCheckingMode": "basic", // Type checking
   "python.analysis.indexing": true,
-  "python.analysis.autoImportCompletions": true, //autocomplete
+  "python.analysis.autoImportCompletions": false, //auto add imports
   "python.analysis.importFormat": "absolute", //prefer absolute import paths
   "python.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
   "python.analysis.exclude": [
@@ -150,9 +153,4 @@
   "python.analysis.extraPaths": [
     "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
   ], // == new settings below ==
-
-
-
-
-
 }
