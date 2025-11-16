@@ -27,38 +27,11 @@ call :make_absolute_path_if_relative "%TARGET_DIR%"
 set "TARGET_DIR=%output%"
 
 :: add "virtual_environment" for delete safety 
-set "venv_path=%TARGET_DIR%\virtual_environment"
+set "VENV_PATH=%TARGET_DIR%\virtual_environment"
 
 :: make path absolute
 call :make_absolute_path_if_relative "%PYTHON_FOLDER%"
 set "PYTHON_FOLDER=%output%"
-
-:: === [start] delete old venv ===============
-
-:: Skip if folder doesn't exist
-if not exist "%venv_path%\" (
-    goto :skip_delete_old_venv 
-)
-
-:: Check for Python venv markers
-if not exist "%venv_path%\Scripts\activate.bat" (
-    echo: [Error] folder "%venv_path%" does not appear to be a Python virtual environment. Delete manually after confirming. Aborting. Press any key to exit.
-    pause > nul
-    exit /b 1
-)
-
-:: delete folder
-rmdir /s /q "%venv_path%"
-if exist "%venv_path%\" (
-    echo: [Error] Failed to delete "%venv_path%". Delete manually after confirming. Aborting. Press any key to exit.
-    pause > nul
-    exit /b 1
-) else (
-    echo: Deleted old virtual environment.
-)
-
-:skip_delete_old_venv
-:: === [end] delete old venv ===============
 
 :: check if python exists
 if not exist "%PYTHON_FOLDER%\python.exe" (
@@ -67,26 +40,55 @@ if not exist "%PYTHON_FOLDER%\python.exe" (
     exit /b 1
 )
 
+:: === [start] delete old venv ===============
+REM Skip if folder doesn't exist
+if not exist "%VENV_PATH%\" (
+    goto :skip_delete_old_venv 
+)
+REM Check for Python venv markers
+if not exist "%VENV_PATH%\Scripts\activate.bat" (
+    echo: [Error] folder "%VENV_PATH%" does not appear to be a Python virtual environment. Delete manually after confirming. Aborting. Press any key to exit.
+    pause > nul
+    exit /b 1
+)
+REM delete folder
+rmdir /s /q "%VENV_PATH%"
+if exist "%VENV_PATH%\" (
+    echo: [Error] Failed to delete "%VENV_PATH%". Delete manually after confirming. Aborting. Press any key to exit.
+    pause > nul
+    exit /b 1
+) else (
+    echo: Deleted old virtual environment.
+)
+:skip_delete_old_venv
+:: === [end] delete old venv ===============
+
 :: create venv parent folder if missing
 mkdir "%TARGET_DIR%" >nul 2>&1
 
 :: create venv
-echo: Creating virtual environment "%venv_path%"
-"%PYTHON_FOLDER%\python.exe" -m venv "%venv_path%"
+echo: Creating virtual environment "%VENV_PATH%"
+"%PYTHON_FOLDER%\python.exe" -m venv "%VENV_PATH%"
 if errorlevel 1 (
     echo: [Error] venv creation failed. Aborting. Press any key to exit.
     pause > NUL
     exit /b 1
 )
 
+:: add .gitignore to folder to prevent git from syncing of python environment
+>> "%VENV_PATH%\.gitignore" (
+  echo # Auto added to prevent synchronization of python environment in git by blacklisting everything with wildcard "*"
+  echo *
+)
+
 :: upgrade pip
-"%venv_path%\Scripts\python.exe" -m pip install --upgrade pip >nul 2>&1
+"%VENV_PATH%\Scripts\python.exe" -m pip install --upgrade pip >nul 2>&1
 if errorlevel 1 (
     echo [Warning] pip upgrade failed.
 )
 
 :: create python.bat file that repairs paths if folder moved
->"%venv_path%\python.bat" (
+>"%VENV_PATH%\python.bat" (
 echo(@echo off
 echo(setlocal
 echo(
@@ -138,14 +140,14 @@ echo(	goto :EOF
 echo(:: ================================================
 )
 :: check if python.bat file was created
-if not exist "%venv_path%\python.bat" (
-    ECHO: [Error] Failed to create "%venv_path%\python.bat" (see above^). Aborting. Press any key to exit.
+if not exist "%VENV_PATH%\python.bat" (
+    ECHO: [Error] Failed to create "%VENV_PATH%\python.bat" (see above^). Aborting. Press any key to exit.
     pause > NUL
     exit /b 2
 )
 
 :: create activate.bat that works for portable folder:
-> "%venv_path%\activate.bat" (
+> "%VENV_PATH%\activate.bat" (
   echo @echo off
   echo.
   echo rem This file is UTF-8 encoded, so we need to update the current code page while executing it
@@ -183,8 +185,8 @@ if not exist "%venv_path%\python.bat" (
   echo ^)
 )
 :: check if activate.bat file was created
-if not exist "%venv_path%\activate.bat" (
-    ECHO: [Error] Failed to create "%venv_path%\activate.bat" (see above^). Aborting. Press any key to exit.
+if not exist "%VENV_PATH%\activate.bat" (
+    ECHO: [Error] Failed to create "%VENV_PATH%\activate.bat" (see above^). Aborting. Press any key to exit.
     pause > NUL
     exit /b 2
 )
