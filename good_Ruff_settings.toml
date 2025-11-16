@@ -82,6 +82,7 @@ ignore = [
   "PLR5501", # allow for "else: if" instead of "elif"
   "PLW0120", # allow for redundant else after for
   "PLW0603", # allow for use of globals
+  "PLW2901", # allow for redefinition of iterated elem in for loops
   "RET504",  # allow for unnecessary new variable before return
   "RET505",  # allow for unnecessary else before return
   "RET506",  # allow for unnecessary else after raise
