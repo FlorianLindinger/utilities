@@ -1,18 +1,23 @@
 :: =================================================
 :: Usage: 
-:: make_shortcut.bat "<name>" "<target>" "<target-args>" "<working-dir>" "<icon-path>" "<description>"
-:: Add quotations inside an arg as a \"
+::  make_shortcut.bat "<name>" "<target>" "<target-args>" "<working-dir>" "<icon-path>" "<description>"
+:: Add " inside an arg as a ^".
 :: =================================================
 
-@echo off
-setlocal
+:: turn off printing of command and make variables local
+@echo off & setlocal
 
+:: get call arguments
 set "NAME=%~1"
 set "TARGET=%~2"
 set "ARGS=%~3"
 set "WDIR=%~4"
 set "ICON=%~5"
 set "DESC=%~6"
+
+:: replace ^" with " in ARGS (^" needed to have " inside an arg). Second replacement needed in case of call of this script because batch is weird
+set "ARGS=%ARGS:^"="%"
+set "ARGS=%ARGS:^"="%"
 
 :: print USAGE if no arg given
 if "%~1"=="" (
