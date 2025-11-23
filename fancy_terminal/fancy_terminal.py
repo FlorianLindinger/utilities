@@ -638,6 +638,9 @@ class TkinterTerminal:
         # Remove default title bar
         self.root.overrideredirect(True)
 
+        # Handle window close requests (Alt+F4, Taskbar Close)
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
         # Apply Windows 11 Rounded Corners (DWMWA_WINDOW_CORNER_PREFERENCE = 33)
         try:
             DWMWA_WINDOW_CORNER_PREFERENCE = 33
