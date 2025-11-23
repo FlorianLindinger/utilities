@@ -433,6 +433,10 @@ class CustomTitleBar(tk.Frame):
         self.title_label.bind("<B1-Motion>", self.do_drag, add="+")
         self.title_label.bind("<ButtonRelease-1>", self.stop_drag, add="+")
 
+        # Bind double-click to maximize/restore
+        self.bind("<Double-Button-1>", lambda e: on_maximize())  # noqa: ARG005
+        self.title_label.bind("<Double-Button-1>", lambda e: on_maximize(), add="+")  # noqa: ARG005
+
     def on_title_click(self, event):
         """Handle title click - if it's a drag, don't open folder"""
         # Only open folder if mouse hasn't moved much (not a drag)
@@ -488,44 +492,8 @@ class CustomTitleBar(tk.Frame):
         self._drag_data["start_win_x"] = self.master.winfo_x()
         self._drag_data["start_win_y"] = self.master.winfo_y()
 
-        # Store original window state in case we need to restore from maximized
-        if self.master.state() == "zoomed":
-            # If dragging from maximized, restore to normal first
-            self.master.state("normal")
-
-            # Default size fallback
-            width = 900
-            height = 600
-
-            # Restore original size if available and calculate new position
-            if hasattr(self.master, "_pre_snap_geometry") and self.master._pre_snap_geometry:
-                try:
-                    # Parse geometry string "WxH+X+Y"
-                    parts = self.master._pre_snap_geometry.split("+")
-                    size_parts = parts[0].split("x")
-                    width = int(size_parts[0])
-                    height = int(size_parts[1])
-                except (ValueError, IndexError):
-                    # Fallback to current width if parsing fails (though state is normal now)
-                    width = self.master.winfo_width()
-                    height = self.master.winfo_height()
-            else:
-                width = self.master.winfo_width()
-                height = self.master.winfo_height()
-
-            # Calculate new position to center under cursor
-            new_x = event.x_root - (width // 2)
-
-            # For Y, we want the title bar to be under the cursor.
-            # event.y is the click position relative to the title bar widget.
-            new_y = event.y_root - event.y
-
-            # Apply new geometry immediately
-            self.master.geometry(f"{width}x{height}+{new_x}+{new_y}")
-
-            # Update stored initial window position to this new position
-            self._drag_data["start_win_x"] = new_x
-            self._drag_data["start_win_y"] = new_y
+        # Store whether we're starting from a maximized state (for do_drag to handle)
+        self._drag_data["was_maximized"] = self.master.state() == "zoomed"
 
         # Save geometry BEFORE the drag moves it (for restoration)
         self._drag_start_geometry = self.master.geometry()
@@ -553,6 +521,43 @@ class CustomTitleBar(tk.Frame):
             return self.master.winfo_screenheight() - 40  # Assume 40px taskbar
 
     def do_drag(self, event):
+        # If this is the first drag motion from a maximized window, restore it
+        if self._drag_data.get("was_maximized") and not self._drag_data.get("restored"):
+            # Mark as restored so we only do this once
+            self._drag_data["restored"] = True
+
+            # Restore to normal state
+            self.master.state("normal")
+
+            # Default size fallback
+            width = 900
+            height = 600
+
+            # Restore original size if available
+            if hasattr(self.master, "_pre_snap_geometry") and self.master._pre_snap_geometry:
+                try:
+                    # Parse geometry string "WxH+X+Y"
+                    parts = self.master._pre_snap_geometry.split("+")
+                    size_parts = parts[0].split("x")
+                    width = int(size_parts[0])
+                    height = int(size_parts[1])
+                except (ValueError, IndexError):
+                    pass  # Keep default
+
+            # Calculate new position to center under cursor
+            new_x = event.x_root - (width // 2)
+            new_y = event.y_root - (event.y_root - self._drag_data["start_win_y"])
+
+            # Apply new geometry immediately
+            self.master.geometry(f"{width}x{height}+{new_x}+{new_y}")
+
+            # Update stored initial window position to this new position
+            self._drag_data["start_win_x"] = new_x
+            self._drag_data["start_win_y"] = new_y
+
+            # Update drag start geometry
+            self._drag_start_geometry = f"{width}x{height}+{new_x}+{new_y}"
+
         # Calculate how far the mouse has moved
         delta_x = event.x_root - self._drag_data["start_x_root"]
         delta_y = event.y_root - self._drag_data["start_y_root"]

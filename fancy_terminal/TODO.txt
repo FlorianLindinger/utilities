@@ -5,8 +5,6 @@
 
 #undid last changes becaseu they broke remembering position beofre snap; now again resize from top does not work; now maximizing over taskbar is again wrong
 
-# make double click work like in windows
-
 # make it also not go to far ontop like bottom
 
 
@@ -19,6 +17,8 @@
 #chsnge font with ctrl +- and scroll and. buttons 
 
 # mkae option to remove or add timestaps to all orints. make it removeber timesatap eve n if not tunred on
+
+make text in terminal copy out able
 
 #####################################
 
