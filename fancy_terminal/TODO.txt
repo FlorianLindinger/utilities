@@ -3,9 +3,11 @@
 #todo
 # #=====================================
 
-# dragging away from max makes it scale instaed of snap to old size and drag
+confirm on close not working for right clikc close 
+change confirm on close icon
 
-# prevent window from going too low to get back. apparently Windows makes it snap up
+
+
 
 # change maximize button icon when maximaize like Windows
 
@@ -35,9 +37,7 @@
 
 #Calculator option?
 
-
-
-#Can I right click paste and copy?
+# ight click paste and copy option
 
 #Auto clickable links and paths?
 
