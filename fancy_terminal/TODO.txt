@@ -3,6 +3,8 @@
 #todo
 # #=====================================
 
+# side snaps dont seem to remember old position again
+
 # make maximize not go over taskabr
 
 # make double click work like in windows
@@ -87,3 +89,5 @@ change confirm on close icon
 # is it vaniall only?
 
 # make error print nicer
+
+# mabye check all commit fixes if soemthing broke

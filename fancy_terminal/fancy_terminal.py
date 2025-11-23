@@ -637,12 +637,35 @@ class CustomTitleBar(tk.Frame):
         # Define snap threshold (pixels from edge)
         snap_threshold = 10
 
-        # Check if cursor is near top edge - maximize
+        # Check if cursor is near top edge - maximize to work area
         if cursor_y <= snap_threshold:
             # Save current geometry before maximizing
-            if self.master.state() != "zoomed":
-                self.master._pre_snap_geometry = self._drag_start_geometry  # noqa: SLF001
-            self.master.state("zoomed")
+            self.master._pre_snap_geometry = self._drag_start_geometry  # noqa: SLF001
+
+            # Get work area (screen minus taskbar)
+            try:
+                monitor = ctypes.windll.user32.MonitorFromWindow(
+                    self.master.winfo_id(),
+                    2,  # MONITOR_DEFAULTTONEAREST
+                )
+
+                mi = MONITORINFO()
+                mi.cbSize = ctypes.sizeof(MONITORINFO)
+                ctypes.windll.user32.GetMonitorInfoW(monitor, ctypes.byref(mi))
+
+                work_left = mi.rcWork.left
+                work_top = mi.rcWork.top
+                work_width = mi.rcWork.right - mi.rcWork.left
+                work_height = mi.rcWork.bottom - mi.rcWork.top
+            except Exception:
+                # Fallback to screen dimensions minus estimated taskbar
+                work_left = 0
+                work_top = 0
+                work_width = screen_width
+                work_height = screen_height - 40
+
+            self.master.state("normal")
+            self.master.geometry(f"{work_width}x{work_height}+{work_left}+{work_top}")
 
         # Check if cursor is near left edge - snap to left half
         elif cursor_x <= snap_threshold:
@@ -885,15 +908,44 @@ class TkinterTerminal:
         ctypes.windll.user32.ShowWindow(ctypes.windll.user32.GetParent(self.root.winfo_id()), 2)
 
     def maximize_window(self):
-        # Simple toggle for now
-        if self.root.state() == "zoomed":
+        # Check if currently maximized (by checking if geometry matches work area)
+        current_geo = self.root.geometry()
+
+        # Get work area (screen minus taskbar)
+        try:
+            monitor = ctypes.windll.user32.MonitorFromWindow(
+                self.root.winfo_id(),
+                2,  # MONITOR_DEFAULTTONEAREST
+            )
+
+            mi = MONITORINFO()
+            mi.cbSize = ctypes.sizeof(MONITORINFO)
+            ctypes.windll.user32.GetMonitorInfoW(monitor, ctypes.byref(mi))
+
+            work_left = mi.rcWork.left
+            work_top = mi.rcWork.top
+            work_width = mi.rcWork.right - mi.rcWork.left
+            work_height = mi.rcWork.bottom - mi.rcWork.top
+        except Exception:
+            # Fallback to screen dimensions minus estimated taskbar
+            work_left = 0
+            work_top = 0
+            work_width = self.root.winfo_screenwidth()
+            work_height = self.root.winfo_screenheight() - 40
+
+        work_geo = f"{work_width}x{work_height}+{work_left}+{work_top}"
+
+        # Toggle maximize
+        if current_geo == work_geo or self.root.state() == "zoomed":
+            # Restore
             self.root.state("normal")
-            # Restore previous geometry if available
             if hasattr(self.root, "_pre_snap_geometry") and self.root._pre_snap_geometry:
                 self.root.geometry(self.root._pre_snap_geometry)
         else:
-            self.root._pre_snap_geometry = self.root.geometry()  # noqa: SLF001
-            self.root.state("zoomed")
+            # Maximize to work area
+            self.root._pre_snap_geometry = current_geo  # noqa: SLF001
+            self.root.state("normal")  # Ensure not in zoomed state
+            self.root.geometry(work_geo)
 
     def minimize_to_tray(self):
         # Save current window state (maximized or normal)
