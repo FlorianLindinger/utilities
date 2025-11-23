@@ -435,7 +435,7 @@ class CustomTitleBar(tk.Frame):
             ("print", self.print_btn),
         ]:
             if self.toggles[key]:
-                btn.config(fg="#007acc", activeforeground="#007acc")  # Blue when active
+                btn.config(fg="#00FF00", activeforeground="#00FF00")  # Green when active
             else:
                 btn.config(fg="#d4d4d4", activeforeground="#ffffff")
 
