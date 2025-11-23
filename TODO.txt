@@ -14,3 +14,6 @@ mention common packages where not allowed or where to check waht license they wa
 creat utility version of install packages needed in python files from PyApp
 
 in order to have batch script with relative icon:make a c# script that either can have insted batch code and compile afterwasd or a c# script that runs a batch (with option to bake batch inside)
+
+
+make antigravity extensions file and generator
