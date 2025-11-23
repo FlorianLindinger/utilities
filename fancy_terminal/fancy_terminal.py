@@ -441,19 +441,32 @@ class CustomTitleBar(tk.Frame):
                 btn.config(fg="#d4d4d4", activeforeground="#ffffff")
 
     def start_drag(self, event):
+        self.master.config(cursor="arrow")
         self._drag_data["x"] = event.x
         self._drag_data["y"] = event.y
         # Store original window state in case we need to restore from maximized
         if self.master.state() == "zoomed":
             # If dragging from maximized, restore to normal first
             self.master.state("normal")
-            # Adjust drag position to keep window under cursor
+
+            # Restore original geometry if available
+            if hasattr(self.master, "_pre_snap_geometry") and self.master._pre_snap_geometry:
+                self.master.geometry(self.master._pre_snap_geometry)
+                # Parse width from geometry string "WxH+X+Y"
+                try:
+                    width = int(self.master._pre_snap_geometry.split("x")[0])
+                except (ValueError, IndexError):
+                    width = self.master.winfo_width()
+            else:
+                width = self.master.winfo_width()
+
             # Center the window under cursor
-            width = self.master.winfo_width()
             self._drag_data["x"] = width // 2
 
         # Save geometry BEFORE the drag moves it (for restoration)
         self._drag_start_geometry = self.master.geometry()
+
+        return "break"  # Prevent other bindings (like resize) from firing
 
     def do_drag(self, event):
         deltax = event.x - self._drag_data["x"]
@@ -463,6 +476,7 @@ class CustomTitleBar(tk.Frame):
         self.master.geometry(f"+{x}+{y}")
 
     def stop_drag(self, event):
+        self.master.config(cursor="")  # Reset cursor
         """Handle window snapping when drag ends"""
         # Get cursor position on screen
         cursor_x = event.x_root
@@ -800,8 +814,8 @@ class TkinterTerminal:
 
     def update_cursor(self, event):
         """Update cursor based on position for resize feedback"""
-        # Don't change cursor if window is maximized
-        if self.root.state() == "zoomed":
+        # Don't change cursor if window is maximized or if dragging (Button 1 pressed)
+        if self.root.state() == "zoomed" or (event.state & 0x100):
             return
 
         direction = self.get_resize_direction(event)

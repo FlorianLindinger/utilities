@@ -3,8 +3,6 @@
 #todo
 # #=====================================
 
-# when sanpping to sides make it remember last non-dragged position
-
 # dragging away from max makes it scale instaed of snap to old size and drag
 
 # prevent window from going too low to get back. apparently Windows makes it snap up
@@ -17,6 +15,7 @@
 
 #Option to print to file parallel and link to that file
 
+#Stop python crash and print and give options to restart? Open windows prompt for crash
 
 #####################################
 
@@ -26,10 +25,13 @@
 
 # mkae option to remove or add timestaps to all orints. make it removeber timesatap eve n if not tunred on
 
+#####################################
 
+#transparency option -> maxbe as option ontop under "Window"
 
+#Print of name in asci Option
 
-
+#####################################
 
 #Calculator option?
 
@@ -39,11 +41,10 @@
 
 #Auto clickable links and paths?
 
-#Print of name in asci Option
 
-#Stop python crash and print and give options to restart? Open windows prompt for crash
 
-#transparency option 
+
+
 
 #----------------
 # interactions
