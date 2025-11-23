@@ -174,10 +174,27 @@
   //
   // "antigravity.marketplaceGalleryItemURL": "https://marketplace.visualstudio.com/items",
   // "antigravity.marketplaceExtensionGalleryServiceURL": "https://marketplace.visualstudio.com/_apis/public/gallery",
-  // "python.languageServer": "Default"
+  // "python.languageServer": "Default",
+  // "basedpyright.analysis.typeCheckingMode": "basic", // Type checking
+  // "basedpyright.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
+  // "basedpyright.analysis.logLevel": "Trace",
+  // "basedpyright.analysis.autoFormatStrings": true,
+  // "basedpyright.analysis.inlayHints.functionReturnTypes": true,
+  // "basedpyright.analysis.autoImportCompletions": false, //auto add imports
+  // "basedpyright.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
+  // "basedpyright.analysis.exclude": [
+  //   "**/.venv/**",
+  //   "**/build/**",
+  //   "**/dist/**",
+  //   "**/__pycache__/**",
+  //   "**/.git/**"
+  // ],
+  // "basedpyright.analysis.extraPaths": [
+  //   "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
+  // ],
   //
   // =====================================
   // == new settings below ==
   // =====================================
-  , //
+  //
 }
