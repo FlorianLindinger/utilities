@@ -89,3 +89,5 @@ change confirm on close icon
 # make error print nicer
 
 # mabye check all commit fixes if soemthing broke
+
+ruff

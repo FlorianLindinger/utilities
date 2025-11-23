@@ -777,6 +777,11 @@ class TkinterTerminal:
         self.input_entry.bind("<Return>", self.send_input)
         self.input_entry.bind("<Up>", lambda e: self.navigate_history(-1))  # noqa: ARG005
         self.input_entry.bind("<Down>", lambda e: self.navigate_history(1))  # noqa: ARG005
+
+        # Add paste functionality
+        self.input_entry.bind("<Control-v>", lambda e: self.paste_to_input())
+        self.input_entry.bind("<Button-3>", lambda e: self.show_paste_menu(e))  # Right-click
+
         self.input_entry.focus_set()
 
         # --- Output Area (Packed SECOND to fill remaining space) ---
@@ -795,8 +800,14 @@ class TkinterTerminal:
             wrap=tk.WORD,
             bd=0,  # No border
             highlightthickness=0,  # No focus highlight
+            exportselection=True,  # Allow copying to clipboard
         )
         self.output_text.pack(expand=True, fill=tk.BOTH, side=tk.LEFT)
+
+        # Enable text selection even when disabled
+        self.output_text.bind("<Button-1>", lambda e: self.output_text.focus_set())
+        self.output_text.bind("<Control-c>", lambda e: self.copy_selection())
+        self.output_text.bind("<Control-a>", lambda e: self.select_all_output())
 
         # Scrollbar for output (Styled minimal if possible, otherwise standard)
         self.scrollbar = tk.Scrollbar(
@@ -1268,8 +1279,36 @@ class TkinterTerminal:
             # If we go past the end, clear the input (new command)
             pass
 
-    def queue_write(self, text, tag):
-        self.queue.put((text, tag))
+    def copy_selection(self):
+        """Copy selected text from output to clipboard"""
+        try:
+            text = self.output_text.get(tk.SEL_FIRST, tk.SEL_LAST)
+            self.root.clipboard_clear()
+            self.root.clipboard_append(text)
+        except tk.TclError:
+            pass  # No selection
+
+    def select_all_output(self):
+        """Select all text in output widget"""
+        self.output_text.tag_add(tk.SEL, "1.0", tk.END)
+        self.output_text.mark_set(tk.INSERT, "1.0")
+        self.output_text.see(tk.INSERT)
+        return "break"
+
+    def paste_to_input(self):
+        """Paste clipboard content to input field"""
+        try:
+            text = self.root.clipboard_get()
+            self.input_entry.insert(tk.INSERT, text)
+        except tk.TclError:
+            pass
+        return "break"
+
+    def show_paste_menu(self, event):
+        """Show right-click context menu with paste option"""
+        menu = tk.Menu(self.root, tearoff=0)
+        menu.add_command(label="Paste", command=self.paste_to_input)
+        menu.tk_popup(event.x_root, event.y_root)
 
     def on_closing(self):
         if self.confirm_on_close:
