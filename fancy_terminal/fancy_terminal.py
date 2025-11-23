@@ -101,6 +101,29 @@ NIM_DELETE = 0x00000002
 NIF_MESSAGE = 0x00000001
 NIF_ICON = 0x00000002
 NIF_TIP = 0x00000004
+
+
+class RECT(ctypes.Structure):
+    _fields_ = [
+        ("left", ctypes.c_long),
+        ("top", ctypes.c_long),
+        ("right", ctypes.c_long),
+        ("bottom", ctypes.c_long),
+    ]
+
+
+class MONITORINFO(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", ctypes.c_ulong),
+        ("rcMonitor", RECT),
+        ("rcWork", RECT),
+        ("dwFlags", ctypes.c_ulong),
+    ]
+
+
+NIF_MESSAGE = 0x00000001
+NIF_ICON = 0x00000002
+NIF_TIP = 0x00000004
 IDI_APPLICATION = 32512
 IMAGE_ICON = 1
 LR_LOADFROMFILE = 0x00000010
@@ -484,11 +507,44 @@ class CustomTitleBar(tk.Frame):
 
         return "break"  # Prevent other bindings (like resize) from firing
 
+    def get_work_area_bottom(self):
+        """Get the bottom coordinate of the work area (screen minus taskbar)"""
+        try:
+            # Get monitor handle for the current window
+            monitor = ctypes.windll.user32.MonitorFromWindow(
+                self.master.winfo_id(),
+                2,  # MONITOR_DEFAULTTONEAREST
+            )
+
+            mi = MONITORINFO()
+            mi.cbSize = ctypes.sizeof(MONITORINFO)
+
+            # Get monitor info
+            ctypes.windll.user32.GetMonitorInfoW(monitor, ctypes.byref(mi))
+
+            return mi.rcWork.bottom
+        except Exception:
+            # Fallback if API fails
+            return self.master.winfo_screenheight() - 40  # Assume 40px taskbar
+
     def do_drag(self, event):
         deltax = event.x - self._drag_data["x"]
         deltay = event.y - self._drag_data["y"]
         x = self.master.winfo_x() + deltax
         y = self.master.winfo_y() + deltay
+
+        # Prevent dragging title bar off the bottom of the screen
+        # Use work area bottom (excludes taskbar)
+        work_area_bottom = self.get_work_area_bottom()
+
+        # Ensure at least the title bar height is visible
+        # We use a safe estimate of 30px or the actual height if available
+        title_bar_height = self.winfo_height() if self.winfo_height() > 1 else 30
+        max_y = work_area_bottom - title_bar_height
+
+        if y > max_y:
+            y = max_y
+
         self.master.geometry(f"+{x}+{y}")
 
     def stop_drag(self, event):
