@@ -3,7 +3,12 @@
 #todo
 # #=====================================
 
-# top reesize does dragging when window hitting bottom?
+# make maximize not go over taskabr
+
+# make double click work like in windows
+
+# make it also not go to far ontop like bottom
+
 
 #Option to open logged file for crash
 
@@ -16,6 +21,10 @@
 # mkae option to remove or add timestaps to all orints. make it removeber timesatap eve n if not tunred on
 
 #####################################
+
+#----------------
+# optional
+#--------------
 
 # change maximize button icon when maximaize like Windows
 
@@ -32,11 +41,6 @@ change confirm on close icon
 # ight click paste and copy option
 
 #Auto clickable links and paths?
-
-
-
-
-
 
 #----------------
 # interactions
