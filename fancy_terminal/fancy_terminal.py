@@ -337,6 +337,8 @@ class CustomTitleBar(tk.Frame):
         on_confirm_toggle,
         on_print_toggle,
         on_clear,
+        on_zoom_in,
+        on_zoom_out,
         script_path=None,
     ):
         super().__init__(master, bg="#2d2d2d", height=30)
@@ -412,6 +414,16 @@ class CustomTitleBar(tk.Frame):
         self.highlight_btn = create_toggle_button("🔔", self.toggle_highlight, "Toggle Highlight on Print")
         self.confirm_btn = create_toggle_button("🔒", self.toggle_confirm, "Toggle Confirm on Close")
         self.print_btn = create_toggle_button("💬", self.toggle_print, "Toggle Command Printing")
+
+        # Font Zoom Buttons
+        self.zoom_out_btn = HoverButton(self.settings_frame, text="-", command=on_zoom_out, hover_bg="#0078d4", width=3)
+        self.zoom_out_btn.pack(side=tk.LEFT, padx=2)
+        Tooltip(self.zoom_out_btn, "Decrease Font Size")
+
+        self.zoom_in_btn = HoverButton(self.settings_frame, text="+", command=on_zoom_in, hover_bg="#0078d4", width=3)
+        self.zoom_in_btn.pack(side=tk.LEFT, padx=2)
+        Tooltip(self.zoom_in_btn, "Increase Font Size")
+
         self.clear_btn = create_toggle_button("🗑", on_clear, "Clear Output")
 
         self.callbacks = {
@@ -734,6 +746,8 @@ class TkinterTerminal:
             self.set_confirm_on_close,
             self.set_show_command_printing,
             self.clear_output,
+            self.zoom_in,
+            self.zoom_out,
             target_script,
         )
         self.title_bar.pack(side=tk.TOP, fill=tk.X)
@@ -741,6 +755,9 @@ class TkinterTerminal:
         # Sync initial state
         self.title_bar.toggles["top"] = self.always_on_top
         self.title_bar.update_toggle_visuals()
+
+        # Bind Ctrl+Scroll for zooming
+        self.root.bind("<Control-MouseWheel>", self.on_mousewheel_zoom)
 
         # --- Input Area (Packed FIRST to ensure visibility at bottom) ---
         self.input_frame = tk.Frame(root, bg=self.colors["input_bg"])
@@ -1097,6 +1114,10 @@ class TkinterTerminal:
 
         self.root.after(10, self.check_queue)
 
+    def queue_write(self, text, tag):
+        """Thread-safe write to queue"""
+        self.queue.put((text, tag))
+
     def write_to_output(self, text, tag):
         self.output_text.config(state=tk.NORMAL)
 
@@ -1323,7 +1344,34 @@ class TkinterTerminal:
             self.tray_icon.hide()
         if self.process and self.process.poll() is None:
             self.process.terminate()
+        if self.process and self.process.poll() is None:
+            self.process.terminate()
         self.root.destroy()
+
+    def zoom_in(self):
+        """Increase font size"""
+        current_size = self.custom_font.cget("size")
+        new_size = min(current_size + 1, 40)  # Max size 40
+        if new_size != current_size:
+            self.custom_font.configure(size=new_size)
+            # Update prompt label font specifically as it uses a tuple
+            self.prompt_label.configure(font=(self.custom_font.cget("family"), new_size, "bold"))
+
+    def zoom_out(self):
+        """Decrease font size"""
+        current_size = self.custom_font.cget("size")
+        new_size = max(current_size - 1, 6)  # Min size 6
+        if new_size != current_size:
+            self.custom_font.configure(size=new_size)
+            # Update prompt label font specifically as it uses a tuple
+            self.prompt_label.configure(font=(self.custom_font.cget("family"), new_size, "bold"))
+
+    def on_mousewheel_zoom(self, event):
+        """Handle Ctrl+Scroll zooming"""
+        if event.delta > 0:
+            self.zoom_in()
+        else:
+            self.zoom_out()
 
     # --- Feature Setters ---
     def set_always_on_top(self, enabled):

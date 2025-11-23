@@ -3,10 +3,11 @@
 #todo
 # #=====================================
 
-#undid last changes becaseu they broke remembering position beofre snap; now again resize from top does not work; now maximizing over taskbar is again wrong
+#chsnge font with ctrl +- and scroll and. buttons 
+
+#now again resize from top does not work; now maximizing over taskbar is again wrong. was broken by attempt to undid last changes becaseu they broke remembering position beofre snap; 
 
 # make it also not go to far ontop like bottom
-
 
 #Option to open logged file for crash
 
@@ -14,7 +15,6 @@
 
 #Stop python crash and print and give options to restart? Open windows prompt for crash
 
-#chsnge font with ctrl +- and scroll and. buttons 
 
 # mkae option to remove or add timestaps to all orints. make it removeber timesatap eve n if not tunred on
 
