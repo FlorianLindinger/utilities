@@ -302,6 +302,7 @@ class CustomTitleBar(tk.Frame):
         on_highlight_toggle,
         on_confirm_toggle,
         on_print_toggle,
+        on_clear,
         script_path=None,
     ):
         super().__init__(master, bg="#2d2d2d", height=30)
@@ -376,6 +377,7 @@ class CustomTitleBar(tk.Frame):
         self.highlight_btn = create_toggle_button("🔔", self.toggle_highlight, "Toggle Highlight on Print")
         self.confirm_btn = create_toggle_button("🔒", self.toggle_confirm, "Toggle Confirm on Close")
         self.print_btn = create_toggle_button("💬", self.toggle_print, "Toggle Command Printing")
+        self.clear_btn = create_toggle_button("🗑", on_clear, "Clear Output")
 
         self.callbacks = {
             "top": on_top_toggle,
@@ -595,6 +597,7 @@ class TkinterTerminal:
             self.set_highlight_on_print,
             self.set_confirm_on_close,
             self.set_show_command_printing,
+            self.clear_output,
             target_script,
         )
         self.title_bar.pack(side=tk.TOP, fill=tk.X)
@@ -701,6 +704,11 @@ class TkinterTerminal:
         # Force refresh
         self.root.wm_withdraw()
         self.root.after(10, lambda: self.root.wm_deiconify())
+
+    def clear_output(self):
+        self.output_text.config(state=tk.NORMAL)
+        self.output_text.delete("1.0", tk.END)
+        self.output_text.config(state=tk.DISABLED)
 
     def minimize_window(self):
         # Standard minimize to taskbar
@@ -892,7 +900,7 @@ class TkinterTerminal:
 
             # Start subprocess with pipes
             # bufsize=0 and -u flag ensure unbuffered output
-            self.process = subprocess.Popen( #noqa: S603
+            self.process = subprocess.Popen(  # noqa: S603
                 cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -1074,7 +1082,7 @@ class TkinterTerminal:
 
             try:
                 # Run command and capture output
-                result = subprocess.run(cmd, shell=True, capture_output=True, text=True) #noqa: S602
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)  # noqa: S602
                 if result.stdout:
                     self.write_to_output(result.stdout, "stdout")
                 if result.stderr:
