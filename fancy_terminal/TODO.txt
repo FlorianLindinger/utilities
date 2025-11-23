@@ -65,6 +65,8 @@
 # settings
 # #=====================================
 
+# confirm on close should not be on runtime?
+
 # add color options for colors of: button icons, button highlight, window top bottom main colors text
 
 # option to disable print highlight
@@ -84,3 +86,6 @@
 # remove unneeded args
 
 # update docstirng
+
+# is it cross platform?
+# is it vaniall only?

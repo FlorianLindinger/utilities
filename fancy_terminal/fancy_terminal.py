@@ -449,18 +449,34 @@ class CustomTitleBar(tk.Frame):
             # If dragging from maximized, restore to normal first
             self.master.state("normal")
 
-            # Restore original geometry if available
+            # Default size fallback
+            width = 900
+            height = 600
+
+            # Restore original size if available and calculate new position
             if hasattr(self.master, "_pre_snap_geometry") and self.master._pre_snap_geometry:
-                self.master.geometry(self.master._pre_snap_geometry)
-                # Parse width from geometry string "WxH+X+Y"
                 try:
-                    width = int(self.master._pre_snap_geometry.split("x")[0])
+                    # Parse geometry string "WxH+X+Y"
+                    parts = self.master._pre_snap_geometry.split("+")
+                    size_parts = parts[0].split("x")
+                    width = int(size_parts[0])
+                    height = int(size_parts[1])
                 except (ValueError, IndexError):
+                    # Fallback to current width if parsing fails (though state is normal now)
                     width = self.master.winfo_width()
+                    height = self.master.winfo_height()
             else:
                 width = self.master.winfo_width()
+                height = self.master.winfo_height()
 
-            # Center the window under cursor
+            # Calculate new position to center under cursor
+            new_x = event.x_root - (width // 2)
+            new_y = event.y_root - event.y
+
+            # Apply new geometry immediately
+            self.master.geometry(f"{width}x{height}+{new_x}+{new_y}")
+
+            # Update drag data to match new relative position (center)
             self._drag_data["x"] = width // 2
 
         # Save geometry BEFORE the drag moves it (for restoration)
