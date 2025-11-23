@@ -3,7 +3,7 @@
 #todo
 # #=====================================
 
-#chsnge font with ctrl +- and scroll and. buttons 
+# addd scrollbar when too many lines
 
 #now again resize from top does not work; now maximizing over taskbar is again wrong. was broken by attempt to undid last changes becaseu they broke remembering position beofre snap; 
 
