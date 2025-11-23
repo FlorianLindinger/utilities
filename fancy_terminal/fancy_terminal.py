@@ -310,6 +310,7 @@ class CustomTitleBar(tk.Frame):
 
         self.master = master
         self._drag_data = {"x": 0, "y": 0}
+        self._drag_start_geometry = None
         self.script_path = script_path
 
         self.title_label = tk.Label(
@@ -447,10 +448,12 @@ class CustomTitleBar(tk.Frame):
             # If dragging from maximized, restore to normal first
             self.master.state("normal")
             # Adjust drag position to keep window under cursor
-            if hasattr(self.master, "_pre_snap_geometry"):
-                # Center the window under cursor
-                width = self.master.winfo_width()
-                self._drag_data["x"] = width // 2
+            # Center the window under cursor
+            width = self.master.winfo_width()
+            self._drag_data["x"] = width // 2
+
+        # Save geometry BEFORE the drag moves it (for restoration)
+        self._drag_start_geometry = self.master.geometry()
 
     def do_drag(self, event):
         deltax = event.x - self._drag_data["x"]
@@ -476,7 +479,7 @@ class CustomTitleBar(tk.Frame):
         if cursor_y <= snap_threshold:
             # Save current geometry before maximizing
             if self.master.state() != "zoomed":
-                self.master._pre_snap_geometry = self.master.geometry()  # noqa: SLF001
+                self.master._pre_snap_geometry = self._drag_start_geometry  # noqa: SLF001
             self.master.state("zoomed")
 
         # Check if cursor is near left edge - snap to left half
@@ -490,7 +493,7 @@ class CustomTitleBar(tk.Frame):
     def snap_to_half(self, side, screen_width, screen_height):
         """Snap window to half of the screen"""
         # Save current geometry
-        self.master._pre_snap_geometry = self.master.geometry()  # noqa: SLF001
+        self.master._pre_snap_geometry = self._drag_start_geometry  # noqa: SLF001
 
         # Calculate half-screen dimensions
         half_width = screen_width // 2
@@ -719,7 +722,11 @@ class TkinterTerminal:
         # Simple toggle for now
         if self.root.state() == "zoomed":
             self.root.state("normal")
+            # Restore previous geometry if available
+            if hasattr(self.root, "_pre_snap_geometry") and self.root._pre_snap_geometry:
+                self.root.geometry(self.root._pre_snap_geometry)
         else:
+            self.root._pre_snap_geometry = self.root.geometry()  # noqa: SLF001
             self.root.state("zoomed")
 
     def minimize_to_tray(self):
