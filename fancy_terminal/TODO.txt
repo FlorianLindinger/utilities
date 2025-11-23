@@ -3,7 +3,7 @@
 #todo
 # #=====================================
 
-# side snaps dont seem to remember old position again
+#undid last changes becaseu they broke remembering position beofre snap; now again resize from top does not work; now maximizing over taskbar is again wrong
 
 # make double click work like in windows
 
