@@ -74,6 +74,7 @@ ignore = [
   "N812",    # allow any capitalization when renaming import #2
   "N813",    # allow any naming convention for import rename
   "N816",    # allow mixed capitalization in global variable label
+  "PERF203", # allow try/except in loop
   "PLR0911", # allow too many returns
   "PLR0912", # too many branches in function/method
   "PLR0913", # too many function parameters
@@ -83,6 +84,7 @@ ignore = [
   "PLR5501", # allow for "else: if" instead of "elif"
   "PLW0120", # allow for redundant else after for
   "PLW0603", # allow for use of globals
+  "PLW1510", # allow to not define "check" arg for "subprocess" function
   "PLW2901", # allow for redefinition of iterated elem in for loops
   "RET504",  # allow for unnecessary new variable before return
   "RET505",  # allow for unnecessary else before return
