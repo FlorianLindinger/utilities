@@ -3,6 +3,8 @@
 #todo
 # #=====================================
 
+# if i press the icon in taskbar again it does not minimize
+
 confirm on close not working for right clikc close 
 change confirm on close icon
 
