@@ -5,8 +5,6 @@
 
 # side snaps dont seem to remember old position again
 
-# make maximize not go over taskabr
-
 # make double click work like in windows
 
 # make it also not go to far ontop like bottom
