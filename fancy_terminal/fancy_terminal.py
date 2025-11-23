@@ -102,6 +102,17 @@ NIF_MESSAGE = 0x00000001
 NIF_ICON = 0x00000002
 NIF_TIP = 0x00000004
 
+GWL_STYLE = -16
+WS_CAPTION = 0x00C00000
+WS_THICKFRAME = 0x00040000
+WS_SYSMENU = 0x00080000
+WS_MINIMIZEBOX = 0x00020000
+WS_MAXIMIZEBOX = 0x00010000
+
+# SetWindowPos flags
+SWP_NOSIZE = 0x0001
+SWP_NOZORDER = 0x0004
+
 
 class RECT(ctypes.Structure):
     _fields_ = [
@@ -465,8 +476,18 @@ class CustomTitleBar(tk.Frame):
 
     def start_drag(self, event):
         self.master.config(cursor="arrow")
-        self._drag_data["x"] = event.x
-        self._drag_data["y"] = event.y
+
+        # Cache work area for the duration of the drag
+        self._drag_data["work_area_bottom"] = self.get_work_area_bottom()
+
+        # Store initial cursor position (screen coordinates)
+        self._drag_data["start_x_root"] = event.x_root
+        self._drag_data["start_y_root"] = event.y_root
+
+        # Store initial window position
+        self._drag_data["start_win_x"] = self.master.winfo_x()
+        self._drag_data["start_win_y"] = self.master.winfo_y()
+
         # Store original window state in case we need to restore from maximized
         if self.master.state() == "zoomed":
             # If dragging from maximized, restore to normal first
@@ -494,13 +515,17 @@ class CustomTitleBar(tk.Frame):
 
             # Calculate new position to center under cursor
             new_x = event.x_root - (width // 2)
+
+            # For Y, we want the title bar to be under the cursor.
+            # event.y is the click position relative to the title bar widget.
             new_y = event.y_root - event.y
 
             # Apply new geometry immediately
             self.master.geometry(f"{width}x{height}+{new_x}+{new_y}")
 
-            # Update drag data to match new relative position (center)
-            self._drag_data["x"] = width // 2
+            # Update stored initial window position to this new position
+            self._drag_data["start_win_x"] = new_x
+            self._drag_data["start_win_y"] = new_y
 
         # Save geometry BEFORE the drag moves it (for restoration)
         self._drag_start_geometry = self.master.geometry()
@@ -528,14 +553,17 @@ class CustomTitleBar(tk.Frame):
             return self.master.winfo_screenheight() - 40  # Assume 40px taskbar
 
     def do_drag(self, event):
-        deltax = event.x - self._drag_data["x"]
-        deltay = event.y - self._drag_data["y"]
-        x = self.master.winfo_x() + deltax
-        y = self.master.winfo_y() + deltay
+        # Calculate how far the mouse has moved
+        delta_x = event.x_root - self._drag_data["start_x_root"]
+        delta_y = event.y_root - self._drag_data["start_y_root"]
+
+        # Apply delta to initial window position
+        x = self._drag_data["start_win_x"] + delta_x
+        y = self._drag_data["start_win_y"] + delta_y
 
         # Prevent dragging title bar off the bottom of the screen
-        # Use work area bottom (excludes taskbar)
-        work_area_bottom = self.get_work_area_bottom()
+        # Use cached work area bottom
+        work_area_bottom = self._drag_data.get("work_area_bottom", self.get_work_area_bottom())
 
         # Ensure at least the title bar height is visible
         # We use a safe estimate of 30px or the actual height if available
@@ -545,7 +573,17 @@ class CustomTitleBar(tk.Frame):
         if y > max_y:
             y = max_y
 
-        self.master.geometry(f"+{x}+{y}")
+        # Use SetWindowPos for smoother, faster updates during drag
+        hwnd = ctypes.windll.user32.GetParent(self.master.winfo_id())
+        ctypes.windll.user32.SetWindowPos(
+            hwnd,
+            0,  # hWndInsertAfter (ignored with SWP_NOZORDER)
+            x,  # X
+            y,  # Y
+            0,  # cx (width, ignored with SWP_NOSIZE)
+            0,  # cy (height, ignored with SWP_NOSIZE)
+            SWP_NOSIZE | SWP_NOZORDER,  # Only update position
+        )
 
     def stop_drag(self, event):
         self.master.config(cursor="")  # Reset cursor
@@ -635,8 +673,9 @@ class TkinterTerminal:
             except tk.TclError:
                 print(f"Warning: Could not load icon from {self.icon_path}")
 
-        # Remove default title bar
-        self.root.overrideredirect(True)
+        # Remove default title bar using Windows API to keep taskbar functionality
+        # self.root.overrideredirect(True) # This breaks taskbar minimize
+        self.setup_custom_frame()
 
         # Handle window close requests (Alt+F4, Taskbar Close)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -1248,6 +1287,32 @@ class TkinterTerminal:
 
     def set_confirm_on_close(self, enabled):
         self.confirm_on_close = enabled
+
+    def setup_custom_frame(self):
+        """
+        Removes the standard title bar and border using Windows API,
+        but keeps the window managed by the OS so taskbar interactions work.
+        """
+        self.root.update_idletasks()  # Ensure window handle exists
+        hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
+
+        # Get current style
+        style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
+
+        # Remove caption (title bar) and thick frame (standard resize border)
+        style = style & ~WS_CAPTION
+        style = style & ~WS_THICKFRAME
+
+        # Ensure system menu and minimize/maximize boxes are present
+        # (Even if invisible, they allow taskbar interactions)
+        style = style | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX
+
+        # Apply new style
+        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, style)
+
+        # Force refresh
+        self.root.wm_withdraw()
+        self.root.after(10, lambda: self.root.wm_deiconify())
 
     def set_show_command_printing(self, enabled):
         self.show_command_printing = enabled
