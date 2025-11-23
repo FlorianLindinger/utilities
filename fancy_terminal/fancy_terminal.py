@@ -475,6 +475,36 @@ class CustomTitleBar(tk.Frame):
                 btn.config(fg="#d4d4d4", activeforeground="#ffffff")
 
     def start_drag(self, event):
+        # Check if we're in a resize zone - if so, don't drag
+        # Get mouse position relative to root window
+        x = event.x_root - self.master.winfo_x()
+        y = event.y_root - self.master.winfo_y()
+
+        width = self.master.winfo_width()
+        height = self.master.winfo_height()
+        border = 10  # Match resize_border_width
+        corner_size = 20
+
+        # Check if we're in a corner (priority)
+        in_corner = (
+            (x < corner_size and y < corner_size)  # nw
+            or (x > width - corner_size and y < corner_size)  # ne
+            or (x < corner_size and y > height - corner_size)  # sw
+            or (x > width - corner_size and y > height - corner_size)  # se
+        )
+
+        # Check if we're on an edge (but not in a corner)
+        in_edge = not in_corner and (
+            x < border  # left edge
+            or x > width - border  # right edge
+            or y < border  # top edge
+            or y > height - border  # bottom edge
+        )
+
+        # If we're in a resize zone, don't start dragging
+        if in_corner or in_edge:
+            return  # Don't start drag, allow resize to work
+
         self.master.config(cursor="arrow")
 
         # Cache work area for the duration of the drag
@@ -553,6 +583,10 @@ class CustomTitleBar(tk.Frame):
             return self.master.winfo_screenheight() - 40  # Assume 40px taskbar
 
     def do_drag(self, event):
+        # If start_drag didn't initialize (e.g., we were in a resize zone), skip
+        if "start_x_root" not in self._drag_data:
+            return
+
         # Calculate how far the mouse has moved
         delta_x = event.x_root - self._drag_data["start_x_root"]
         delta_y = event.y_root - self._drag_data["start_y_root"]
@@ -586,6 +620,10 @@ class CustomTitleBar(tk.Frame):
         )
 
     def stop_drag(self, event):
+        # If start_drag didn't initialize, skip
+        if "start_x_root" not in self._drag_data:
+            return
+
         self.master.config(cursor="")  # Reset cursor
         """Handle window snapping when drag ends"""
         # Get cursor position on screen
