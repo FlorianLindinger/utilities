@@ -3,7 +3,7 @@
 :: 
 :: Args (all optional):
 :: <py_ver>: It picks the most modern python version by default the matches None/x/x.y/x.y.z defined python version.
-:: <target_dir>: If not defined it generates in the file folder. It always names the generated python folder portable_python in the <target_dir>.
+:: <target_dir>: If not defined it generates in the file folder. It always names the generated python folder py_dist in the <target_dir>.
 :: <install_tkinter>/<install_tests>/<install_docs>: Can be 1/0 for install/no-install of that python sub components. Default 1/1/0
 
 :: =======================
@@ -43,8 +43,8 @@ if "%install_docs%"=="0" ( set "exclude_install=%exclude_install% doc.msi" )
 CALL :make_absolute_path_if_relative "%TARGET_DIR%"
 SET "TARGET_DIR=%OUTPUT%"
 
-:: add "portable_python" for delete safety
-set "PYTHON_FOLDER=%TARGET_DIR%\portable_python"
+:: add "py_dist" for delete safety
+set "PYTHON_FOLDER=%TARGET_DIR%\py_dist"
 
 :: find available python full version compatible with specified input and installation method via amd64 folders and .msi files
 set "FULL_VER="
