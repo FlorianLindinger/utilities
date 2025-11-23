@@ -1299,7 +1299,11 @@ class TkinterTerminal:
         """Paste clipboard content to input field"""
         try:
             text = self.root.clipboard_get()
-            self.input_entry.insert(tk.INSERT, text)
+            position = self.input_entry.index(tk.INSERT)
+            self.input_entry.insert(position, text)
+            self.input_entry.icursor(position + len(text))
+            self.input_entry.focus_set()
+            self.input_entry.xview_moveto(1)
         except tk.TclError:
             pass
         return "break"
