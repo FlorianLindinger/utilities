@@ -136,8 +136,8 @@
   },
   // =====================================
   // pyrefly - type checker and LSP (alternative to pylance)
-  // "python.languageServer": "None",
-  // "python.pyrefly.displayTypeErrors": "force-on",
+  "python.languageServer": "None",
+  "python.pyrefly.displayTypeErrors": "force-on",
   //
   // =====================================
   // vscode specific (aka not Antigravity)
@@ -145,27 +145,27 @@
   //
   // =====================================
   // pylance - type checker and LSP (alternative to pyrefly)
-  "python.languageServer": "Pylance",
-  "python.analysis.generateWithTypeAnnotation": true,
-  "python.analysis.userFileIndexingLimit": -1, //2000
-  "python.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
-  "python.analysis.logLevel": "Trace",
-  "python.analysis.autoFormatStrings": true,
-  "python.analysis.completeFunctionParens": true,
-  "python.analysis.inlayHints.functionReturnTypes": true,
-  "python.analysis.inlayHints.pytestParameters": true,
-  "python.analysis.typeCheckingMode": "basic", // Type checking
-  "python.analysis.indexing": true,
-  "python.analysis.autoImportCompletions": false, //auto add imports
-  "python.analysis.importFormat": "absolute", //prefer absolute import paths
-  "python.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
-  "python.analysis.exclude": [
-    "**/.venv/**",
-    "**/build/**",
-    "**/dist/**",
-    "**/__pycache__/**",
-    "**/.git/**"
-  ],
+  // "python.languageServer": "Pylance",
+  // "python.analysis.generateWithTypeAnnotation": true,
+  // "python.analysis.userFileIndexingLimit": -1, //2000
+  // "python.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
+  // "python.analysis.logLevel": "Trace",
+  // "python.analysis.autoFormatStrings": true,
+  // "python.analysis.completeFunctionParens": true,
+  // "python.analysis.inlayHints.functionReturnTypes": true,
+  // "python.analysis.inlayHints.pytestParameters": true,
+  // "python.analysis.typeCheckingMode": "basic", // Type checking
+  // "python.analysis.indexing": true,
+  // "python.analysis.autoImportCompletions": false, //auto add imports
+  // "python.analysis.importFormat": "absolute", //prefer absolute import paths
+  // "python.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
+  // "python.analysis.exclude": [
+  //   "**/.venv/**",
+  //   "**/build/**",
+  //   "**/dist/**",
+  //   "**/__pycache__/**",
+  //   "**/.git/**"
+  // ],
   // =====================================
   // vscode
   "settingsSync.ignoredExtensions": [],
