@@ -33,7 +33,7 @@
   "notebook.formatOnSave.enabled": true,
   "[cpp]": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
-  },
+  }, // if "C/C++" extension installed
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
@@ -45,10 +45,7 @@
   },
   "notebook.defaultFormatter": "charliermarsh.ruff",
   // =====================================
-  // AI
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
-  // =====================================// git & diff
+  // git & diff
   "git.enableSmartCommit": true,
   "git.autofetch": true,
   "git.autofetchPeriod": 180, //seconds
@@ -108,6 +105,14 @@
     "All"
   ],
   // =====================================
+  // autodocstring
+  "autoDocstring.docstringFormat": "numpy",
+  "autoDocstring.customTemplatePath": "..\\utilities\\python_autodocstring_extension_template.mustache",
+  // =====================================
+  // gitlens (if "gitlens" extension installed)
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  // =====================================
   // Ruff formatter/linter settings (python)
   "ruff.nativeServer": "on",
   "ruff.configuration": "${env:USERPROFILE}\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
@@ -119,7 +124,7 @@
     "source.organizeImports.ruff": "explicit"
   },
   // =====================================
-  // pylance settings (python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems)
+  // python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/.venv/**": true
@@ -129,11 +134,17 @@
     "comments": true,
     "strings": true
   },
+  // =====================================
+  // pyrefly - type checker and LSP (alternative to pylance)
+  // "python.languageServer": "None",
+  // "python.pyrefly.displayTypeErrors": "force-on",
   //
   // =====================================
   // vscode specific (aka not Antigravity)
   // =====================================
   //
+  // =====================================
+  // pylance - type checker and LSP (alternative to pyrefly)
   "python.languageServer": "Pylance",
   "python.analysis.generateWithTypeAnnotation": true,
   "python.analysis.userFileIndexingLimit": -1, //2000
@@ -158,6 +169,12 @@
   "python.analysis.extraPaths": [
     "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
   ],
+  // =====================================
+  // vscode
+  "settingsSync.ignoredExtensions": [],
+  "settingsSync.ignoredSettings": [],
+  // =====================================
+  // github copilot
   "github.copilot.enable": {
     "*": true,
     "plaintext": false,
@@ -165,15 +182,19 @@
     "scminput": false,
     "python": true
   },
-  "settingsSync.ignoredExtensions": [],
-  "settingsSync.ignoredSettings": [],
+  // =====================================
+  //
   //
   // =====================================
   // Antigravity specific (aka not vscode)
   // =====================================
-  //
+  // 
+  // // =====================================
+  // // antigravity
   // "antigravity.marketplaceGalleryItemURL": "https://marketplace.visualstudio.com/items",
   // "antigravity.marketplaceExtensionGalleryServiceURL": "https://marketplace.visualstudio.com/_apis/public/gallery",
+  // // =====================================
+  // // based pyright - type checker and LSP (alternative to pyrefly)
   // "python.languageServer": "Default",
   // "basedpyright.analysis.typeCheckingMode": "basic", // Type checking
   // "basedpyright.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
@@ -192,9 +213,10 @@
   // "basedpyright.analysis.extraPaths": [
   //   "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
   // ],
+  // // =====================================
   //
-  // =====================================
-  // == new settings below ==
-  // =====================================
   //
+  // ============================
+  // ==== new settings below ====
+  // ============================
 }
