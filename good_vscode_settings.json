@@ -166,9 +166,6 @@
     "**/__pycache__/**",
     "**/.git/**"
   ],
-  "python.analysis.extraPaths": [
-    "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
-  ],
   // =====================================
   // vscode
   "settingsSync.ignoredExtensions": [],
