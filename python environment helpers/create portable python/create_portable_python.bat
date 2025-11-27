@@ -32,15 +32,16 @@ if "%install_docs%"=="" (
 )
 
 :: exclude not needed files from install:
-REM path.msi excluded since it is only needed to update global path which we do not want for portable install:
-REM pip.msi excluded from install since it is not meant to be installed
-set "exclude_install=path.msi pip.msi" 
+REM path.msi/appendpath.msi excluded since it is only needed to update global Windows variable PATH which we do not want for portable install:
+REM pip.msi excluded from install since it is not meant to be installed:
+set "exclude_install=_path.msi_ _appendpath.msi_ _pip.msi_" 
+REM _-symbol needed to search for exact math
 REM tcltk.msi (~11 MB):
-if "%install_tkinter%"=="0" ( set "exclude_install=%exclude_install% tcltk.msi" )
+if "%install_tkinter%"=="0" ( set "exclude_install=%exclude_install% _tcltk.msi_" )
 REM test.msi (~31 MB):
-if "%install_tests%"=="0" ( set "exclude_install=%exclude_install% test.msi" ) 
+if "%install_tests%"=="0" ( set "exclude_install=%exclude_install% _test.msi_" ) 
 REM doc.msi(~61 MB):
-if "%install_docs%"=="0" ( set "exclude_install=%exclude_install% doc.msi" )
+if "%install_docs%"=="0" ( set "exclude_install=%exclude_install% _doc.msi_" )
 
 :: make path absolute
 CALL :make_absolute_path_if_relative "%TARGET_DIR%"
@@ -137,7 +138,7 @@ pushd "%DOWNLOAD_FOLDER%"
 for %%A in (*.msi) do (
   set "skip="
   for %%X in (%exclude_install%) do (
-    echo %%~nxA | findstr /i /c:"%%~X" >nul && set "skip=1"
+    echo _%%~nxA_ | findstr /i /c:"%%~X" >nul && set "skip=1"
   )
   if not defined skip (
     echo Installing %%~nxA
