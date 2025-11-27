@@ -1,3 +1,6 @@
+:: Description:
+:: Installs portable full-version (aka. not embeddable-version) Python into a folder with control what subparts get installed. Should work for Python version 3.5-3.14 and likely later versions. Probably needs user to be admin to install
+::
 :: Usage:
 :: create_portable_python.bat <py_ver> "<target_dir>" <install_tkinter> <install_tests> <install_docs>
 :: 
@@ -5,6 +8,9 @@
 :: <py_ver>: It picks the most modern python version by default the matches None/x/x.y/x.y.z defined python version.
 :: <target_dir>: If not defined it generates in the file folder. It always names the generated python folder py_dist in the <target_dir>.
 :: <install_tkinter>/<install_tests>/<install_docs>: Can be 1/0 for install/no-install of that python sub components. Default 1/1/0
+::
+:: Note:
+:: For python 3.11+ the download of for example "python-3.11.0-amd64.zip" is an alternative to the .msi files download from the amd64 folder. Downside is no control over what gets downloaded and installed.
 
 :: =======================
 :: ==== Program Start ====
@@ -31,17 +37,17 @@ if "%install_docs%"=="" (
   set "install_docs=0"
 )
 
-:: exclude not needed files from install:
+:: exclude not needed files from download:
 REM path.msi/appendpath.msi excluded since it is only needed to update global Windows variable PATH which we do not want for portable install:
-REM pip.msi excluded from install since it is not meant to be installed:
-set "exclude_install=_path.msi_ _appendpath.msi_ _pip.msi_" 
-REM _-symbol needed to search for exact math
+REM pip.msi excluded from install since it is generally not meant to be installed:
+REM launcher.msi excluded from install since a global python launcher is unwanted for portable install:
+set "EXCLUDE_FILES=path|appendpath|pip|launcher"
 REM tcltk.msi (~11 MB):
-if "%install_tkinter%"=="0" ( set "exclude_install=%exclude_install% _tcltk.msi_" )
+if "%install_tkinter%"=="0" ( set "EXCLUDE_FILES=%EXCLUDE_FILES%|tcltk" )
 REM test.msi (~31 MB):
-if "%install_tests%"=="0" ( set "exclude_install=%exclude_install% _test.msi_" ) 
+if "%install_tests%"=="0" ( set "EXCLUDE_FILES=%EXCLUDE_FILES%|test" ) 
 REM doc.msi(~61 MB):
-if "%install_docs%"=="0" ( set "exclude_install=%exclude_install% _doc.msi_" )
+if "%install_docs%"=="0" ( set "EXCLUDE_FILES=%EXCLUDE_FILES%|doc" )
 
 :: make path absolute
 CALL :make_absolute_path_if_relative "%TARGET_DIR%"
@@ -122,39 +128,35 @@ mkdir "%DOWNLOAD_FOLDER%" > NUL
 )
 
 :: download files
-echo Downloading... (may take a little)
 powershell -NoLogo -NoProfile -Command ^
   "$base='%URL%';" ^
   "$out='%DOWNLOAD_FOLDER%';" ^
   "$links=(Invoke-WebRequest -Uri $base).Links | Where-Object href -ne $null | ForEach-Object { $_.href } |" ^
   " Where-Object {$_ -notmatch '/$'} |" ^
   " ForEach-Object { if($_ -match '^https?://') {$_} else {$base + $_} } |" ^
-  " Where-Object { -not ( ([IO.Path]::GetFileNameWithoutExtension( ([IO.Path]::GetFileNameWithoutExtension($_)) )) -match '(_d|_pdb)$' ) };" ^
-  "foreach($l in $links){$n=[IO.Path]::GetFileName($l);$p=Join-Path $out $n;Try{Invoke-WebRequest -Uri $l -OutFile $p -UseBasicParsing}catch{Write-Error $l}}"
+  " Where-Object { -not ( ([IO.Path]::GetFileNameWithoutExtension( ([IO.Path]::GetFileNameWithoutExtension($_)) )) -match '(_d|_pdb)$' ) } |" ^
+  " Where-Object { $_ -match '\.msi$' } |" ^
+  " Where-Object { ([IO.Path]::GetFileName($_)) -notmatch '^(%EXCLUDE_FILES%)\.msi$' };" ^
+  "foreach($l in $links){" ^
+  "  $n=[IO.Path]::GetFileName($l); $p=Join-Path $out $n;" ^
+  "  Write-Host 'Downloading ' $n;" ^
+  "  Try{Invoke-WebRequest -Uri $l -OutFile $p -UseBasicParsing}catch{Write-Error $l}" ^
+  "}"
 
-:: install python files that are not in %exclude_install% (via .msi files)
-:: (download folder DOWNLOAD_FOLDER can't be install folder PYTHON_FOLDER because problems with msiexec)
+:: install python files
 pushd "%DOWNLOAD_FOLDER%"
 for %%A in (*.msi) do (
-  set "skip="
-  for %%X in (%exclude_install%) do (
-    echo _%%~nxA_ | findstr /i /c:"%%~X" >nul && set "skip=1"
-  )
-  if not defined skip (
-    echo Installing %%~nxA
-    REM /a option needed to not install paths globally
-    msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" /qn
-    if "%%~nxA"=="test.msi" (
-      REM disable line in %PYTHON_FOLDER%\Lib\test\.ruff.toml that causes Ruff error message (line: "extend = "../../.ruff.toml"  # Inherit the project-wide settings"^):
-      if exist "%PYTHON_FOLDER%\Lib\test\.ruff.toml" (
-        powershell -NoLogo -NoProfile -Command ^
-        "(Get-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml') | ForEach-Object { if ($_ -match '^\s*extend\s*=') { '# ' + $_ } else { $_ } } | Set-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml'"
-      )
+  echo Installing %%~nxA
+  REM /a option needed to not install paths globally
+  msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" /qn
+  if "%%~nxA"=="test.msi" (
+    REM disable line in %PYTHON_FOLDER%\Lib\test\.ruff.toml that causes Ruff error message (line: "extend = "../../.ruff.toml"  # Inherit the project-wide settings"^):
+    if exist "%PYTHON_FOLDER%\Lib\test\.ruff.toml" (
+      powershell -NoLogo -NoProfile -Command ^
+      "(Get-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml') | ForEach-Object { if ($_ -match '^\s*extend\s*=') { '# ' + $_ } else { $_ } } | Set-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml'"
     )
-    del "%PYTHON_FOLDER%\%%~nxA" > nul
-  ) else (
-    echo Excluding %%~nxA
   )
+  del "%PYTHON_FOLDER%\%%~nxA" > nul
 )
 popd
 
@@ -191,12 +193,25 @@ if errorlevel 1 (
   EXIT /B 6
 )
 
-:: update pip
-"%PYTHON_FOLDER%\python.exe" -m pip install --upgrade pip > nul
+:: upgrade pip
+REM "--ignore-installed" apparently needed for older python versions because too long paths in cache
+REM "--progress-bar off" apparently needed for older python versions
+"%PYTHON_FOLDER%\python.exe" -m pip install --upgrade pip --ignore-installed --progress-bar off > nul 2>&1
 if errorlevel 1 (
-  echo [Error] Python not sucessfully installed (see above^). Aborting. Press any key to exit.
-  PAUSE > NUL
-  EXIT /B 7
+  REM retry with no "--progress-bar off" for pip versions before implemented
+  "%PYTHON_FOLDER%\python.exe" -m pip install --upgrade pip --ignore-installed > nul
+  if errorlevel 1 (
+    echo [Error] Python's pip not sucessfully installed (see above^). Aborting. Press any key to exit.
+    PAUSE > NUL
+    EXIT /B 7
+  )
+)
+:: upgrade pip again because older pips don't manage to fully upgrade in one step
+"%PYTHON_FOLDER%\python.exe" -m pip install --upgrade pip > nul
+  if errorlevel 1 (
+    echo [Error] Python's pip not sucessfully installed (see above^). Aborting. Press any key to exit.
+    PAUSE > NUL
+    EXIT /B 8
 )
 
 :: print success and exit
