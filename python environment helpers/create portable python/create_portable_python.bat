@@ -32,19 +32,24 @@ if "%install_docs%"=="" (
 )
 
 :: exclude not needed files from install:
-::(~11 MB):
+REM path.msi excluded since it is only needed to update global path which we do not want for portable install:
+REM pip.msi excluded from install since it is not meant to be installed
+set "exclude_install=path.msi pip.msi" 
+REM tcltk.msi (~11 MB):
 if "%install_tkinter%"=="0" ( set "exclude_install=%exclude_install% tcltk.msi" )
-::(~31 MB):
+REM test.msi (~31 MB):
 if "%install_tests%"=="0" ( set "exclude_install=%exclude_install% test.msi" ) 
-::(~61 MB):
+REM doc.msi(~61 MB):
 if "%install_docs%"=="0" ( set "exclude_install=%exclude_install% doc.msi" )
 
 :: make path absolute
 CALL :make_absolute_path_if_relative "%TARGET_DIR%"
 SET "TARGET_DIR=%OUTPUT%"
 
+:: carefull with DOWNLOAD_FOLDER/PYTHON_FOLDER because it can/will be deleted
 :: add "py_dist" for delete safety
 set "PYTHON_FOLDER=%TARGET_DIR%\py_dist"
+set "DOWNLOAD_FOLDER=%PYTHON_FOLDER%\tmp"
 
 :: find available python full version compatible with specified input and installation method via amd64 folders and .msi files
 set "FULL_VER="
@@ -82,16 +87,6 @@ echo Found (msi-install-available) Python version %FULL_VER%
 set "URL=https://www.python.org/ftp/python/%FULL_VER%/amd64/"
 ECHO Download URL: %URL%
 
-:: downlaod files
-powershell -NoLogo -NoProfile -Command ^
-  "$base='%URL%';" ^
-  "$out='%PYTHON_FOLDER%';" ^
-  "$links=(Invoke-WebRequest -Uri $base).Links | Where-Object href -ne $null | ForEach-Object { $_.href } |" ^
-  " Where-Object {$_ -notmatch '/$'} |" ^
-  " ForEach-Object { if($_ -match '^https?://') {$_} else {$base + $_} } |" ^
-  " Where-Object { -not ( ([IO.Path]::GetFileNameWithoutExtension( ([IO.Path]::GetFileNameWithoutExtension($_)) )) -match '(_d|_pdb)$' ) };" ^
-  "foreach($l in $links){$n=[IO.Path]::GetFileName($l);$p=Join-Path $out $n;Try{Invoke-WebRequest -Uri $l -OutFile $p -UseBasicParsing}catch{Write-Error $l}}"
-
 :: === [START] delete old python folder ==================
 :: Skip if folder doesn't exist
 if not exist "%PYTHON_FOLDER%\" (
@@ -99,24 +94,25 @@ if not exist "%PYTHON_FOLDER%\" (
 )
 REM Check for Python folder markers
 if not exist "%PYTHON_FOLDER%\python.exe" (
-    echo [Error] Folder "%PYTHON_FOLDER%" does not appear to be a Python folder. -^> Delete manually after confirming. ^| Aborting. Press any key to exit.
+    echo [Error] Folder "%PYTHON_FOLDER%" does not appear to be a Python folder. -^> Delete manually after confirming it is a Python folder and restart. Press any key to exit.
     pause > nul
-    exit /b 1
+    exit /b 2
 )
 REM delete folder
 rmdir /s /q "%PYTHON_FOLDER%"
 if exist "%PYTHON_FOLDER%\" (
-    echo [Error] Failed to delete "%PYTHON_FOLDER%". -^> Delete manually after confirming. ^| Aborting. Press any key to exit.
+    echo [Error] Failed to delete "%PYTHON_FOLDER%". -^> Delete manually after confirming it is a Python folder and restart. Press any key to exit.
     pause > nul
-    exit /b 1
+    exit /b 3
 ) else (
     echo Deleted old python folder.
 )
 :skip_delete_old
 :: === [END] delete old python folder ==================
 
-:: (re)create folder
+:: (re)create folders
 mkdir "%PYTHON_FOLDER%" > NUL
+mkdir "%DOWNLOAD_FOLDER%" > NUL
 
 :: add .gitignore to folder to prevent git from syncing python distribution
 >> "%PYTHON_FOLDER%\.gitignore" (
@@ -124,8 +120,20 @@ mkdir "%PYTHON_FOLDER%" > NUL
   echo *
 )
 
+:: download files
+echo Downloading... (may take a little)
+powershell -NoLogo -NoProfile -Command ^
+  "$base='%URL%';" ^
+  "$out='%DOWNLOAD_FOLDER%';" ^
+  "$links=(Invoke-WebRequest -Uri $base).Links | Where-Object href -ne $null | ForEach-Object { $_.href } |" ^
+  " Where-Object {$_ -notmatch '/$'} |" ^
+  " ForEach-Object { if($_ -match '^https?://') {$_} else {$base + $_} } |" ^
+  " Where-Object { -not ( ([IO.Path]::GetFileNameWithoutExtension( ([IO.Path]::GetFileNameWithoutExtension($_)) )) -match '(_d|_pdb)$' ) };" ^
+  "foreach($l in $links){$n=[IO.Path]::GetFileName($l);$p=Join-Path $out $n;Try{Invoke-WebRequest -Uri $l -OutFile $p -UseBasicParsing}catch{Write-Error $l}}"
+
 :: install python files that are not in %exclude_install% (via .msi files)
-pushd "%PYTHON_FOLDER%"
+:: (download folder DOWNLOAD_FOLDER can't be install folder PYTHON_FOLDER because problems with msiexec)
+pushd "%DOWNLOAD_FOLDER%"
 for %%A in (*.msi) do (
   set "skip="
   for %%X in (%exclude_install%) do (
@@ -133,25 +141,61 @@ for %%A in (*.msi) do (
   )
   if not defined skip (
     echo Installing %%~nxA
-    msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" INSTALLDIR="%PYTHON_FOLDER%" /qn
+    REM /a option needed to not install paths globally
+    msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" /qn
     if "%%~nxA"=="test.msi" (
-      rem disable line in %PYTHON_FOLDER%\Lib\test\.ruff.toml that causes Ruff error message (line: "extend = "../../.ruff.toml"  # Inherit the project-wide settings"^):
-      powershell -NoLogo -NoProfile -Command ^
-      "(Get-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml') | ForEach-Object { if ($_ -match '^\s*extend\s*=') { '# ' + $_ } else { $_ } } | Set-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml'"
+      REM disable line in %PYTHON_FOLDER%\Lib\test\.ruff.toml that causes Ruff error message (line: "extend = "../../.ruff.toml"  # Inherit the project-wide settings"^):
+      if exist "%PYTHON_FOLDER%\Lib\test\.ruff.toml" (
+        powershell -NoLogo -NoProfile -Command ^
+        "(Get-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml') | ForEach-Object { if ($_ -match '^\s*extend\s*=') { '# ' + $_ } else { $_ } } | Set-Content '%PYTHON_FOLDER%\Lib\test\.ruff.toml'"
+      )
     )
+    del "%PYTHON_FOLDER%\%%~nxA" > nul
   ) else (
     echo Excluding %%~nxA
   )
-  rem delete .msi file afterwards
-  del /q "%%~nxA" 2>nul
 )
 popd
 
-:: verify functioning %local_python_name%
-CALL "%PYTHON_FOLDER%\python.exe" -V > Nul || (
-  echo [Error] Python not runnable. Aborting. Press any key to exit.
+:: delete downloads afterwards
+if not "%DOWNLOAD_FOLDER%"=="" if exist "%DOWNLOAD_FOLDER%\" (
+    rmdir /s /q "%DOWNLOAD_FOLDER%"
+)
+
+:: verify installation via existing python.exe
+if not exist "%PYTHON_FOLDER%\python.exe" (
+  echo [Error] Python installation failed (see above^). Aborting. Press any key to exit.
   PAUSE > NUL
-  EXIT /B 2
+  EXIT /B 4
+)
+
+:: verify functioning python.exe
+CALL "%PYTHON_FOLDER%\python.exe" -V > Nul || (
+  echo [Error] Python not runnable (see above^). Aborting. Press any key to exit.
+  PAUSE > NUL
+  EXIT /B 5
+)
+
+:: add a settings file for pip to avoid warning for portable python not being in a folder mentioned in system variable PATH
+> "%PYTHON_FOLDER%\pip.ini" (
+  echo [global]
+  echo no-warn-script-location = false
+)
+
+:: install pip
+"%PYTHON_FOLDER%\python.exe" -m ensurepip --upgrade > nul 2>&1
+if errorlevel 1 (
+  echo [Error] Python not sucessfully installed (see above^). Aborting. Press any key to exit.
+  PAUSE > NUL
+  EXIT /B 6
+)
+
+:: update pip
+"%PYTHON_FOLDER%\python.exe" -m pip install --upgrade pip > nul
+if errorlevel 1 (
+  echo [Error] Python not sucessfully installed (see above^). Aborting. Press any key to exit.
+  PAUSE > NUL
+  EXIT /B 7
 )
 
 :: print success and exit
