@@ -1,17 +1,19 @@
+:: Description:
+:: Create a virtual python environment at path "<target_dir>\virtual_environment" using the portable Python runtime at "<python_folder_rel_path>\python.exe". Should work for Python version 3.5-3.14 and likely later versions.
+::
 :: Usage:
-:: create_portable_venv.bat "<target_dir>" "<python_folder>"
+:: create_portable_venv.bat "<target_dir>" "<python_folder_rel_path>"
 ::
 :: Args (all optional):
 ::   <target_dir>: Destination directory. The script creates "<target_dir>\virtual_environment". Default: current working directory.
-::   <python_folder>: Path to the portable Python runtime containing python.exe. Accepts relative or absolute. Default: "portable_python".
+::   <python_folder_rel_path>: Relative path to the portable Python runtime containing python.exe. Default: "py_dist".
 
 :: =======================
 :: ==== Program Start ====
 :: =======================
 
-:: dont print commands & make variables local
-@echo off
-setlocal
+:: dont print commands & make variables local & allow for delayed variable expansion
+@echo off & setlocal EnableDelayedExpansion
 
 :: process args
 set "TARGET_DIR=%~1"
@@ -19,7 +21,7 @@ set "PYTHON_FOLDER=%~2"
 
 :: set default arg if not given
 if "%PYTHON_FOLDER%"=="" (
-    set "PYTHON_FOLDER=portable_python"
+    set "PYTHON_FOLDER=py_dist"
 )
 
 :: make path absolute
@@ -33,9 +35,28 @@ set "VENV_PATH=%TARGET_DIR%\virtual_environment"
 call :make_absolute_path_if_relative "%PYTHON_FOLDER%"
 set "PYTHON_FOLDER=%output%"
 
+:: find relative path from venv to python folder
+SET "PyScript=temp_relpath.py"
+REM Create the temporary Python script (using ECHO commands)
+> "%PyScript%" (
+    ECHO import os, sys
+    ECHO try:
+    ECHO     print(os.path.relpath(sys.argv[2], sys.argv[1]^)^)
+    ECHO except:
+    ECHO     print("ERROR: Check inputs or drive compatibility."^)
+)
+REM Execute the Python script and capture the output into a Batch variable
+FOR /F "delims=" %%L IN ('cmd /c ""%PYTHON_FOLDER%\python.exe" "%PyScript%" "%VENV_PATH%" "%PYTHON_FOLDER%" 2^>NUL"') DO (
+    SET "VENV_TO_PYTHON_REL_PATH=%%L"
+)
+REM Cleanup (Delete the temporary script)
+DEL "%PyScript%" >NUL 2>&1
+
 :: check if python exists
 if not exist "%PYTHON_FOLDER%\python.exe" (
-    echo: [Error] "%PYTHON_FOLDER%\python.exe" does not exist. Aborting. Press any key to exit.
+    echo: [Error] Relative path (<python_folder_rel_path>^) targets "%PYTHON_FOLDER%\python.exe" which does not exist. Aborting. 
+    echo: Usage: create_portable_venv.bat "<target_dir>" "<python_folder_rel_path>"
+    echo: Press any key to exit.
     pause > NUL
     exit /b 1
 )
@@ -96,7 +117,7 @@ echo(:: get folder of this file with \ at end
 echo(set "VENV_FOLDER=%%~dp0"
 echo(
 echo(:: get where python exe should be 
-echo(set "python_exe_folder=%%VENV_FOLDER%%..\portable_python"
+echo(set "python_exe_folder=%%VENV_FOLDER%%%VENV_TO_PYTHON_REL_PATH%"
 echo(:: compute paths relative to this file
 echo(call :make_absolute_path_if_relative "%%python_exe_folder%%"
 echo(set "python_exe_folder=%%OUTPUT%%"
@@ -111,7 +132,7 @@ echo(^)
 echo(if /I "%%CURRENT_HOME%%"=="%%python_exe_folder%%" (
 echo(    goto :skip_replace
 echo(^)
-echo(powershell -NoProfile -Command "$cfg='%%VENV_FOLDER%%pyvenv.cfg'; $newHome=(Resolve-Path '%%python_exe_folder%%').Path; $txt=Get-Content -Raw $cfg; if($txt -match '(?m)^home\s*='){ $txt=[regex]::Replace($txt,'(?m)^(home\s*=\s*).+$','${1}'+$newHome) } else { $nl=if($txt -and $txt[-1]-ne [char]10){[environment]::NewLine}else{''}; $txt+=$nl+'home = '+$newHome+[environment]::NewLine }; Set-Content -Encoding UTF8 -NoNewline -Path $cfg -Value $txt"
+echo(powershell -NoProfile -Command "$cfg='%%VENV_FOLDER%%pyvenv.cfg'; $newHome=(Resolve-Path '%%python_exe_folder%%').Path; $txt=Get-Content -Raw $cfg; if($txt -match '(?m)^home\s*='){ $txt=[regex]::Replace($txt,'(?m)^(home\s*=\s*).+$','${1}'+$newHome) } else { $nl=if($txt -and $txt[-1]-ne [char]10){[environment]::NewLine}else{''}; $txt+=$nl+'home = '+$newHome+[environment]::NewLine }; $utf8NoBom=New-Object System.Text.UTF8Encoding $false; [System.IO.File]::WriteAllText($cfg,$txt,$utf8NoBom)"
 echo(:skip_replace
 echo(:: ================================================
 echo(
@@ -147,10 +168,15 @@ if not exist "%VENV_PATH%\python.bat" (
 )
 
 :: create activate.bat that works for portable folder:
+:: create activate.bat that works for portable folder:
 > "%VENV_PATH%\activate.bat" (
   echo @echo off
   echo.
-  echo rem This file is UTF-8 encoded, so we need to update the current code page while executing it
+  echo :: ---------------------------------------------------------------------
+  echo :: UTF-8 ENCODING FIX
+  echo :: This block forces the console code page to 65001 ^(UTF-8^) so that
+  echo :: paths with special characters display correctly.
+  echo :: ---------------------------------------------------------------------
   echo for /f "tokens=2 delims=:." %%%%a in (^'"%%SystemRoot%%\System32\chcp.com"^'^) do (
   echo     set _OLD_CODEPAGE=%%%%a
   echo ^)
@@ -158,11 +184,20 @@ if not exist "%VENV_PATH%\python.bat" (
   echo     "%%SystemRoot%%\System32\chcp.com" 65001 ^> nul
   echo ^)
   echo.
-  echo :: portable venv path
+  echo :: ---------------------------------------------------------------------
+  echo :: PORTABILITY MAGIC
+  echo :: "%%~dp0" gets the directory of THIS script. We use this instead of
+  echo :: a hardcoded path so the environment works even if you move the folder.
+  echo :: ---------------------------------------------------------------------
   echo set "VIRTUAL_ENV=%%~dp0"
   echo.
   echo if not defined PROMPT set PROMPT=$P$G
   echo.
+  echo :: ---------------------------------------------------------------------
+  echo :: SAVE OLD STATE
+  echo :: We save the current PROMPT, PYTHONHOME, and PATH so we can restore
+  echo :: them cleanly when you type 'deactivate'.
+  echo :: ---------------------------------------------------------------------
   echo if defined _OLD_VIRTUAL_PROMPT set PROMPT=%%_OLD_VIRTUAL_PROMPT%%
   echo if defined _OLD_VIRTUAL_PYTHONHOME set PYTHONHOME=%%_OLD_VIRTUAL_PYTHONHOME%%
   echo.
@@ -175,10 +210,18 @@ if not exist "%VENV_PATH%\python.bat" (
   echo if defined _OLD_VIRTUAL_PATH set PATH=%%_OLD_VIRTUAL_PATH%%
   echo if not defined _OLD_VIRTUAL_PATH set _OLD_VIRTUAL_PATH=%%PATH%%
   echo.
+  echo :: ---------------------------------------------------------------------
+  echo :: ACTIVATE ENVIRONMENT
+  echo :: Prepend the 'Scripts' folder to PATH so 'python' and 'pip' run from here.
+  echo :: ---------------------------------------------------------------------
   echo set "PATH=%%VIRTUAL_ENV%%\Scripts;%%PATH%%"
   echo set "VIRTUAL_ENV_PROMPT=virtual_environment"
   echo.
   echo :END
+  echo :: ---------------------------------------------------------------------
+  echo :: RESTORE CODE PAGE
+  echo :: Clean up the UTF-8 setting if we changed it.
+  echo :: ---------------------------------------------------------------------
   echo if defined _OLD_CODEPAGE (
   echo     "%%SystemRoot%%\System32\chcp.com" %%_OLD_CODEPAGE%% ^> nul
   echo     set _OLD_CODEPAGE=
@@ -190,6 +233,19 @@ if not exist "%VENV_PATH%\activate.bat" (
     pause > NUL
     exit /b 2
 )
+
+:: create pip.bat and delete pip.exe such that "pip" command works in activated env after folder move
+> "%VENV_PATH%\Scripts\pip.bat" (
+  echo @echo off
+  echo "%%~dp0..\python.bat" -m pip %%*
+)
+:: check if created
+if not exist "%VENV_PATH%\Scripts\pip.bat" (
+    ECHO: [Error] Failed to create "%VENV_PATH%\Scripts\pip.bat" (see above^). Aborting. Press any key to continue.
+    pause > NUL
+)
+REM delete pip.exe
+del "%VENV_PATH%\Scripts\pip.exe" > NUL 2>&1
 
 :: print success and exit
 echo: Sucessfully created portable virtual environment.
