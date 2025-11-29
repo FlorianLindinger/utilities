@@ -1,13 +1,13 @@
 :: Description:
-:: Installs portable full-version (aka. not embeddable-version) Python into a folder with control what subparts get installed. Should work for Python version 3.5-3.14 and likely later versions. Probably needs user to be admin to install
+:: Installs portable full-version (aka. not embeddable-version) Python (version <py_ver>) at path "<target_dir>\py_dist" with control what subparts get installed (see Usage below). Should work for Python version 3.6-3.14 and likely later versions. Probably needs user to be admin to install.
 ::
 :: Usage:
-:: create_portable_python.bat <py_ver> "<target_dir>" <install_tkinter> <install_tests> <install_docs>
+:: create_portable_python.bat <py_ver> "<target_dir>" <install_tkinter> <install_tests> <install_tools> <install_docs>
 :: 
 :: Args (all optional):
 :: <py_ver>: It picks the most modern python version by default the matches None/x/x.y/x.y.z defined python version.
 :: <target_dir>: If not defined it generates in the file folder. It always names the generated python folder py_dist in the <target_dir>.
-:: <install_tkinter>/<install_tests>/<install_docs>: Can be 1/0 for install/no-install of that python sub components. Default 1/1/0
+:: <install_tkinter>/<install_tests>/<install_tools>/<install_docs>: Can be 1/0 for install/no-install of that python sub components. Default 1/1/1/0
 ::
 :: Note:
 :: For python 3.11+ the download of for example "python-3.11.0-amd64.zip" is an alternative to the .msi files download from the amd64 folder. Downside is no control over what gets downloaded and installed.
@@ -24,7 +24,8 @@ set "PY_VER=%~1"
 set "TARGET_DIR=%~2"
 set "install_tkinter=%~3"
 set "install_tests=%~4"
-set "install_docs=%~5"
+set "install_tools=%~5"
+set "install_docs=%~6"
 
 :: set default values
 if "%install_tkinter%"=="" (
@@ -32,6 +33,9 @@ if "%install_tkinter%"=="" (
 )
 if "%install_tests%"=="" (
   set "install_tests=1"
+)
+if "%install_tools%"=="" (
+  set "install_tools=1"
 )
 if "%install_docs%"=="" (
   set "install_docs=0"
@@ -46,6 +50,8 @@ REM tcltk.msi (~11 MB):
 if "%install_tkinter%"=="0" ( set "EXCLUDE_FILES=%EXCLUDE_FILES%|tcltk" )
 REM test.msi (~31 MB):
 if "%install_tests%"=="0" ( set "EXCLUDE_FILES=%EXCLUDE_FILES%|test" ) 
+REM tools.msi (~1 MB, and some installation time):
+if "%install_tools%"=="0" ( set "EXCLUDE_FILES=%EXCLUDE_FILES%|tools" )
 REM doc.msi(~61 MB):
 if "%install_docs%"=="0" ( set "EXCLUDE_FILES=%EXCLUDE_FILES%|doc" )
 
