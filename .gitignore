@@ -1,1 +1,4 @@
+# temporary files:
 tmp
+# folder generated during compilation with pyinstall from python to exe:
+exe_build
