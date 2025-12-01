@@ -28,11 +28,13 @@ for %%f in ("*.py") do (
 :: Delete old exe
 if exist "%file_name%.exe" del "%file_name%.exe"
 
-:: --- MAX OPTIMIZATION FLAGS ---
-:: --lto=yes: Link Time Optimization (smaller binary, faster execution, slower compile)
-:: --static-libpython=yes: Embeds the Python library directly (removes dependency on external python DLLs)
-:: --deployment: Disables safety checks meant for development (asserts, docstrings, etc.) to gain speed
-:: --disable-console: Standard for GUI apps (remove this line if you want to see print output!)
+:: --- MAX OPTIMIZATION FLAGS FOR SMALLEST SIZE ---
+:: --lto=yes: Link Time Optimization (smaller binary, faster execution)
+:: --deployment: Disables safety checks meant for development
+:: --enable-plugin=upx: Compress the executable with UPX (may not always work)
+:: --python-flag=no_docstrings,no_asserts,-OO: Strip docstrings, asserts, and optimize bytecode
+:: --prefer-source-code: Keep some modules as bytecode instead of compiled (smaller)
+:: --nofollow-import-to: Don't follow imports to these modules (excludes them from exe)
 
 rem   --windows-disable-console ^
 
@@ -41,6 +43,19 @@ python -m nuitka ^
   --standalone ^
   --lto=yes ^
   --deployment ^
+  --enable-plugin=upx ^
+  --python-flag=no_docstrings,no_asserts,-OO ^
+  --prefer-source-code ^
+  --nofollow-import-to=pytest ^
+  --nofollow-import-to=unittest ^
+  --nofollow-import-to=IPython ^
+  --nofollow-import-to=setuptools ^
+  --nofollow-import-to=distutils ^
+  --nofollow-import-to=tkinter ^
+  --nofollow-import-to=email ^
+  --nofollow-import-to=xml ^
+  --nofollow-import-to=http ^
+  --nofollow-import-to=urllib ^
   --assume-yes-for-downloads ^
   --remove-output ^
   --output-dir=. ^
