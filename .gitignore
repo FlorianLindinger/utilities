@@ -2,3 +2,13 @@
 tmp
 # folder generated during compilation with pyinstall from python to exe:
 exe_build
+# tmp folders for python to exe compilation via nuitka:
+*.dist
+*.build
+# image files:
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.ico
