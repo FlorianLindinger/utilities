@@ -29,9 +29,9 @@ for %%f in ("*.py") do (
 if exist "%file_name%.exe" del "%file_name%.exe"
 
 :: --- MAX OPTIMIZATION FLAGS FOR SMALLEST SIZE ---
+:: --onefile: Create a single compressed executable file (not a folder)
 :: --lto=yes: Link Time Optimization (smaller binary, faster execution)
 :: --deployment: Disables safety checks meant for development
-:: --enable-plugin=upx: Compress the executable with UPX (may not always work)
 :: --python-flag=no_docstrings,no_asserts,-OO: Strip docstrings, asserts, and optimize bytecode
 :: --prefer-source-code: Keep some modules as bytecode instead of compiled (smaller)
 :: --nofollow-import-to: Don't follow imports to these modules (excludes them from exe)
@@ -40,10 +40,8 @@ rem   --windows-disable-console ^
 
 python -m nuitka ^
   --onefile ^
-  --standalone ^
   --lto=yes ^
   --deployment ^
-  --enable-plugin=upx ^
   --python-flag=no_docstrings,no_asserts,-OO ^
   --prefer-source-code ^
   --nofollow-import-to=pytest ^
@@ -59,12 +57,13 @@ python -m nuitka ^
   --assume-yes-for-downloads ^
   --remove-output ^
   --output-dir=. ^
+  --output-filename="%file_name%_py.exe" ^
   "%python_file%"
 
 echo.
-if exist "%file_name%.exe" (
+if exist "%file_name%_py.exe" (
     echo ============================================
-    echo SUCCESS! Optimized EXE created: %file_name%.exe
+    echo SUCCESS! Optimized EXE created: %file_name%_py.exe
     echo ============================================
 ) else (
     echo ============================================
