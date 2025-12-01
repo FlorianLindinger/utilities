@@ -49,14 +49,14 @@ python -m nuitka ^
   --assume-yes-for-downloads ^
   --remove-output ^
   --output-dir=. ^
-  --output-filename="%file_name%_py.exe" ^
+  --output-filename="%file_name%_py_small.exe" ^
   "%python_file%"
 
 :: print end message
 echo.
-if exist "%file_name%_py.exe" (
+if exist "%file_name%_py_small.exe" (
     echo ============================================
-    echo SUCCESS! Optimized EXE created: %file_name%_py.exe
+    echo SUCCESS! Optimized EXE created: %file_name%_py_small.exe
     echo ============================================
 ) else (
     echo ============================================
