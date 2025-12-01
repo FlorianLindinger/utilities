@@ -1,18 +1,12 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Clean old build artifacts AND PyInstaller cache to avoid permission/corruption issues
-rem echo Cleaning old build files and cache...
-rem rmdir /s /q build 2>nul
-rem rmdir /s /q dist 2>nul
-rem del /q *.spec 2>nul
-rem rmdir /s /q "%LOCALAPPDATA%\pyinstaller" 2>nul
-rem timeout /t 2 /nobreak >nul
-rem echo.
+:: measure start time
+call :count_duration
 
 :: Install Nuitka and Zstandard
 echo Installing/Updating Nuitka...
-python -m pip install nuitka zstandard >nul 2>&1
+python -m pip install nuitka zstandard --upgrade
 echo.
 
 :: Find python file
@@ -36,8 +30,6 @@ if exist "%file_name%.exe" del "%file_name%.exe"
 :: --prefer-source-code: Keep some modules as bytecode instead of compiled (smaller)
 :: --nofollow-import-to: Don't follow imports to these modules (excludes them from exe)
 
-rem   --windows-disable-console ^
-
 python -m nuitka ^
   --onefile ^
   --lto=yes ^
@@ -60,6 +52,7 @@ python -m nuitka ^
   --output-filename="%file_name%_py.exe" ^
   "%python_file%"
 
+:: print end message
 echo.
 if exist "%file_name%_py.exe" (
     echo ============================================
@@ -71,6 +64,44 @@ if exist "%file_name%_py.exe" (
     echo ============================================
 )
 
+:: print execution duration
+call :count_duration
+
+:: wait for key press and exit
 echo.
 echo Press any key to exit
 PAUSE > nul
+
+exit /b 0
+
+:: ====================
+:: ==== FUNCTIONS: ====
+:: ====================
+
+:count_duration
+:: call twice to get printed the duration between the two calls
+setlocal enabledelayedexpansion
+rem %TIME% ? HH:MM:SScc by removing the comma
+set "t=%time:,=%"
+rem HH = characters 0–1
+set "HH=!t:~0,2!"
+rem MM = characters 3–4
+set "MM=!t:~3,2!"
+rem SS = characters 6–7
+set "SS=!t:~6,2!"
+rem CC = characters 9–2 (centiseconds)
+set "CC=!t:~9,2!"
+rem calculate centiseconds since midnight
+set /a total=(HH*3600 + MM*60 + SS)*100 + CC
+REM set global variable to current time if unset or print time passed since start if already set and reset afterwards
+if "%count_time_s_start%"=="" (
+    endlocal & set "count_time_s_start=%total%"
+) else (
+    set /a diff=%total%-%count_time_s_start%
+    if !diff! lss 0 set /a diff+=24*60*60*100
+    set /a SEC=diff/100
+    set /a CS=diff%%100
+    echo Passed Time: !SEC!.!CS! s
+    endlocal & set "count_time_s_start="
+)
+exit /b 0
