@@ -73,13 +73,9 @@ GOTO :EOF
 setlocal enabledelayedexpansion
 rem %TIME% ? HH:MM:SScc by removing the comma
 set "t=%time:,=%"
-rem HH = characters 0�1
 set "HH=!t:~0,2!"
-rem MM = characters 3�4
 set "MM=!t:~3,2!"
-rem SS = characters 6�7
 set "SS=!t:~6,2!"
-rem CC = characters 9�2 (centiseconds)
 set "CC=!t:~9,2!"
 rem calculate centiseconds since midnight
 set /a total=(HH*3600 + MM*60 + SS)*100 + CC
