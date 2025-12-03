@@ -43,17 +43,26 @@ echo ===========================
 echo Compilation:
 echo.
 python -m nuitka ^
-    --standalone ^
-    --no-lto ^
-    --low-memory ^
-    --python-flag=no_docstrings,no_asserts,-OO ^
-    --prefer-source-code ^
-    --nofollow-import-to=pytest,unittest,IPython,setuptools,distutils,tkinter,email,xml,http,urllib,multiprocessing,logging.config,decimal ^
-    --jobs=%NUMBER_OF_PROCESSORS% ^
-    --assume-yes-for-downloads ^
-    --output-dir="%build_folder_path%" ^
-    --output-filename="%exe_name%" ^
-    "%python_file%"
+  --onefile ^
+  --lto=yes ^
+  --deployment ^
+  --python-flag=no_docstrings,no_asserts,-OO ^
+  --prefer-source-code ^
+  --nofollow-import-to=pytest ^
+  --nofollow-import-to=unittest ^
+  --nofollow-import-to=IPython ^
+  --nofollow-import-to=setuptools ^
+  --nofollow-import-to=distutils ^
+  --nofollow-import-to=tkinter ^
+  --nofollow-import-to=email ^
+  --nofollow-import-to=xml ^
+  --nofollow-import-to=http ^
+  --nofollow-import-to=urllib ^
+  --jobs=%NUMBER_OF_PROCESSORS% ^
+  --assume-yes-for-downloads ^
+  --output-dir="%build_folder_path%" ^
+  --output-filename="%exe_name%" ^
+  "%python_file%"
 echo.
 echo ===========================
 echo Compilation over

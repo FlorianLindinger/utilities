@@ -1,13 +1,12 @@
 """
 Convert image to ICO with multiple resolutions.
 
-Usage (other image types might also work):
-    python create_icon.py input.png {optional:output.ico}
-
 Equivalent to for example:
 magick "icon.png" -define icon:auto-resize=16,32,48,64,128,256 -compress zip "icon.ico"
 
-
+Usage (other image types might also work):
+    python create_icon.py input.png output.ico
+    python create_icon.py input.png  # Creates input.ico
 """
 
 import sys
@@ -16,47 +15,22 @@ from pathlib import Path
 from PIL import Image
 
 
-def create_icon(
-    image_path,
-    output_path,
-    icon_sizes=(256, 128, 64, 48, 32, 16),
-    background_color=(0, 0, 0, 0),  # transparent
-):
+def create_icon(image_path, output_path, icon_sizes=(256, 128, 64, 48, 32, 16)):
     """
-    Convert an image into a multi-resolution .ico file with padding
-    to preserve aspect ratio (no distortion).
-
-    background_color=(0, 0, 0, 0) means transparent background
+    Standard conversion of an image to a multi-size ICO.
     """
 
-    src = Image.open(image_path).convert("RGBA")
-    src_w, src_h = src.size
+    img = Image.open(image_path).convert("RGBA")
 
-    layers = []
+    # resize to max size
+    max_size = max(img.width, img.height)
 
-    for size in icon_sizes:
-        # scale factor: fit longest side into "size"
-        scale = size / max(src_w, src_h)
-        new_w = round(src_w * scale)
-        new_h = round(src_h * scale)
+    layers = [
+        img.resize((round(size * img.width / max_size), round(size * img.height / max_size)), Image.Resampling.LANCZOS)
+        for size in icon_sizes
+    ]
 
-        resized = src.resize((new_w, new_h), Image.Resampling.LANCZOS)
-
-        # create square canvas and center the resized image
-        canvas = Image.new("RGBA", (size, size), background_color)
-        offset_x = (size - new_w) // 2
-        offset_y = (size - new_h) // 2
-        canvas.paste(resized, (offset_x, offset_y), resized)
-
-        layers.append(canvas)
-
-    # save as multi-size ICO
-    layers[0].save(
-        output_path,
-        format="ICO",
-        sizes=[(s, s) for s in icon_sizes],
-        append_images=layers[1:],
-    )
+    layers[0].save(output_path, format="ICO", sizes=[(s, s) for s in icon_sizes], append_images=layers[1:])
 
 
 if __name__ == "__main__":
@@ -69,25 +43,14 @@ if __name__ == "__main__":
 
         png_s = glob.glob("*.png")
         if len(png_s) == 0:
-            print("""[Error] No png file found in directory.
-
-Usage:
-    python create_icon.py input.png {optional:output.ico}
-(other image types might also work)
-""")
-            print("Aborting. Press enter to exit.")
-            input()
+            print(__doc__)
             sys.exit(1)
-
         image_path = png_s[0]
         image_path = Path(image_path)
     else:
         image_path = Path(image_path)
         if not image_path.exists():
-            print(f"[Error] Input file not found: {image_path}")
-            print("Aborting. Press enter to exit.")
-            input()
-            sys.exit(1)
+            raise FileNotFoundError(f"Input file not found: {image_path}")
 
     # Determine output path if undefined
     if output_path is None:
@@ -97,9 +60,8 @@ Usage:
 
     try:
         create_icon(image_path, output_path)
+        print(f"Generated: {output_path}")
         sys.exit(0)
     except Exception as e:
-        print(f"[Error] {e}")
-        print("Aborting. Press enter to exit.")
-        input()
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
