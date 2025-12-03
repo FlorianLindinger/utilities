@@ -2,7 +2,7 @@
 change_icon.exe_LICENSE.txt
 ===============================================================================
 
-This application was built with Pyinstaller and bundles components under multiple open-source licenses:
+This application was built with Nuitka and bundles components under multiple open-source licenses:
 - Python source code (see end of file): MIT License
 - Python and standard library: Python Software Foundation License Version 2.0
 - pywin32: Python Software Foundation License Version 2.0 (same text)
