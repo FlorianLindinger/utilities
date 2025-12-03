@@ -15,7 +15,7 @@ for %%f in ("*.py") do (
 :found
 
 :: set variables
-set "ending=_py_small"
+set "ending=.py_small"
 set "output_path="
 set "build_folder_path=%file_name%%ending%.build"
 set "exe_name=%file_name%%ending%.exe"
