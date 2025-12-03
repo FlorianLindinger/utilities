@@ -8,15 +8,15 @@ call :count_duration
 for %%f in ("*.py") do (
     set "python_file=%%f"
     set "file_name=%%~nf"
-    echo Compiling for fast execution: !python_file!
+    echo Compiling with fast compilation: !python_file!
     echo.
     goto :found
 )
 :found
 
 :: set variables
-REM Ending "_py_fast" for delete safey of output_folder_path folder deletion! Do not change it to empty or remove from output_folder_path!
-set "ending=_py_fast"
+REM Ending "_py_fast_compile" for delete safey of output_folder_path folder deletion! Do not change it to empty or remove from output_folder_path!
+set "ending=_py_fast_compile"
 set "output_folder_path=%file_name%%ending%"
 set "build_folder_path=%file_name%%ending%.build"
 set "exe_name=%file_name%%ending%.exe"
@@ -34,20 +34,15 @@ python -m pip install nuitka zstandard --upgrade
 echo.
 
 :: compile
-REM MAX OPTIMIZATION FLAGS FOR FASTEST EXECUTION:
-REM --standalone: Create a standalone executable (includes all dependencies)
-REM --jobs=%NUMBER_OF_PROCESSORS%: Use multiple jobs to speed up compilation
-REM --lto=yes: Link Time Optimization (smaller binary, faster execution)
-REM --deployment: Disables safety checks meant for development
-REM --python-flag=no_docstrings,no_asserts,-OO: Strip docstrings, asserts, and optimize bytecode
+REM OPTIMIZATION FLAGS FOR FASTEST COMPILATION:
+REM --standalone: Create a standalone executable folder (includes all dependencies)
+REM --jobs=%NUMBER_OF_PROCESSORS%: Use all available cores for compilation (faster build)
+REM --assume-yes-for-downloads: Automatically accept all download prompts
 echo ===========================
 echo Compilation:
 echo.
 python -m nuitka ^
   --standalone ^
-  --lto=yes ^
-  --deployment ^
-  --python-flag=no_docstrings,no_asserts,-OO ^
   --jobs=%NUMBER_OF_PROCESSORS% ^
   --assume-yes-for-downloads ^
   --output-dir="%build_folder_path%" ^
@@ -133,13 +128,13 @@ exit /b 0
 setlocal enabledelayedexpansion
 rem %TIME% ? HH:MM:SScc by removing the comma
 set "t=%time:,=%"
-rem HH = characters 0–1
+rem HH = characters 0â€“1
 set "HH=!t:~0,2!"
-rem MM = characters 3–4
+rem MM = characters 3â€“4
 set "MM=!t:~3,2!"
-rem SS = characters 6–7
+rem SS = characters 6â€“7
 set "SS=!t:~6,2!"
-rem CC = characters 9–2 (centiseconds)
+rem CC = characters 9â€“2 (centiseconds)
 set "CC=!t:~9,2!"
 rem calculate centiseconds since midnight
 set /a total=(HH*3600 + MM*60 + SS)*100 + CC
