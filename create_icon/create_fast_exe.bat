@@ -15,8 +15,8 @@ for %%f in ("*.py") do (
 :found
 
 :: set variables
-REM Ending "_py_fast" for delete safey of output_folder_path folder deletion! Do not change it to empty or remove from output_folder_path!
-set "ending=_py_fast"
+REM Ending ".py_fast" for delete safey of output_folder_path folder deletion! Do not change it to empty or remove from output_folder_path!
+set "ending=.py_fast"
 set "output_folder_path=%file_name%%ending%"
 set "build_folder_path=%file_name%%ending%.build"
 set "exe_name=%file_name%%ending%.exe"
