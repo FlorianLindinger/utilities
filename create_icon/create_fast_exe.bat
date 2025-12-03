@@ -46,8 +46,8 @@ echo.
 python -m nuitka ^
   --standalone ^
   --lto=yes ^
-  --deployment ^
   --python-flag=no_docstrings,no_asserts,-OO ^
+  --deployment ^
   --jobs=%NUMBER_OF_PROCESSORS% ^
   --assume-yes-for-downloads ^
   --output-dir="%build_folder_path%" ^
