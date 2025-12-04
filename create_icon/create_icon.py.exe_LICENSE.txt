@@ -1,5 +1,5 @@
 ===============================================================================
-COMBINED LICENSE
+COMPOSITE LICENSE
 ===============================================================================
 
 This application was built with Nuitka and bundles components under multiple open-source licenses:
