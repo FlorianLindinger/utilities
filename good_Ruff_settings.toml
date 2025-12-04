@@ -2,9 +2,8 @@
 # Ruff (python linter/formatter) configuration file
 # ===========================
 
-# files to check/correct:
-include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"]
-exclude = [".git", ".mypy_cache", ".ruff_cache", "__pycache__", "build", "dist"]
+include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"] # files to check/correct
+exclude = [".git", ".mypy_cache", ".ruff_cache", "__pycache__", "*.build", "*.dist"] # files to exclude from check/correct
 
 line-length = 120 # max line length before wrapping
 
@@ -35,7 +34,6 @@ select = [
   "PERF",  # performance issues
   "PIE",   # small correctness & simplification checks
   "PL",    # pylint logic/safety rules
-  # "PT",    # good patterns in Pytest tests
   "Q",   # Enforce single/double quote style 
   "RET", # Ensures consistent return patterns in functions
   "RSE", # correct raise syntax
@@ -51,6 +49,10 @@ select = [
   "UP",  # Updates syntax for newer Python versions
   "W",   # minor style issues
   "YTT", # Catch obsolete sys.version comparisons & old idioms
+
+# Temporarily disable the following rule families:
+# "D",    # docstring rules
+# "PT",   # good patterns in Pytest tests
 ]
 
 # Ignore specific rules:
@@ -108,8 +110,4 @@ ignore = [
   "TRY301",  # allow for not encapsulated raise in try-except
   "UP009",   # allow python file encoding declaration
   "UP028",   # don't replace for+yield with "yield from"
-
-
-  # temporarily ignore the following rules:
-  "D", # docstring rules
 ]
