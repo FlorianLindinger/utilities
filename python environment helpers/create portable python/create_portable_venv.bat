@@ -1,11 +1,11 @@
 :: Description:
-:: Create a virtual python environment at path "<target_dir>\virtual_environment" using the portable Python runtime at "<python_folder_rel_path>\python.exe". Should work for Python version 3.5-3.14 and likely later versions.
+:: Create a virtual python environment at path "<target_dir>\virt_env" using the portable Python runtime at "<python_folder_rel_path>\python.exe". Should work for Python version 3.5-3.14 and likely later versions.
 ::
 :: Usage:
 :: create_portable_venv.bat "<target_dir>" "<python_folder_rel_path>"
 ::
 :: Args (all optional):
-::   <target_dir>: Destination directory. The script creates "<target_dir>\virtual_environment". Default: current working directory.
+::   <target_dir>: Destination directory. The script creates "<target_dir>\virt_env". Default: current working directory.
 ::   <python_folder_rel_path>: Relative path to the portable Python runtime containing python.exe. Default: "py_dist".
 
 :: =======================
@@ -28,8 +28,8 @@ if "%PYTHON_FOLDER%"=="" (
 call :make_absolute_path_if_relative "%TARGET_DIR%"
 set "TARGET_DIR=%output%"
 
-:: add "virtual_environment" for delete safety 
-set "VENV_PATH=%TARGET_DIR%\virtual_environment"
+:: add "virt_env" for delete safety 
+set "VENV_PATH=%TARGET_DIR%\virt_env"
 
 :: make path absolute
 call :make_absolute_path_if_relative "%PYTHON_FOLDER%"
