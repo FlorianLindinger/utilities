@@ -37,9 +37,8 @@
                             "saysaeqo.python-cprofile",
                             "seanwu.vscode-qt-for-python",
                             "tamasfe.even-better-toml",
-                            "visualstudioexptteam.intellicode-api-usage-examples",
-                            "visualstudioexptteam.vscodeintellicode",
                             "wholroyd.jinja",
-                            "xelad0m.jupyter-toc"
+                            "xelad0m.jupyter-toc",
+                            "meta.pyrefly"
                         ]
 }
