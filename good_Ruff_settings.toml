@@ -111,4 +111,5 @@ ignore = [
   "TRY301",  # allow for not encapsulated raise in try-except
   "UP009",   # allow python file encoding declaration
   "UP028",   # don't replace for+yield with "yield from"
+  "W293"     # allow whitespace in empty line (for indented multiline str)
 ]
