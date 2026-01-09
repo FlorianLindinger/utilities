@@ -107,7 +107,7 @@
   // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
-  "autoDocstring.customTemplatePath": "..\\utilities\\python_autodocstring_extension_template.mustache",
+  "autoDocstring.customTemplatePath": "${env:USERPROFILE}\\Documents\\Repositories\\utilities\\python_autodocstring_extension_template.mustache",
   // =====================================
   // gitlens (if "gitlens" extension installed)
   "gitlens.ai.model": "vscode",
