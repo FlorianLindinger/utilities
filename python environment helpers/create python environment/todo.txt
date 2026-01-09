@@ -18,3 +18,6 @@ write readme and instructions ontop of scripts
 
 make easy possible to update/reset/recreate env
 make at least installing the packages default if already present
+
+
+add "install package" launcher to env folder and shortcut to it to desktop
