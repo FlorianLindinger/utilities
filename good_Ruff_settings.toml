@@ -60,6 +60,7 @@ ignore = [
   "B905",    # allow for zip without explicit strict setting
   "BLE001",  # don't replace "try ... except: pass" #3
   "COM812",  # require trailing comma (formatter handles)
+  "D100",    # allow missing docstring in public module
   "D401",    # allow non imperative mood in docstrings
   "E402",    # allow imports not at top
   "E501",    # max line length handled via formatter
