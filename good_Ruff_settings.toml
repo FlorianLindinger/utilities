@@ -66,6 +66,7 @@ ignore = [
   "D106",    # allow missing docstring in public nested class
   "D107",    # allow missing docstring in public __init__
   "D202",    # allow blank lines after docstring
+  "D204",    # allow  blank line after class docstring
   "D205",    # allow 1 blank line after summary in docstring
   "D209",    # allow docstring closing quotes on same line
   "D400",    # allow no period at end of first line
