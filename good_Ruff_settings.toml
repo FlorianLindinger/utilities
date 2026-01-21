@@ -65,10 +65,17 @@ ignore = [
   "D105",    # allow missing docstring in magic method
   "D106",    # allow missing docstring in public nested class
   "D107",    # allow missing docstring in public __init__
+  "D202",    # allow blank lines after docstring
+  "D205",    # allow 1 blank line after summary in docstring
+  "D209",    # allow docstring closing quotes on same line
+  "D400",    # allow no period at end of first line
   "D401",    # allow non imperative mood in docstrings
+  "D403",    # allow no capitalized docstring first letter
   "E402",    # allow imports not at top
+  "D415",    # allow no .?! at end of first line in docstring
   "E501",    # max line length handled via formatter
   "E712",    # allow `== True/False`
+  "E741",    # allow variable names that look like l, O, or I"
   "EM101",   # allow for strings in error message
   "EM102",   # allow f-string in exception message
   "FBT001",  # allow boolean parameters when type hinting
