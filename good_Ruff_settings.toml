@@ -70,6 +70,7 @@ ignore = [
   "D205",    # allow 1 blank line after summary in docstring
   "D209",    # allow docstring closing quotes on same line
   "D212",    # allow docstring to start on second line
+  "D213",    # allow multi-line docstring summary to start at the second line
   "D400",    # allow no period at end of first line
   "D401",    # allow non imperative mood in docstrings
   "D403",    # allow no capitalized docstring first letter
