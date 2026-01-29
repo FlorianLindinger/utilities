@@ -65,6 +65,7 @@ ignore = [
   "D105",    # allow missing docstring in magic method
   "D106",    # allow missing docstring in public nested class
   "D107",    # allow missing docstring in public __init__
+  "D200",    # allow one-liner docstrings on multiple lines
   "D202",    # allow blank lines after docstring
   "D204",    # allow  blank line after class docstring
   "D205",    # allow 1 blank line after summary in docstring
@@ -73,9 +74,20 @@ ignore = [
   "D213",    # allow multi-line docstring summary to start at the second line
   "D400",    # allow no period at end of first line
   "D401",    # allow non imperative mood in docstrings
+  "D402",    # allow function signature in first line of docstring
   "D403",    # allow no capitalized docstring first letter
-  "E402",    # allow imports not at top
+  "D404",    # allow doctstring to start with "This"
+  "D405",    # allow docstring sections to be uncapitalized
+  "D406",    # allow for non-newline chragacter after docstring section headers
+  "D407",    # allow for no underline for docstring section headers
+  "D408",    # missing-section-underline-after-name
+  "D409",    # mismatched-section-underline-length 
+  "D410",    # allow missing blank line after "Args" section
+  "D411",    # allow missing blank line before "Warnings" section
+  "D412",    # blank-lines-between-header-and-content 
+  "D413",    # allow for missing blank line after last docstring section
   "D415",    # allow no .?! at end of first line in docstring
+  "E402",    # allow imports not at top
   "E501",    # max line length handled via formatter
   "E712",    # allow `== True/False`
   "E741",    # allow variable names that look like l, O, or I"
