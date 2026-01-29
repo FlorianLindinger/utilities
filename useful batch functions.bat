@@ -38,17 +38,24 @@ goto :EOF
 :: =================================================
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
-:: function that prompts user with "Enter y/n for Yes/No" and sets OUTPUT=1 for y and OUTPUT=0 for n.
+:: function that prompts user with prompt=arg1 and sets OUTPUT=1 for y and OUTPUT=0 for n.
 ::::::::::::::::::::::::::::::::::::::::::::::::
 :prompt_user
-	CHOICE /c YN /m Delete? Enter y/n for Yes/No
-	IF %ERRORLEVEL%==1 (
-		set "OUTPUT=1"
-	) else (
-		set "OUTPUT=0"
-	)
-GOTO :EOF
-
+setlocal
+set "ans="
+set "OUT="
+:ask
+set /p "ans=%~1"
+if /i "%ans%"=="y" (
+    set "OUT=1"
+) else if /i "%ans%"=="n" (
+    set "OUT=0"
+) else (
+    echo Invalid input. Please enter y or n.
+    goto ask
+)
+endlocal & set "OUTPUT=%OUT%"
+goto :EOF
 :: =================================================
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
