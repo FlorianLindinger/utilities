@@ -13,6 +13,9 @@ magick "icon.png" -define icon:auto-resize=16,32,48,64,128,256 -compress zip "ic
 import sys
 from pathlib import Path
 
+import PIL.BmpImagePlugin  # for nuitka compile nudging
+import PIL.IcoImagePlugin  # for nuitka compile nudging
+import PIL.PngImagePlugin  # for nuitka compile nudging
 from PIL import Image
 
 
@@ -65,9 +68,11 @@ if __name__ == "__main__":
 
     # Determine input path if undefined (first png in directory)
     if image_path is None:
+        # get path to the folder containing the script
+        script_dir = Path(__file__).resolve().parent
         import glob
 
-        png_s = glob.glob("*.png")
+        png_s = glob.glob(f"{script_dir}\\*.png")
         if len(png_s) == 0:
             print("""[Error] No png file found in directory.
 
