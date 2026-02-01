@@ -3,6 +3,9 @@
 # arg2(optional) {icon_path}
 # arg3(optional) {anything if you want errors to print}
 
+# For non code execution blocking icon change use:
+# start "" change_icon.py "{window name}" "{icon_path}"
+
 import sys
 import time
 
