@@ -33,7 +33,7 @@
   "notebook.formatOnSave.enabled": true,
   "[cpp]": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
-  }, // if "C/C++" extension installed
+  },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
@@ -45,7 +45,10 @@
   },
   "notebook.defaultFormatter": "charliermarsh.ruff",
   // =====================================
-  // git & diff
+  // AI
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  // =====================================// git & diff
   "git.enableSmartCommit": true,
   "git.autofetch": true,
   "git.autofetchPeriod": 180, //seconds
@@ -105,14 +108,6 @@
     "All"
   ],
   // =====================================
-  // autodocstring
-  "autoDocstring.docstringFormat": "numpy",
-  "autoDocstring.customTemplatePath": "utilities\\python_autodocstring_extension_template.mustache",
-  // =====================================
-  // gitlens (if "gitlens" extension installed)
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
-  // =====================================
   // Ruff formatter/linter settings (python)
   "ruff.nativeServer": "on",
   "ruff.configuration": "${env:USERPROFILE}\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
@@ -124,7 +119,7 @@
     "source.organizeImports.ruff": "explicit"
   },
   // =====================================
-  // python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems
+  // pylance settings (python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems)
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/.venv/**": true
@@ -136,57 +131,38 @@
   },
   //
   // =====================================
-  // vscode specific
+  // Antigravity specific
   // =====================================
   //
-  // =====================================
-  // pyrefly - type checker and LSP (alternative to pylance)
+  "antigravity.marketplaceGalleryItemURL": "https://marketplace.visualstudio.com/items",
+  "antigravity.marketplaceExtensionGalleryServiceURL": "https://marketplace.visualstudio.com/_apis/public/gallery",
   "python.languageServer": "None",
-  "python.pyrefly.displayTypeErrors": "force-on",
+  "basedpyright.analysis.typeCheckingMode": "basic", // Type checking
+  "basedpyright.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
+  "basedpyright.analysis.logLevel": "Trace",
+  "basedpyright.analysis.autoFormatStrings": true,
+  "basedpyright.analysis.inlayHints.functionReturnTypes": true,
+  "basedpyright.analysis.autoImportCompletions": false, //auto add imports
+  "basedpyright.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
+  "basedpyright.analysis.exclude": [
+    "**/.venv/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/__pycache__/**",
+    "**/.git/**"
+  ],
+  "basedpyright.analysis.extraPaths": [
+    "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
+  ],
+  "json.schemaDownload.enable": true,
+  "basedpyright.disableLanguageServices": true,
+  //
+  // =====================================
+  // end of Antigravity specific
   // =====================================
   //
   // =====================================
-  // pylance - type checker and LSP (alternative to pyrefly)
-  // "python.languageServer": "Pylance",
-  // "python.analysis.generateWithTypeAnnotation": true,
-  // "python.analysis.userFileIndexingLimit": -1, //2000
-  // "python.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
-  // "python.analysis.logLevel": "Trace",
-  // "python.analysis.autoFormatStrings": true,
-  // "python.analysis.completeFunctionParens": true,
-  // "python.analysis.inlayHints.functionReturnTypes": true,
-  // "python.analysis.inlayHints.pytestParameters": true,
-  // "python.analysis.typeCheckingMode": "basic", // Type checking
-  // "python.analysis.indexing": true,
-  // "python.analysis.autoImportCompletions": false, //auto add imports
-  // "python.analysis.importFormat": "absolute", //prefer absolute import paths
-  // "python.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
-  // "python.analysis.exclude": [
-  //   "**/.venv/**",
-  //   "**/build/**",
-  //   "**/dist/**",
-  //   "**/__pycache__/**",
-  //   "**/.git/**"
-  // ],
+  // == new settings below ==
   // =====================================
   //
-  // vscode
-  "settingsSync.ignoredExtensions": [],
-  "settingsSync.ignoredSettings": [],
-  // =====================================
-  // github copilot
-  "github.copilot.enable": {
-    "*": true,
-    "plaintext": false,
-    "markdown": false,
-    "scminput": false,
-    "python": true
-  },
-  // =====================================
-  // end of vscode specific
-  // =====================================
-  //
-  // ============================
-  // ==== new settings below ====
-  // ============================
 }
