@@ -61,8 +61,14 @@ REM Create the temporary Python script (using ECHO commands)
     ECHO     print("ERROR: Check inputs or drive compatibility."^)
 )
 REM Execute the Python script and capture the output into a Batch variable
-FOR /F "delims=" %%L IN ('cmd /c ""%PYTHON_FOLDER%\python.exe" "%tmp_file_path_for_code_execution%" "%VENV_PATH%" "%PYTHON_FOLDER%" 2^>NUL"') DO (
-    SET "VENV_TO_PYTHON_REL_PATH=%%L"
+REM We use a temporary file to avoid complex quoting issues with FOR /F loops and parentheses in paths
+SET "output_tmp_file_path=%temp%\tmp_helper.txt"
+"%PYTHON_FOLDER%\python.exe" "%tmp_file_path_for_code_execution%" "%VENV_PATH%" "%PYTHON_FOLDER%" > "%output_tmp_file_path%" 2>NUL
+IF EXIST "%output_tmp_file_path%" (
+    FOR /F "usebackq delims=" %%L IN ("%output_tmp_file_path%") DO (
+        SET "VENV_TO_PYTHON_REL_PATH=%%L"
+    )
+    DEL "%output_tmp_file_path%" >NUL 2>&1
 )
 REM Delete the temporary script
 DEL "%tmp_file_path_for_code_execution%" >NUL 2>&1
@@ -241,7 +247,7 @@ if errorlevel 1 (
 > "%portable_scripts_path%\pip.bat" (
   echo :: force pip command to use python that works for portable virtual environments
   echo @echo off
-  echo "%%~dp0..\python.bat" -m pip %%*
+  echo "%%~dp0python.bat" -m pip %%*
 )
 :: check if created
 if not exist "%portable_scripts_path%\pip.bat" (
