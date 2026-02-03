@@ -56,13 +56,12 @@ REM doc.msi(~61 MB):
 if "%install_docs%"=="0" ( set "EXCLUDE_FILES=%EXCLUDE_FILES%|doc" )
 
 :: make path absolute
-CALL :make_absolute_path_if_relative "%TARGET_DIR%"
-SET "TARGET_DIR=%OUTPUT%"
+CALL :set_abs_path "%TARGET_DIR%" "TARGET_DIR"
 
 :: carefull with DOWNLOAD_FOLDER/PYTHON_FOLDER because it can/will be deleted
 :: add "py_dist" for delete safety
 set "PYTHON_FOLDER=%TARGET_DIR%\py_dist"
-set "DOWNLOAD_FOLDER=%PYTHON_FOLDER%\tmp"
+set "DOWNLOAD_FOLDER=%temp%\tmp_python_installation_files"
 
 :: find available python full version compatible with specified input and installation method via amd64 folders and .msi files
 set "FULL_VER="
@@ -124,8 +123,8 @@ if exist "%PYTHON_FOLDER%\" (
 :: === [END] delete old python folder ==================
 
 :: (re)create folders
-mkdir "%PYTHON_FOLDER%" > NUL
-mkdir "%DOWNLOAD_FOLDER%" > NUL
+mkdir "%PYTHON_FOLDER%" > NUL 2>&1
+mkdir "%DOWNLOAD_FOLDER%" > NUL 2>&1
 
 :: add .gitignore to folder to prevent git from syncing python distribution
 >> "%PYTHON_FOLDER%\.gitignore" (
@@ -137,7 +136,7 @@ mkdir "%DOWNLOAD_FOLDER%" > NUL
 powershell -NoLogo -NoProfile -Command ^
   "$base='%URL%';" ^
   "$out='%DOWNLOAD_FOLDER%';" ^
-  "$links=(Invoke-WebRequest -Uri $base).Links | Where-Object href -ne $null | ForEach-Object { $_.href } |" ^
+  "$links=(Invoke-WebRequest -Uri $base -UseBasicParsing).Links | Where-Object href -ne $null | ForEach-Object { $_.href } |" ^
   " Where-Object {$_ -notmatch '/$'} |" ^
   " ForEach-Object { if($_ -match '^https?://') {$_} else {$base + $_} } |" ^
   " Where-Object { -not ( ([IO.Path]::GetFileNameWithoutExtension( ([IO.Path]::GetFileNameWithoutExtension($_)) )) -match '(_d|_pdb)$' ) } |" ^
@@ -229,17 +228,22 @@ exit /b 0
 :: ==== Functions: ====
 :: ====================
 
-:: =================================================
-:: function that makes relative path (relative to current working directory) to :: absolute if not already. Works for empty path (relative) path:
+::::::::::::::::::::::::::::::::::::::::::::::::
+:: function that converts relative (to current working directory) path {arg1} to absolute and sets it to variable {arg2}. Works for empty path {arg1} which then sets the current working directory to variable {arg2}. Raises error if {arg2} is missing:
 :: Usage:
-::    call :make_absolute_path_if_relative "%some_path%"
-::    set "abs_path=%output%"
-:: =================================================
-:make_absolute_path_if_relative
+::    call :set_abs_path "%some_path%" "some_path"
+::::::::::::::::::::::::::::::::::::::::::::::::
+:set_abs_path
+    if "%~2"=="" (
+        echo [Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). 
+        echo Aborting. Press any key to exit.
+        pause > nul
+        exit /b 1
+    )
     if "%~1"=="" (
-        set "OUTPUT=%CD%"
+        set "%~2=%CD%"
     ) else (
-	    set "OUTPUT=%~f1"
+	    set "%~2=%~f1"
     )
 goto :EOF
 :: =================================================
