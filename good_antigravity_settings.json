@@ -1,0 +1,168 @@
+{
+  // =====================================
+  // general 
+  "breadcrumbs.enabled": true,
+  "files.autoSave": "afterDelay",
+  "window.newWindowProfile": "Default",
+  "workbench.list.mouseWheelScrollSensitivity": 4,
+  "security.workspace.trust.untrustedFiles": "open",
+  "typescript.tsserver.watchOptions": "vscode",
+  // =====================================
+  // terminal
+  "terminal.integrated.inheritEnv": true,
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  // =====================================
+  // explorer
+  "explorer.excludeGitIgnore": false,
+  "explorer.confirmDelete": false,
+  "files.exclude": { // not visible in explorer:
+    "**/__pycache__": true,
+    "**/node_modules": true,
+    "**/.venv": true,
+    "**/.gitattributes": true,
+    "**/LICENSE": true,
+    "**/*.lnk": true,
+    "**/*.lprof": true,
+    "**/*.pid": true,
+    "**/*.ome.tif": true,
+    "**/*.tiff": true,
+  },
+  // =====================================
+  // default formatters
+  "editor.formatOnSave": true,
+  "notebook.formatOnSave.enabled": true,
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "notebook.defaultFormatter": "charliermarsh.ruff",
+  // =====================================
+  // AI
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  // =====================================// git & diff
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  "git.autofetchPeriod": 180, //seconds
+  "git.confirmSync": false,
+  "git.openRepositoryInParentFolders": "always",
+  "git.postCommitCommand": "push",
+  "diffEditor.ignoreTrimWhitespace": true,
+  "diffEditor.maxComputationTime": 0,
+  // =====================================
+  // editor  
+  "editor.suggest.showStatusBar": true,
+  "editor.mouseWheelZoom": true,
+  "editor.insertSpaces": true,
+  "editor.wordWrap": "on",
+  "editor.hover.delay": 800,
+  "editor.mouseWheelScrollSensitivity": 3,
+  // =====================================
+  // notebooks
+  "notebook.compactView": true,
+  "notebook.lineNumbers": "on",
+  "notebook.stickyScroll.enabled": true,
+  "notebook.cellExecutionTimeVerbosity": "verbose",
+  "notebook.cellFocusIndicator": "border",
+  "notebook.dragAndDropEnabled": true,
+  "notebook.diff.overviewRuler": true,
+  "notebook.globalToolbarShowLabel": "dynamic",
+  "notebook.insertToolbarLocation": "hidden", // insert cell button
+  "notebook.output.scrolling": true,
+  "notebook.output.wordWrap": true,
+  "notebook.showCellStatusBar": "visible",
+  "notebook.variablesView": true,
+  "jupyter.widgetScriptSources": [
+    "jsdelivr.com",
+    "unpkg.com"
+  ], //needed for interactive
+  "jupyter.askForKernelRestart": false,
+  "[jupyter]": {
+    "editor.mouseWheelScrollSensitivity": 3.5
+  },
+  "notebook.cellToolbarLocation": {
+    "default": "hidden"
+  },
+  "notebook.editorOptionsCustomizations": {
+    "editor.tabSize": 4,
+    "editor.indentSize": 4,
+    "editor.insertSpaces": true
+  },
+  // =====================================
+  // python (some settings in other groups)
+  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.venvFolders": [
+    "Documents\\python_envs"
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.experiments.optOutFrom": [
+    "All"
+  ],
+  // =====================================
+  // Ruff formatter/linter settings (python)
+  "ruff.nativeServer": "on",
+  "ruff.configuration": "${env:USERPROFILE}\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
+  "ruff.configurationPreference": "filesystemFirst", //"filesystemFirst" "editorFirst"
+  "ruff.lint.enable": true,
+  "ruff.lint.preview": false,
+  "ruff.logLevel": "info",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.ruff": "explicit"
+  },
+  // =====================================
+  // pylance settings (python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems)
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.venv/**": true
+  },
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+  //
+  // =====================================
+  // Antigravity specific
+  // =====================================
+  //
+  "antigravity.marketplaceGalleryItemURL": "https://marketplace.visualstudio.com/items",
+  "antigravity.marketplaceExtensionGalleryServiceURL": "https://marketplace.visualstudio.com/_apis/public/gallery",
+  "python.languageServer": "None",
+  "basedpyright.analysis.typeCheckingMode": "basic", // Type checking
+  "basedpyright.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
+  "basedpyright.analysis.logLevel": "Trace",
+  "basedpyright.analysis.autoFormatStrings": true,
+  "basedpyright.analysis.inlayHints.functionReturnTypes": true,
+  "basedpyright.analysis.autoImportCompletions": false, //auto add imports
+  "basedpyright.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
+  "basedpyright.analysis.exclude": [
+    "**/.venv/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/__pycache__/**",
+    "**/.git/**"
+  ],
+  "basedpyright.analysis.extraPaths": [
+    "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
+  ],
+  "json.schemaDownload.enable": true,
+  "basedpyright.disableLanguageServices": true,
+  //
+  // =====================================
+  // end of Antigravity specific
+  // =====================================
+  //
+  // =====================================
+  // == new settings below ==
+  // =====================================
+  //
+}
