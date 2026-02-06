@@ -29,3 +29,5 @@ Das System kann den angegebenen Pfad nicht finden.
 Das System kann den angegebenen Pfad nicht finden.
 
 add prompt to recreate venv if already there or tell where is and to delete
+
+mention what settings where changed in vscode and where the file is. maybe prompt if it would change a setting that exists and is not correct alreafy
