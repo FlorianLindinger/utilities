@@ -27,3 +27,5 @@ Creating conda list C:\Users\Maxi Zwingt Mich\.conda\environments.txt
 Das System kann den angegebenen Pfad nicht finden.
  --Registering environment with conda: C:\Users\Maxi Zwingt Mich\Documents\python_envs\default_env
 Das System kann den angegebenen Pfad nicht finden.
+
+add prompt to recreate venv if already there or tell where is and to delete
