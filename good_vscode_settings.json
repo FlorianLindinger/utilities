@@ -34,6 +34,9 @@
   "[cpp]": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
   }, // if "C/C++" extension installed
+  "[c]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  }, // if "C/C++" extension installed
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
@@ -96,13 +99,13 @@
   // =====================================
   // python (some settings in other groups)
   "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
-  "python.venvFolders": [
-    "Documents\\python_envs"
-  ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "python.experiments.optOutFrom": [
     "All"
+  ],
+  "python.venvFolders": [
+    "Documents\\python_envs"
   ],
   // =====================================
   // autodocstring
@@ -111,7 +114,6 @@
   // =====================================
   // gitlens (if "gitlens" extension installed)
   "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
   // =====================================
   // Ruff formatter/linter settings (python)
   "ruff.nativeServer": "on",
@@ -135,18 +137,17 @@
     "strings": true
   },
   //
-  // =====================================
-  // vscode specific
-  // =====================================
+  //
   //
   // =====================================
   // pyrefly - type checker and LSP (alternative to pylance)
+  //
   "python.languageServer": "None",
   "python.pyrefly.displayTypeErrors": "force-on",
-  // =====================================
   //
   // =====================================
   // pylance - type checker and LSP (alternative to pyrefly)
+  //
   // "python.languageServer": "Pylance",
   // "python.analysis.generateWithTypeAnnotation": true,
   // "python.analysis.userFileIndexingLimit": -1, //2000
@@ -166,10 +167,15 @@
   //   "**/build/**",
   //   "**/dist/**",
   //   "**/__pycache__/**",
-  //   "**/.git/**"
+  //   "**/node_modules",
+  //   "**/.git/**",
+  //   "${env:USERPROFILE}/Documents/Repositories/*"
   // ],
-  // =====================================
+  // "python.analysis.extraPaths": [
+  //   "${env:USERPROFILE}/Documents/Repositories/python_code_repository"
+  // ],
   //
+  // =====================================
   // vscode
   "settingsSync.ignoredExtensions": [],
   "settingsSync.ignoredSettings": [],
@@ -182,8 +188,7 @@
     "scminput": false,
     "python": true
   },
-  // =====================================
-  // end of vscode specific
+  "chat.viewSessions.orientation": "stacked",
   // =====================================
   //
   // ============================
