@@ -123,3 +123,22 @@ endlocal
 exit /b 0
 
 :: =================================================
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+:: function that prints a line of '=' characters above and below the text {arg1}
+::::::::::::::::::::::::::::::::::::::::::::::::
+:print_wrap
+SETLOCAL Enabledelayedexpansion
+set "str=%~1"
+set "len=0"
+:len_loop_pw
+if not "!str:~%len%,1!"=="" (
+    set /a len+=1
+    goto :len_loop_pw
+)
+set "sep="
+for /L %%i in (1,1,%len%) do set "sep=!sep!="
+echo !sep!
+echo !str!
+echo !sep!
+ENDLOCAL & GOTO :EOF
