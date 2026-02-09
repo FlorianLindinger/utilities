@@ -21,3 +21,13 @@ make at least installing the packages default if already present
 
 
 add "install package" launcher to env folder and shortcut to it to desktop
+
+fix: does it matter? will conda delete folder after installation?
+Creating conda list C:\Users\Maxi Zwingt Mich\.conda\environments.txt
+Das System kann den angegebenen Pfad nicht finden.
+ --Registering environment with conda: C:\Users\Maxi Zwingt Mich\Documents\python_envs\default_env
+Das System kann den angegebenen Pfad nicht finden.
+
+add prompt to recreate venv if already there or tell where is and to delete
+
+mention what settings where changed in vscode and where the file is. maybe prompt if it would change a setting that exists and is not correct alreafy
