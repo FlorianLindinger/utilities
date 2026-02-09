@@ -3,16 +3,27 @@
 # =================================================
 
 # files to check/correct
-include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"] 
+include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"]
 # files to exclude from check/correct
-exclude = [".git", ".mypy_cache", ".ruff_cache", "__pycache__", "*.build", "*.dist"] 
+exclude = [
+  ".git",
+  ".mypy_cache",
+  ".ruff_cache",
+  "__pycache__",
+  "**/*.build",
+  "**/*.dist",
+]
 
 # max line length before wrapping
 line-length = 120
 
-# file specific rule ignores
+# file specific rule ignores (keep above "[lint]"):
 [lint.per-file-ignores]
-"*.ipynb" = ["F403", "F405"] # allow * import in notebooks
+"**/*.ipynb" = [
+  "F403",  # allow * import in notebooks
+  "F405",  # allow * import in notebooks
+  "E703",  # allow for useless semicolons
+]
 
 [lint]
 # Rule families to enable:
@@ -54,11 +65,11 @@ select = [
   "W",     # minor style issues
   "YTT",   # Catch obsolete sys.version comparisons & old idioms
 
-# Temporarily disable the following rule families:
-# "PT",      # good patterns in Pytest tests
+  # Temporarily disable the following rule families:
+  # "PT",      # good patterns in Pytest tests
 ]
 
-# Ignore specific rules:
+# general rule ignores:
 ignore = [
   "B905",    # allow for zip without explicit strict setting
   "BLE001",  # don't replace "try ... except: pass" #3
@@ -140,5 +151,5 @@ ignore = [
   "TRY301",  # allow for not encapsulated raise in try-except
   "UP009",   # allow python file encoding declaration
   "UP028",   # don't replace for+yield with "yield from"
-  "W293"     # allow whitespace in empty line (for indented multiline str)
+  "W293",    # allow whitespace in empty line (for indented multiline str)
 ]
