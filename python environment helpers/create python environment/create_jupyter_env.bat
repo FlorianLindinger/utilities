@@ -6,7 +6,7 @@
 
 SET "def_env_path=%USERPROFILE%\Documents\python_envs\jupyter_env"
 SET "def_folder=%USERPROFILE%\Documents\python_notebooks"
-SET "def_packages=ipympl numpy matplotlib scipy ipywidgets pyqt5 pandas pillow pyyaml tqdm openpyxl pyarrow html5lib pyserial tifffile py7zr numba pyautogui nptdms pywinauto opencv-python scipy-stubs cupy-cuda12x nvmath-python"
+SET "def_packages=ipympl numpy matplotlib scipy ipywidgets pyqt5 pandas pillow pyyaml tqdm openpyxl pyarrow html5lib pyserial tifffile py7zr numba pyautogui nptdms pywinauto opencv-python scipy-stubs cupy-cuda12x nvmath-python pyside6 winsound pywin32 nuitka"
 SET "def_version=3.13"
 
 :: #############################
