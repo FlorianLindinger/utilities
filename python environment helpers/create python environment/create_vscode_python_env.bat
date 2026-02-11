@@ -6,7 +6,7 @@ CALL :process_args || goto :fail
 :: ########################
 
 SET "def_version=3"
-SET "def_packages=ipykernel ipympl numpy matplotlib scipy ipywidgets pyqt5 pandas pillow pyyaml tqdm openpyxl pyarrow html5lib pyserial tifffile py7zr numba pyautogui nptdms pywinauto opencv-python scipy-stubs cupy-cuda12x nvmath-python"
+SET "def_packages=ipykernel ipympl numpy matplotlib scipy ipywidgets pyqt5 pandas pillow pyyaml tqdm openpyxl pyarrow html5lib pyserial tifffile py7zr numba pyautogui nptdms pywinauto opencv-python scipy-stubs cupy-cuda12x nvmath-python pyside6 winsound pywin32 nuitka"
 
 :: #############################
 :: ### Execution starts here ###
