@@ -59,6 +59,8 @@
   "diffEditor.maxComputationTime": 0,
   // =====================================
   // editor  
+  "editor.showFoldingControls": "always",
+  "editor.foldingStrategy":"auto",
   "editor.suggest.showStatusBar": true,
   "editor.mouseWheelZoom": true,
   "editor.insertSpaces": true,
@@ -66,8 +68,6 @@
   "editor.hover.delay": 800,
   "editor.mouseWheelScrollSensitivity": 3,
   "editor.folding": true,
-  "editor.showFoldingControls": "always",
-  "editor.foldingStrategy": "indentation",
   // =====================================
   // notebooks
   "notebook.compactView": true,
@@ -101,7 +101,7 @@
   },
   // =====================================
   // python (some settings in other groups)
-  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "~\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
   "python.venvFolders": [
     "Documents\\python_envs"
   ],
@@ -113,7 +113,7 @@
   // =====================================
   // Ruff formatter/linter settings (python)
   "ruff.nativeServer": "on",
-  "ruff.configuration": "${env:USERPROFILE}\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
+  "ruff.configuration": "~\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
   "ruff.configurationPreference": "filesystemFirst", //"filesystemFirst" "editorFirst"
   "ruff.lint.enable": true,
   "ruff.lint.preview": false,
@@ -122,16 +122,21 @@
     "source.organizeImports.ruff": "explicit"
   },
   // =====================================
+  // pyrefly - type checker and LSP (alternative to pylance)
+  //
+  "python.pyrefly.displayTypeErrors": "force-on",
+  //
+  // =====================================
   // pylance settings (python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems)
-  "files.watcherExclude": {
-    "**/node_modules/**": true,
-    "**/.venv/**": true
-  },
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": true,
-    "strings": true
-  },
+  // "files.watcherExclude": {
+  //   "**/node_modules/**": true,
+  //   "**/.venv/**": true
+  // },
+  // "editor.quickSuggestions": {
+  //   "other": true,
+  //   "comments": true,
+  //   "strings": true
+  // },
   //
   // =====================================
   // Antigravity specific
@@ -155,7 +160,7 @@
     "**/.git/**"
   ],
   "basedpyright.analysis.extraPaths": [
-    "${env:USERPROFILE}\\Documents\\Repositories\\python_code_repository"
+    "~\\Documents\\Repositories\\python_code_repository"
   ],
   "json.schemaDownload.enable": true,
   "basedpyright.disableLanguageServices": true,
