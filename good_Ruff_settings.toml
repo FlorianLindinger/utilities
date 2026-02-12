@@ -2,6 +2,11 @@
 # Ruff (python linter/formatter) configuration file
 # =================================================
 
+# (Global settings go at the top)
+# Explicitly set the cache to a relative folder. 
+# This stops Ruff from searching for %USERPROFILE% to store its cache.
+cache-dir = ".ruff_cache"
+
 # files to check/correct
 include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"]
 # files to exclude from check/correct
@@ -81,9 +86,11 @@ ignore = [
   "D107",    # allow missing docstring in public __init__
   "D200",    # allow one-liner docstrings on multiple lines
   "D202",    # allow blank lines after docstring
+  "D203",    # allow for lack of blank line before class docstring
   "D204",    # allow  blank line after class docstring
   "D205",    # allow 1 blank line after summary in docstring
   "D209",    # allow docstring closing quotes on same line
+  "D211",    # allow blank line before class docstring
   "D212",    # allow docstring to start on second line
   "D213",    # allow multi-line docstring summary to start at the second line
   "D400",    # allow no period at end of first line
