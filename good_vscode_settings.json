@@ -59,6 +59,8 @@
   "diffEditor.maxComputationTime": 0,
   // =====================================
   // editor  
+  "editor.showFoldingControls": "always",
+  "editor.foldingStrategy":"auto",
   "editor.suggest.showStatusBar": true,
   "editor.mouseWheelZoom": true,
   "editor.insertSpaces": true,
@@ -98,7 +100,7 @@
   },
   // =====================================
   // python (some settings in other groups)
-  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "~\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "python.experiments.optOutFrom": [
@@ -117,7 +119,7 @@
   // =====================================
   // Ruff formatter/linter settings (python)
   "ruff.nativeServer": "on",
-  "ruff.configuration": "${env:USERPROFILE}\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
+  "ruff.configuration": "~\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
   "ruff.configurationPreference": "filesystemFirst", //"filesystemFirst" "editorFirst"
   "ruff.lint.enable": true,
   "ruff.lint.preview": false,
@@ -169,10 +171,10 @@
   //   "**/__pycache__/**",
   //   "**/node_modules",
   //   "**/.git/**",
-  //   "${env:USERPROFILE}/Documents/Repositories/*"
+  //   "~/Documents/Repositories/*"
   // ],
   // "python.analysis.extraPaths": [
-  //   "${env:USERPROFILE}/Documents/Repositories/python_code_repository"
+  //   "~/Documents/Repositories/python_code_repository"
   // ],
   //
   // =====================================
