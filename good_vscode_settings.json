@@ -60,7 +60,7 @@
   // =====================================
   // editor  
   "editor.showFoldingControls": "always",
-  "editor.foldingStrategy":"auto",
+  "editor.foldingStrategy": "auto",
   "editor.suggest.showStatusBar": true,
   "editor.mouseWheelZoom": true,
   "editor.insertSpaces": true,
@@ -101,13 +101,13 @@
   // =====================================
   // python (some settings in other groups)
   "python.defaultInterpreterPath": "~\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.venvFolders": [
+    "Documents\\python_envs"
+  ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "python.experiments.optOutFrom": [
     "All"
-  ],
-  "python.venvFolders": [
-    "Documents\\python_envs"
   ],
   // =====================================
   // autodocstring
