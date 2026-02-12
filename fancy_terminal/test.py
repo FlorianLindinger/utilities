@@ -1,7 +1,6 @@
 import time
 
 while True:
-    msg=input()
+    msg = input()
     time.sleep(2)
     print(msg)
-
