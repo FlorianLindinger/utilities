@@ -59,8 +59,6 @@
   "diffEditor.maxComputationTime": 0,
   // =====================================
   // editor  
-  "editor.showFoldingControls": "always",
-  "editor.foldingStrategy":"auto",
   "editor.suggest.showStatusBar": true,
   "editor.mouseWheelZoom": true,
   "editor.insertSpaces": true,
@@ -68,6 +66,8 @@
   "editor.hover.delay": 800,
   "editor.mouseWheelScrollSensitivity": 3,
   "editor.folding": true,
+  "editor.showFoldingControls": "always",
+  "editor.foldingStrategy": "indentation",
   // =====================================
   // notebooks
   "notebook.compactView": true,
@@ -122,12 +122,13 @@
     "source.organizeImports.ruff": "explicit"
   },
   // =====================================
-  // pyrefly - type checker and LSP (alternative to pylance)
+  // pyrefly - type checker and LSP (alternative to basedpyright)
   //
   "python.pyrefly.displayTypeErrors": "force-on",
   //
   // =====================================
-  // pylance settings (python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems)
+  // basedpyright (python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems)(alternative to pyrefly)
+  //
   // "files.watcherExclude": {
   //   "**/node_modules/**": true,
   //   "**/.venv/**": true
@@ -137,6 +138,24 @@
   //   "comments": true,
   //   "strings": true
   // },
+  // "basedpyright.disableLanguageServices": true,
+  // "basedpyright.analysis.typeCheckingMode": "basic", // Type checking
+  // "basedpyright.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
+  // "basedpyright.analysis.logLevel": "Trace",
+  // "basedpyright.analysis.autoFormatStrings": true,
+  // "basedpyright.analysis.inlayHints.functionReturnTypes": true,
+  // "basedpyright.analysis.autoImportCompletions": false, //auto add imports
+  // "basedpyright.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
+  // "basedpyright.analysis.extraPaths": [
+  //   "~\\Documents\\Repositories\\python_code_repository"
+  // ],
+  // "basedpyright.analysis.exclude": [
+  //   "**/.venv/**",
+  //   "**/build/**",
+  //   "**/dist/**",
+  //   "**/__pycache__/**",
+  //   "**/.git/**"
+  // ],
   //
   // =====================================
   // Antigravity specific
@@ -145,25 +164,7 @@
   "antigravity.marketplaceGalleryItemURL": "https://marketplace.visualstudio.com/items",
   "antigravity.marketplaceExtensionGalleryServiceURL": "https://marketplace.visualstudio.com/_apis/public/gallery",
   "python.languageServer": "None",
-  "basedpyright.analysis.typeCheckingMode": "basic", // Type checking
-  "basedpyright.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
-  "basedpyright.analysis.logLevel": "Trace",
-  "basedpyright.analysis.autoFormatStrings": true,
-  "basedpyright.analysis.inlayHints.functionReturnTypes": true,
-  "basedpyright.analysis.autoImportCompletions": false, //auto add imports
-  "basedpyright.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
-  "basedpyright.analysis.exclude": [
-    "**/.venv/**",
-    "**/build/**",
-    "**/dist/**",
-    "**/__pycache__/**",
-    "**/.git/**"
-  ],
-  "basedpyright.analysis.extraPaths": [
-    "~\\Documents\\Repositories\\python_code_repository"
-  ],
   "json.schemaDownload.enable": true,
-  "basedpyright.disableLanguageServices": true,
   //
   // =====================================
   // =====================================
