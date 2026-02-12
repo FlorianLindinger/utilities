@@ -3,6 +3,8 @@
 #todo
 # #=====================================
 
+add timestamps button and or setting. maybe add just all to a setting  submenu. also the script os no acciendtal open. alllow for "allow minimize button". make submenu stuff pinable to top bar
+
 # addd scrollbar when too many lines
 
 #now again resize from top does not work; now maximizing over taskbar is again wrong. was broken by attempt to undid last changes becaseu they broke remembering position beofre snap; 
