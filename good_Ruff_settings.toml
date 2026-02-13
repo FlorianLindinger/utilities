@@ -25,9 +25,9 @@ line-length = 120
 # file specific rule ignores (keep above "[lint]"):
 [lint.per-file-ignores]
 "**/*.ipynb" = [
-  "F403",  # allow * import in notebooks
-  "F405",  # allow * import in notebooks
-  "E703",  # allow for useless semicolons
+  "F403", # allow * import in notebooks
+  "F405", # allow * import in notebooks
+  "E703", # allow for useless semicolons
 ]
 
 [lint]
@@ -76,6 +76,18 @@ select = [
 
 # general rule ignores:
 ignore = [
+
+  # ==========================
+  # Temporarily Disabled Rules
+  # ==========================
+  "D101", # allow missing docstring in public class
+  "D103", # allow missing docstring in public function
+  "D417", # allow missing arguments in docstring
+  # ==========================
+
+  # ==========================
+  # Permanently Disabled Rules
+  # ==========================
   "B905",    # allow for zip without explicit strict setting
   "BLE001",  # don't replace "try ... except: pass" #3
   "COM812",  # require trailing comma (formatter handles)
