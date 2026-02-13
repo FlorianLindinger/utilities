@@ -12,3 +12,4 @@ exe_build
 *.gif
 *.bmp
 *.ico
+**\__pycache__
