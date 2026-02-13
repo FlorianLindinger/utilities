@@ -1,7 +1,89 @@
+# #=====================================
+#current problems
+# #=====================================
+
+when i drag away from snapped to edge window it does not restore prvious shape
+
+when attempting to resize from top it changes to moving. i guess all direction when starting form top bar
+
+mkae some kind of indication that it will snap to the edges
+
+clicking the script name does not work
+
+it crashes when i engage wiht that script:
+
+"""
+    """
+    Simple test script for the PySide6 terminal emulator.
+    Tests basic input/output functionality.
+    """
+
+    import sys
+    import time
+
+    print("=" * 50)
+    print("PySide6 Terminal Test Script")
+    print("=" * 50)
+    print()
+
+    # Test stdout
+    print("This is standard output (stdout)")
+    print("Testing multiple lines...")
+    for i in range(5):
+        print(f"Line {i + 1}")
+        time.sleep(0.2)
+
+    print()
+
+    # Test stderr
+    print("Now testing stderr output...", file=sys.stderr)
+    sys.stderr.write("This is an error message!\n")
+    sys.stderr.flush()
+
+    print()
+
+    # Test input
+    name = input("What is your name? ")
+    print(f"Hello, {name}!")
+
+    age = input("How old are you? ")
+    print(f"You are {age} years old.")
+
+    print()
+
+    # Test long output
+    print("Testing long output (scroll test):")
+    for i in range(20):
+        print(f"Long line {i + 1}: " + "x" * 80)
+
+    print()
+    print("Test completed successfully!")
+    print("You can now test the terminal features:")
+    print("  - Try typing commands")
+    print("  - Use Up/Down arrows for history")
+    print("  - Try Ctrl+F to search")
+    print("  - Try Ctrl+Scroll to zoom")
+    print("  - Type 'exit' to close")
+    print()
+
+    # Keep running for interactive testing
+    while True:
+        try:
+            user_input = input(">>> ")
+            if user_input.lower() == "quit":
+                break
+            print(f"You entered: {user_input}")
+        except EOFError:
+            break
+
+    print("Goodbye!")
+"""
 
 # #=====================================
 #todo
 # #=====================================
+
+add to submenu the setting to change colors
 
 add timestamps button and or setting. maybe add just all to a setting  submenu. also the script os no acciendtal open. alllow for "allow minimize button". make submenu stuff pinable to top bar
 
