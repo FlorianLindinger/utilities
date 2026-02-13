@@ -1,863 +1,694 @@
 """
-PySide6 Terminal Emulator
-=========================
+PySide6 Fancy Terminal
+======================
 
-A modern, feature-rich terminal emulator built with PySide6.
-Designed to run Python scripts with a sleek, customizable UI.
+A Qt-native terminal emulator for running Python scripts with interactive input.
+This version keeps the behavior of the Tkinter terminal while using better Qt
+primitives instead of Tk/Win32 workarounds.
 
 Usage:
     python pyside6_terminal.py <script_path> [options] [-- script_args]
-
-Arguments:
-    script_path       Path to the Python script to execute.
-    script_args       Arguments to pass to the target script.
-
-Options:
-    --title TITLE     Set the window title (default: script filename).
-    --icon ICON_PATH  Set the window/tray icon (default: internal icon).
-    --on-top          Keep window always on top.
-
-Example:
-    python pyside6_terminal.py my_script.py --title "My App" --on-top -- --verbose
 """
 
+from __future__ import annotations
+
 import argparse
-import json
-import os
-import queue
-import subprocess
 import sys
-import threading
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import (
-    QPoint,
-    QRect,
-    QSettings,
-    QSize,
-    Qt,
-    QTimer,
-    Signal,
-    Slot,
-)
-from PySide6.QtGui import (
-    QAction,
-    QColor,
-    QFont,
-    QIcon,
-    QKeySequence,
-    QPalette,
-    QSyntaxHighlighter,
-    QTextCharFormat,
-    QTextCursor,
-    QTextDocument,
-)
-from PySide6.QtWidgets import (
-    QApplication,
-    QFileDialog,
-    QFrame,
-    QHBoxLayout,
-    QInputDialog,
-    QLabel,
-    QLineEdit,
-    QMainWindow,
-    QMenu,
-    QMessageBox,
-    QPlainTextEdit,
-    QPushButton,
-    QSizeGrip,
-    QSystemTrayIcon,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6 import QtCore, QtGui, QtWidgets
 
-# ==============================================================================
-# Syntax Highlighter for Terminal Output
-# ==============================================================================
+DEFAULT_COLORS = {
+    "background": QtGui.QColor("#1e1e1e"),
+    "input_background": QtGui.QColor("#252526"),
+    "foreground": QtGui.QColor("#d4d4d4"),
+    "prompt": QtGui.QColor("#00FF00"),
+    "stdin": QtGui.QColor("#ce9178"),
+    "stdout": QtGui.QColor("#d4d4d4"),
+    "stderr": QtGui.QColor("#f44747"),
+    "system": QtGui.QColor("#569cd6"),
+}
 
 
-class TerminalHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for different output types"""
-
-    def __init__(self, parent: QTextDocument, color_scheme: dict):
-        super().__init__(parent)
-        self.color_scheme = color_scheme
-        self.formats = {}
-        self.update_formats()
-
-    def update_formats(self):
-        """Update text formats based on color scheme"""
-        self.formats = {
-            "stderr": self._create_format(self.color_scheme["stderr"]),
-            "system": self._create_format(self.color_scheme["system"]),
-            "stdin": self._create_format(self.color_scheme["stdin"]),
-            "stdout": self._create_format(self.color_scheme["stdout"]),
-        }
-
-    def _create_format(self, color: str) -> QTextCharFormat:
-        """Create a text format with the given color"""
-        fmt = QTextCharFormat()
-        fmt.setForeground(QColor(color))
-        return fmt
-
-    def highlightBlock(self, text: str):
-        """Apply highlighting to a block of text"""
-        # This is called automatically by Qt
-        # We'll handle formatting through direct text insertion instead
-        pass
+def safe_open(path: Path) -> bool:
+    """Open a local path with the operating system default handler."""
+    return QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(path)))
 
 
-# ==============================================================================
-# Custom Title Bar
-# ==============================================================================
+class HistoryLineEdit(QtWidgets.QLineEdit):
+    """QLineEdit that emits history navigation requests on Up/Down."""
 
+    history_requested = QtCore.Signal(int)
 
-class CustomTitleBar(QWidget):
-    """Custom title bar with window controls"""
-
-    minimize_clicked = Signal()
-    maximize_clicked = Signal()
-    close_clicked = Signal()
-    tray_clicked = Signal()
-
-    def __init__(self, parent: QWidget, title: str, script_path: Optional[str] = None):
-        super().__init__(parent)
-        self.parent_window = parent
-        self.script_path = script_path
-        self.drag_position = QPoint()
-        self.is_maximized = False
-
-        self.setFixedHeight(35)
-        self.setStyleSheet("""
-            CustomTitleBar {
-                background-color: #2d2d2d;
-            }
-        """)
-
-        # Main layout
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 0, 0, 0)
-        layout.setSpacing(5)
-
-        # Title label
-        self.title_label = QLabel(title)
-        self.title_label.setStyleSheet("""
-            QLabel {
-                color: #d4d4d4;
-                font-size: 10pt;
-                font-family: 'Segoe UI';
-            }
-            QLabel:hover {
-                background-color: #0078d4;
-            }
-        """)
-        if script_path:
-            self.title_label.setCursor(Qt.PointingHandCursor)
-            self.title_label.mousePressEvent = self.open_script_folder
-        layout.addWidget(self.title_label)
-
-        layout.addStretch()
-
-        # Settings buttons
-        self.settings_frame = QWidget()
-        settings_layout = QHBoxLayout(self.settings_frame)
-        settings_layout.setContentsMargins(0, 0, 0, 0)
-        settings_layout.setSpacing(2)
-
-        # Toggle buttons
-        self.top_btn = self._create_toggle_button("📌", "Toggle Always on Top")
-        self.highlight_btn = self._create_toggle_button("🔔", "Toggle Highlight on Print")
-        self.confirm_btn = self._create_toggle_button("🔒", "Toggle Confirm on Close")
-        self.print_btn = self._create_toggle_button("💬", "Toggle Command Printing")
-        self.print_btn.setProperty("active", True)  # Default on
-
-        # Zoom buttons
-        self.zoom_out_btn = self._create_button("-", "Decrease Font Size", width=30)
-        self.zoom_in_btn = self._create_button("+", "Increase Font Size", width=30)
-
-        # Clear button
-        self.clear_btn = self._create_button("🗑", "Clear Output")
-
-        # Search button
-        self.search_btn = self._create_button("🔍", "Search Output (Ctrl+F)")
-
-        for btn in [
-            self.top_btn,
-            self.highlight_btn,
-            self.confirm_btn,
-            self.print_btn,
-            self.zoom_out_btn,
-            self.zoom_in_btn,
-            self.clear_btn,
-            self.search_btn,
-        ]:
-            settings_layout.addWidget(btn)
-
-        layout.addWidget(self.settings_frame)
-
-        # Window control buttons
-        self.tray_btn = self._create_button("▼", "Minimize to System Tray", hover_color="#0078d4")
-        self.min_btn = self._create_button("―", "Minimize", hover_color="#3e3e42")
-        self.max_btn = self._create_button("□", "Maximize", hover_color="#3e3e42", font_size=12)
-        self.close_btn = self._create_button("✕", "Close", hover_color="#e81123", width=50)
-
-        layout.addWidget(self.tray_btn)
-        layout.addWidget(self.min_btn)
-        layout.addWidget(self.max_btn)
-        layout.addWidget(self.close_btn)
-
-        # Connect signals
-        self.tray_btn.clicked.connect(self.tray_clicked.emit)
-        self.min_btn.clicked.connect(self.minimize_clicked.emit)
-        self.max_btn.clicked.connect(self.maximize_clicked.emit)
-        self.close_btn.clicked.connect(self.close_clicked.emit)
-
-    def _create_button(
-        self, text: str, tooltip: str, hover_color: str = "#0078d4", width: int = 40, font_size: int = 10
-    ) -> QPushButton:
-        """Create a styled button"""
-        btn = QPushButton(text)
-        btn.setFixedSize(width, 30)
-        btn.setToolTip(tooltip)
-        btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: #2d2d2d;
-                color: #d4d4d4;
-                border: none;
-                font-size: {font_size}pt;
-                font-family: 'Segoe UI';
-            }}
-            QPushButton:hover {{
-                background-color: {hover_color};
-            }}
-        """)
-        return btn
-
-    def _create_toggle_button(self, text: str, tooltip: str) -> QPushButton:
-        """Create a toggle button"""
-        btn = self._create_button(text, tooltip)
-        btn.setCheckable(True)
-        btn.setProperty("active", False)
-        btn.toggled.connect(lambda checked: self._update_toggle_style(btn, checked))
-        return btn
-
-    def _update_toggle_style(self, button: QPushButton, active: bool):
-        """Update toggle button style"""
-        button.setProperty("active", active)
-        color = "#00FF00" if active else "#d4d4d4"
-        button.setStyleSheet(
-            button.styleSheet()
-            .replace("color: #d4d4d4;", f"color: {color};")
-            .replace("color: #00FF00;", f"color: {color};")
-        )
-
-    def open_script_folder(self, event):
-        """Open the folder containing the script"""
-        if self.script_path:
-            folder_path = os.path.dirname(os.path.abspath(self.script_path))
-            if sys.platform.startswith("win"):
-                os.startfile(folder_path)
-            elif sys.platform == "darwin":
-                subprocess.run(["open", folder_path], check=False)
-            else:
-                subprocess.run(["xdg-open", folder_path], check=False)
-
-    def mousePressEvent(self, event):
-        """Handle mouse press for dragging"""
-        if event.button() == Qt.LeftButton:
-            self.drag_position = event.globalPosition().toPoint() - self.parent_window.frameGeometry().topLeft()
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        if event.key() == QtCore.Qt.Key_Up:
+            self.history_requested.emit(-1)
             event.accept()
-
-    def mouseMoveEvent(self, event):
-        """Handle mouse move for dragging"""
-        if event.buttons() == Qt.LeftButton:
-            # If maximized, restore before dragging
-            if self.parent_window.isMaximized():
-                self.parent_window.showNormal()
-                # Adjust drag position for restored window
-                self.drag_position = QPoint(self.parent_window.width() // 2, 10)
-
-            self.parent_window.move(event.globalPosition().toPoint() - self.drag_position)
+            return
+        if event.key() == QtCore.Qt.Key_Down:
+            self.history_requested.emit(1)
             event.accept()
-
-    def mouseDoubleClickEvent(self, event):
-        """Handle double-click to maximize/restore"""
-        if event.button() == Qt.LeftButton:
-            self.maximize_clicked.emit()
-            event.accept()
+            return
+        super().keyPressEvent(event)
 
 
-# ==============================================================================
-# Main Terminal Widget
-# ==============================================================================
-
-
-class PySide6Terminal(QMainWindow):
-    """Main terminal emulator window"""
-
-    output_ready = Signal(str, str)  # text, tag
+class TerminalWindow(QtWidgets.QMainWindow):
+    """Main window for the PySide6 terminal."""
 
     def __init__(
         self,
-        target_script: str,
-        terminal_name: Optional[str] = None,
-        icon_path: Optional[str] = None,
-        on_top: bool = False,
-        script_args: tuple = (),
-    ):
+        script_path: Path,
+        script_args: list[str],
+        title: str | None = None,
+        icon_path: Path | None = None,
+        start_on_top: bool = False,
+    ) -> None:
         super().__init__()
-
-        self.target_script = target_script
+        self.script_path = script_path
         self.script_args = script_args
-        self.process: Optional[subprocess.Popen] = None
-        self.output_queue = queue.Queue()
-        self.history = []
+        self.icon_path = icon_path
+
+        self.settings = QtCore.QSettings("FancyTerminal", "PySide6Terminal")
+        self.font_size = self.settings.value("font_size", 11, type=int)
+        self.always_on_top = self.settings.value("always_on_top", start_on_top, type=bool)
+        self.highlight_on_print = self.settings.value("highlight_on_print", False, type=bool)
+        self.confirm_on_close = self.settings.value("confirm_on_close", False, type=bool)
+        self.show_command_printing = self.settings.value("show_command_printing", True, type=bool)
+
+        self.history: list[str] = []
         self.history_index = 0
 
-        # Settings
-        self.settings = QSettings("FancyTerminal", "PySide6Terminal")
-        self.always_on_top = on_top
-        self.highlight_on_print = False
-        self.confirm_on_close = False
-        self.show_command_printing = True
-        self.auto_scroll = True
+        self.main_process: QtCore.QProcess | None = None
+        self.shell_processes: set[QtCore.QProcess] = set()
+        self.tray_icon: QtWidgets.QSystemTrayIcon | None = None
+        self.search_bar: QtWidgets.QWidget | None = None
+        self.output: QtWidgets.QTextEdit | None = None
+        self.input_line: HistoryLineEdit | None = None
 
-        # Color scheme
-        self.color_scheme = {
-            "bg": "#1e1e1e",
-            "fg": "#d4d4d4",
-            "cursor": "#ffffff",
-            "select_bg": "#264f78",
-            "prompt": "#00ff00",
-            "stdin": "#ce9178",
-            "stdout": "#d4d4d4",
-            "stderr": "#f44747",
-            "system": "#569cd6",
-            "input_bg": "#2d2d2d",
-        }
-
-        # Window setup
-        if terminal_name is None:
-            terminal_name = os.path.basename(target_script)
-        self.setWindowTitle(terminal_name)
+        window_title = title or script_path.name
+        self.setWindowTitle(window_title)
+        self.setMinimumSize(700, 420)
         self.resize(900, 600)
 
-        # Remove default title bar
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowSystemMenuHint)
+        self.apply_theme()
+        self.apply_icon()
+        self.build_ui()
+        self.install_shortcuts()
+        self.setup_tray()
+        self.restore_window_state()
+        self.set_always_on_top(self.always_on_top)
+        self.start_main_process()
 
-        # Icon
-        self.icon_path = icon_path
-        if icon_path and os.path.exists(icon_path):
-            self.setWindowIcon(QIcon(icon_path))
-
-        # Always on top
-        if on_top:
-            self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
-
-        # Central widget
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
-        # Custom title bar
-        self.title_bar = CustomTitleBar(self, terminal_name, target_script)
-        self.title_bar.minimize_clicked.connect(self.showMinimized)
-        self.title_bar.maximize_clicked.connect(self.toggle_maximize)
-        self.title_bar.close_clicked.connect(self.close)
-        self.title_bar.tray_clicked.connect(self.minimize_to_tray)
-        self.title_bar.top_btn.toggled.connect(self.set_always_on_top)
-        self.title_bar.highlight_btn.toggled.connect(self.set_highlight_on_print)
-        self.title_bar.confirm_btn.toggled.connect(self.set_confirm_on_close)
-        self.title_bar.print_btn.toggled.connect(self.set_show_command_printing)
-        self.title_bar.zoom_in_btn.clicked.connect(self.zoom_in)
-        self.title_bar.zoom_out_btn.clicked.connect(self.zoom_out)
-        self.title_bar.clear_btn.clicked.connect(self.clear_output)
-        self.title_bar.search_btn.clicked.connect(self.show_search_dialog)
-        main_layout.addWidget(self.title_bar)
-
-        # Output area
-        self.output_text = QPlainTextEdit()
-        self.output_text.setReadOnly(True)
-        self.output_text.setStyleSheet(f"""
-            QPlainTextEdit {{
-                background-color: {self.color_scheme["bg"]};
-                color: {self.color_scheme["fg"]};
+    # ------------------------------------------------------------------ setup
+    def apply_theme(self) -> None:
+        self.setStyleSheet(
+            """
+            QMainWindow {
+                background: #1e1e1e;
+            }
+            QWidget {
+                color: #d4d4d4;
+            }
+            QToolBar {
+                background: #2d2d2d;
                 border: none;
-                font-family: 'Consolas', 'Courier New', monospace;
-                font-size: 11pt;
-            }}
-        """)
-        self.output_text.setWordWrapMode(QTextCursor.WordWrap)
-        main_layout.addWidget(self.output_text)
-
-        # Input area
-        input_frame = QFrame()
-        input_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.color_scheme["input_bg"]};
+                spacing: 4px;
+                padding: 4px;
+            }
+            QToolButton {
+                background: transparent;
+                border: 1px solid transparent;
+                border-radius: 4px;
+                padding: 3px 7px;
+            }
+            QToolButton:hover {
+                background: #3e3e42;
+            }
+            QToolButton:checked {
+                color: #00ff00;
+                border-color: #00ff00;
+            }
+            QTextEdit {
+                background: #1e1e1e;
+                border: none;
+                padding: 8px;
+            }
+            QFrame#InputRow {
+                background: #252526;
                 border-top: 1px solid #3e3e42;
-            }}
-        """)
-        input_layout = QHBoxLayout(input_frame)
-        input_layout.setContentsMargins(10, 5, 10, 5)
+            }
+            QLineEdit {
+                background: #252526;
+                border: 1px solid #3e3e42;
+                border-radius: 4px;
+                padding: 5px 7px;
+                color: #ffffff;
+            }
+            """
+        )
 
-        # Prompt label
-        self.prompt_label = QLabel(">>> ")
-        self.prompt_label.setStyleSheet(f"""
-            QLabel {{
-                color: {self.color_scheme["prompt"]};
-                font-family: 'Consolas', 'Courier New', monospace;
-                font-size: 11pt;
-                font-weight: bold;
-            }}
-        """)
+    def apply_icon(self) -> None:
+        icon: QtGui.QIcon | None = None
+        if self.icon_path and self.icon_path.exists():
+            icon = QtGui.QIcon(str(self.icon_path))
+        else:
+            fallback = Path(__file__).with_name("fallback_terminal_icon.ico")
+            if fallback.exists():
+                icon = QtGui.QIcon(str(fallback))
+        if icon is not None and not icon.isNull():
+            self.setWindowIcon(icon)
+            app = QtWidgets.QApplication.instance()
+            if app:
+                app.setWindowIcon(icon)
+
+    def build_ui(self) -> None:
+        self.toolbar = QtWidgets.QToolBar("Controls", self)
+        self.toolbar.setMovable(False)
+        self.addToolBar(QtCore.Qt.TopToolBarArea, self.toolbar)
+
+        self.action_open_folder = self.toolbar.addAction("Open Folder")
+        self.action_open_folder.setToolTip("Open the script folder")
+        self.action_open_folder.triggered.connect(self.open_script_folder)
+
+        self.action_minimize_tray = self.toolbar.addAction("To Tray")
+        self.action_minimize_tray.setToolTip("Minimize to system tray")
+        self.action_minimize_tray.triggered.connect(self.minimize_to_tray)
+
+        self.toolbar.addSeparator()
+
+        self.action_always_on_top = self._add_toggle_action("Always On Top", self.set_always_on_top)
+        self.action_highlight = self._add_toggle_action("Highlight", self.set_highlight_on_print)
+        self.action_confirm = self._add_toggle_action("Confirm Close", self.set_confirm_on_close)
+        self.action_echo = self._add_toggle_action("Command Echo", self.set_show_command_printing)
+
+        self.toolbar.addSeparator()
+
+        clear_action = self.toolbar.addAction("Clear")
+        clear_action.setToolTip("Clear output")
+        clear_action.triggered.connect(self.clear_output)
+
+        zoom_out_action = self.toolbar.addAction("A-")
+        zoom_out_action.setToolTip("Decrease font size")
+        zoom_out_action.triggered.connect(lambda: self.adjust_font_size(-1))
+
+        zoom_in_action = self.toolbar.addAction("A+")
+        zoom_in_action.setToolTip("Increase font size")
+        zoom_in_action.triggered.connect(lambda: self.adjust_font_size(1))
+
+        search_action = self.toolbar.addAction("Search")
+        search_action.setToolTip("Show search bar (Ctrl+F)")
+        search_action.triggered.connect(self.toggle_search_bar)
+
+        central = QtWidgets.QWidget(self)
+        self.setCentralWidget(central)
+
+        layout = QtWidgets.QVBoxLayout(central)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.output = QtWidgets.QTextEdit(self)
+        self.output.setReadOnly(True)
+        self.output.setUndoRedoEnabled(False)
+        output_font = self.create_monospace_font(self.font_size)
+        self.output.setFont(output_font)
+        self.output.installEventFilter(self)
+        layout.addWidget(self.output, 1)
+
+        self.search_bar = self.create_search_bar()
+        self.search_bar.setVisible(False)
+        layout.addWidget(self.search_bar)
+
+        input_row = QtWidgets.QFrame(self)
+        input_row.setObjectName("InputRow")
+        input_layout = QtWidgets.QHBoxLayout(input_row)
+        input_layout.setContentsMargins(10, 8, 10, 8)
+        input_layout.setSpacing(8)
+
+        self.prompt_label = QtWidgets.QLabel(">>>", input_row)
+        prompt_font = self.create_monospace_font(self.font_size, bold=True)
+        self.prompt_label.setFont(prompt_font)
+        prompt_palette = self.prompt_label.palette()
+        prompt_palette.setColor(QtGui.QPalette.WindowText, DEFAULT_COLORS["prompt"])
+        self.prompt_label.setPalette(prompt_palette)
         input_layout.addWidget(self.prompt_label)
 
-        # Input field
-        self.input_entry = QLineEdit()
-        self.input_entry.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {self.color_scheme["input_bg"]};
-                color: #ffffff;
-                border: none;
-                font-family: 'Consolas', 'Courier New', monospace;
-                font-size: 11pt;
-            }}
-        """)
-        self.input_entry.returnPressed.connect(self.send_input)
-        input_layout.addWidget(self.input_entry)
+        self.input_line = HistoryLineEdit(input_row)
+        self.input_line.setPlaceholderText("Type a command and press Enter")
+        self.input_line.setFont(output_font)
+        self.input_line.returnPressed.connect(self.send_input)
+        self.input_line.history_requested.connect(self.navigate_history)
+        self.input_line.installEventFilter(self)
+        input_layout.addWidget(self.input_line, 1)
 
-        main_layout.addWidget(input_frame)
+        layout.addWidget(input_row)
 
-        # Size grip for resizing
-        self.size_grip = QSizeGrip(self)
-        self.size_grip.setStyleSheet("QSizeGrip { background-color: transparent; }")
+        self._sync_toggle_action(self.action_always_on_top, self.always_on_top)
+        self._sync_toggle_action(self.action_highlight, self.highlight_on_print)
+        self._sync_toggle_action(self.action_confirm, self.confirm_on_close)
+        self._sync_toggle_action(self.action_echo, self.show_command_printing)
 
-        # System tray
-        self.tray_icon = None
-        if QSystemTrayIcon.isSystemTrayAvailable():
-            self.setup_tray_icon()
+    def create_search_bar(self) -> QtWidgets.QWidget:
+        bar = QtWidgets.QFrame(self)
+        bar.setStyleSheet("QFrame { background: #252526; border-top: 1px solid #3e3e42; }")
+        layout = QtWidgets.QHBoxLayout(bar)
+        layout.setContentsMargins(10, 6, 10, 6)
+        layout.setSpacing(8)
 
-        # Connect output signal
-        self.output_ready.connect(self.write_to_output)
+        label = QtWidgets.QLabel("Find:", bar)
+        layout.addWidget(label)
 
-        # Start subprocess
-        self.start_subprocess()
+        self.search_input = QtWidgets.QLineEdit(bar)
+        self.search_input.setPlaceholderText("Search output")
+        layout.addWidget(self.search_input, 1)
 
-        # Queue checker timer
-        self.queue_timer = QTimer()
-        self.queue_timer.timeout.connect(self.check_queue)
-        self.queue_timer.start(10)
+        self.search_case = QtWidgets.QCheckBox("Case", bar)
+        layout.addWidget(self.search_case)
 
-        # Load settings
-        self.load_settings()
+        prev_btn = QtWidgets.QToolButton(bar)
+        prev_btn.setText("Prev")
+        prev_btn.clicked.connect(lambda: self.find_text(backward=True))
+        layout.addWidget(prev_btn)
 
-        # Install event filter for key shortcuts
-        self.installEventFilter(self)
+        next_btn = QtWidgets.QToolButton(bar)
+        next_btn.setText("Next")
+        next_btn.clicked.connect(lambda: self.find_text(backward=False))
+        layout.addWidget(next_btn)
 
-    def eventFilter(self, obj, event):
-        """Handle global key events"""
-        if event.type() == event.Type.KeyPress:
-            # Ctrl+F for search
-            if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_F:
-                self.show_search_dialog()
-                return True
-            # Ctrl+Scroll for zoom (handled in wheelEvent)
-        return super().eventFilter(obj, event)
+        close_btn = QtWidgets.QToolButton(bar)
+        close_btn.setText("Close")
+        close_btn.clicked.connect(self.toggle_search_bar)
+        layout.addWidget(close_btn)
 
-    def wheelEvent(self, event):
-        """Handle mouse wheel for zooming"""
-        if event.modifiers() == Qt.ControlModifier:
-            if event.angleDelta().y() > 0:
-                self.zoom_in()
-            else:
-                self.zoom_out()
-            event.accept()
-        else:
-            super().wheelEvent(event)
+        self.search_input.returnPressed.connect(lambda: self.find_text(backward=False))
+        return bar
 
-    def setup_tray_icon(self):
-        """Setup system tray icon"""
-        self.tray_icon = QSystemTrayIcon(self)
-        if self.icon_path and os.path.exists(self.icon_path):
-            self.tray_icon.setIcon(QIcon(self.icon_path))
-        else:
-            self.tray_icon.setIcon(self.style().standardIcon(self.style().StandardPixmap.SP_ComputerIcon))
+    def _add_toggle_action(self, text: str, callback) -> QtGui.QAction:
+        action = self.toolbar.addAction(text)
+        action.setCheckable(True)
+        action.toggled.connect(callback)
+        return action
 
-        # Tray menu
-        tray_menu = QMenu()
-        restore_action = QAction("Restore", self)
+    def _sync_toggle_action(self, action: QtGui.QAction, value: bool) -> None:
+        blocker = QtCore.QSignalBlocker(action)
+        action.setChecked(value)
+        del blocker
+
+    def create_monospace_font(self, size: int, bold: bool = False) -> QtGui.QFont:
+        font = QtGui.QFont("Consolas")
+        font.setStyleHint(QtGui.QFont.Monospace)
+        font.setFixedPitch(True)
+        font.setPointSize(size)
+        font.setBold(bold)
+        return font
+
+    def install_shortcuts(self) -> None:
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+F"), self, activated=self.toggle_search_bar)
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+0"), self, activated=self.reset_font_size)
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self, activated=lambda: self.adjust_font_size(1))
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl++"), self, activated=lambda: self.adjust_font_size(1))
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+-"), self, activated=lambda: self.adjust_font_size(-1))
+
+    # ------------------------------------------------------------------ settings
+    def restore_window_state(self) -> None:
+        geometry = self.settings.value("geometry")
+        if isinstance(geometry, QtCore.QByteArray):
+            self.restoreGeometry(geometry)
+
+    def save_window_state(self) -> None:
+        self.settings.setValue("geometry", self.saveGeometry())
+        self.settings.setValue("font_size", self.font_size)
+        self.settings.setValue("always_on_top", self.always_on_top)
+        self.settings.setValue("highlight_on_print", self.highlight_on_print)
+        self.settings.setValue("confirm_on_close", self.confirm_on_close)
+        self.settings.setValue("show_command_printing", self.show_command_printing)
+
+    # ------------------------------------------------------------------ tray
+    def setup_tray(self) -> None:
+        if not QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():
+            self.tray_icon = None
+            return
+
+        icon = self.windowIcon()
+        if icon.isNull():
+            icon = self.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon)
+
+        tray = QtWidgets.QSystemTrayIcon(icon, self)
+        menu = QtWidgets.QMenu(self)
+        restore_action = menu.addAction("Restore")
         restore_action.triggered.connect(self.restore_from_tray)
-        quit_action = QAction("Quit", self)
+        hide_action = menu.addAction("Hide")
+        hide_action.triggered.connect(self.hide)
+        menu.addSeparator()
+        quit_action = menu.addAction("Quit")
         quit_action.triggered.connect(self.close)
+        tray.setContextMenu(menu)
+        tray.activated.connect(self.on_tray_activated)
+        tray.show()
+        self.tray_icon = tray
 
-        tray_menu.addAction(restore_action)
-        tray_menu.addSeparator()
-        tray_menu.addAction(quit_action)
+    def minimize_to_tray(self) -> None:
+        if self.tray_icon is None:
+            self.showMinimized()
+            return
+        self.hide()
+        self.tray_icon.showMessage(
+            "Fancy Terminal",
+            "Terminal minimized to tray.",
+            QtWidgets.QSystemTrayIcon.Information,
+            2000,
+        )
 
-        self.tray_icon.setContextMenu(tray_menu)
-        self.tray_icon.activated.connect(self.tray_icon_activated)
+    def restore_from_tray(self) -> None:
+        self.show()
+        self.raise_()
+        self.activateWindow()
 
-    def tray_icon_activated(self, reason):
-        """Handle tray icon activation"""
-        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+    def on_tray_activated(self, reason: QtWidgets.QSystemTrayIcon.ActivationReason) -> None:
+        if reason in (QtWidgets.QSystemTrayIcon.Trigger, QtWidgets.QSystemTrayIcon.DoubleClick):
             self.restore_from_tray()
 
-    def minimize_to_tray(self):
-        """Minimize window to system tray"""
-        if self.tray_icon:
-            self.hide()
-            self.tray_icon.show()
-            self.tray_icon.showMessage(
-                "Minimized to Tray",
-                f"{self.windowTitle()} is still running",
-                QSystemTrayIcon.MessageIcon.Information,
-                2000,
-            )
+    # ------------------------------------------------------------------ process
+    def start_main_process(self) -> None:
+        if not self.script_path.exists():
+            self.append_text(f"[System] Script not found: {self.script_path}\n", "stderr")
+            self.input_line.setDisabled(True)
+            return
 
-    def restore_from_tray(self):
-        """Restore window from system tray"""
-        self.show()
-        self.activateWindow()
-        if self.tray_icon:
-            self.tray_icon.hide()
+        process = QtCore.QProcess(self)
+        process.setProgram(sys.executable)
+        process.setArguments(["-u", str(self.script_path)] + self.script_args)
+        process.setWorkingDirectory(str(self.script_path.parent))
+        process.setProcessChannelMode(QtCore.QProcess.SeparateChannels)
+        process.readyReadStandardOutput.connect(self.read_main_stdout)
+        process.readyReadStandardError.connect(self.read_main_stderr)
+        process.finished.connect(self.on_main_process_finished)
+        process.errorOccurred.connect(self.on_main_process_error)
 
-    def toggle_maximize(self):
-        """Toggle between maximized and normal state"""
-        if self.isMaximized():
-            self.showNormal()
+        self.main_process = process
+        process.start()
+
+        shown_args = " ".join(self.script_args).strip()
+        shown_cmd = f"{self.script_path} {shown_args}".strip()
+        self.append_text(f"[System] Running: {shown_cmd}\n", "system")
+
+    def read_main_stdout(self) -> None:
+        if self.main_process is None:
+            return
+        text = bytes(self.main_process.readAllStandardOutput()).decode(errors="replace")
+        self.append_text(text, "stdout")
+
+    def read_main_stderr(self) -> None:
+        if self.main_process is None:
+            return
+        text = bytes(self.main_process.readAllStandardError()).decode(errors="replace")
+        self.append_text(text, "stderr")
+
+    def on_main_process_finished(self, exit_code: int, _status: QtCore.QProcess.ExitStatus) -> None:
+        self.append_text(f"\n[System] Process finished with code {exit_code}.\n", "system")
+        self.input_line.setDisabled(True)
+
+    def on_main_process_error(self, err: QtCore.QProcess.ProcessError) -> None:
+        self.append_text(f"[System] Process error: {err}\n", "stderr")
+
+    def start_shell_command(self, command: str) -> None:
+        if not command:
+            return
+
+        process = QtCore.QProcess(self)
+        process.setWorkingDirectory(str(self.script_path.parent))
+        process.setProcessChannelMode(QtCore.QProcess.SeparateChannels)
+        if sys.platform.startswith("win"):
+            process.setProgram("cmd")
+            process.setArguments(["/c", command])
         else:
-            self.showMaximized()
+            process.setProgram("/bin/sh")
+            process.setArguments(["-lc", command])
 
-    def start_subprocess(self):
-        """Start the target script as a subprocess"""
-        try:
-            cmd = [sys.executable, "-u", self.target_script] + list(self.script_args)
-            self.process = subprocess.Popen(
-                cmd,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=0,
-                cwd=os.path.dirname(os.path.abspath(self.target_script)),
-            )
+        process.readyReadStandardOutput.connect(lambda p=process: self.read_shell_output(p, "stdout"))
+        process.readyReadStandardError.connect(lambda p=process: self.read_shell_output(p, "stderr"))
+        process.finished.connect(lambda code, _status, p=process: self.on_shell_finished(p, code))
+        process.errorOccurred.connect(lambda err, p=process: self.on_shell_error(p, err))
 
-            # Start reader threads
-            threading.Thread(target=self.read_stream, args=(self.process.stdout, "stdout"), daemon=True).start()
-            threading.Thread(target=self.read_stream, args=(self.process.stderr, "stderr"), daemon=True).start()
+        self.shell_processes.add(process)
+        self.append_text(f"[System] Running shell command: {command}\n", "system")
+        process.start()
 
-        except Exception as e:
-            self.output_queue.put((f"[System] Error starting process: {e}\n", "system"))
+    def read_shell_output(self, process: QtCore.QProcess, stream: str) -> None:
+        if stream == "stdout":
+            text = bytes(process.readAllStandardOutput()).decode(errors="replace")
+        else:
+            text = bytes(process.readAllStandardError()).decode(errors="replace")
+        self.append_text(text, stream)
 
-    def read_stream(self, stream, stream_type: str):
-        """Read from a stream and put data into queue"""
-        try:
-            while True:
-                char = stream.read(1)
-                if not char:
-                    break
-                self.output_queue.put((char, stream_type))
-        except Exception:
-            pass
-        finally:
-            if self.process and self.process.poll() is not None:
-                self.output_queue.put(("[System] Process finished.\n", "system"))
+    def on_shell_finished(self, process: QtCore.QProcess, code: int) -> None:
+        self.append_text(f"[System] Shell command finished with code {code}.\n", "system")
+        self.shell_processes.discard(process)
+        process.deleteLater()
 
-    def check_queue(self):
-        """Check queue for new output"""
-        while not self.output_queue.empty():
-            try:
-                content, tag = self.output_queue.get_nowait()
-                self.output_ready.emit(content, tag)
-            except queue.Empty:
-                break
+    def on_shell_error(self, process: QtCore.QProcess, err: QtCore.QProcess.ProcessError) -> None:
+        self.append_text(f"[System] Shell command error: {err}\n", "stderr")
+        self.shell_processes.discard(process)
+        process.deleteLater()
 
-        # Disable input if process is dead
-        if self.process and self.process.poll() is not None:
-            self.input_entry.setEnabled(False)
+    # ------------------------------------------------------------------ output
+    def append_text(self, text: str, stream: str) -> None:
+        if not text:
+            return
 
-    @Slot(str, str)
-    def write_to_output(self, text: str, tag: str):
-        """Write text to output with color coding"""
-        cursor = self.output_text.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor = self.output.textCursor()
+        cursor.movePosition(QtGui.QTextCursor.End)
 
-        # Set color based on tag
-        color = self.color_scheme.get(tag, self.color_scheme["stdout"])
-        char_format = QTextCharFormat()
-        char_format.setForeground(QColor(color))
+        fmt = QtGui.QTextCharFormat()
+        fmt.setForeground(DEFAULT_COLORS.get(stream, DEFAULT_COLORS["foreground"]))
+        cursor.insertText(text, fmt)
 
-        cursor.setCharFormat(char_format)
-        cursor.insertText(text)
+        self.output.setTextCursor(cursor)
+        self.output.ensureCursorVisible()
 
-        # Auto-scroll
-        if self.auto_scroll:
-            self.output_text.setTextCursor(cursor)
-            self.output_text.ensureCursorVisible()
+        if stream in {"stdout", "stderr"} and self.highlight_on_print and not self.isActiveWindow():
+            QtWidgets.QApplication.alert(self, 1200)
 
-        # Highlight on print
-        if self.highlight_on_print and not self.isActiveWindow():
-            QApplication.alert(self)
+    def clear_output(self) -> None:
+        self.output.clear()
 
-    def send_input(self):
-        """Send input to subprocess"""
-        text = self.input_entry.text()
-        self.input_entry.clear()
+    # ------------------------------------------------------------------ input
+    def send_input(self) -> None:
+        text = self.input_line.text()
+        self.input_line.clear()
+        stripped = text.strip()
 
-        # Add to history
-        if text.strip():
+        if stripped:
             self.history.append(text)
             self.history_index = len(self.history)
+        else:
+            return
 
-        # Handle special commands
-        if text.strip().lower() in ["cls", "clear"]:
+        lower = stripped.lower()
+        if lower in {"cls", "clear"}:
             self.clear_output()
             return
 
-        if text.strip().lower() == "exit":
+        if lower == "exit":
             self.close()
             return
 
-        # Handle system commands (prefixed with !)
         if text.startswith("!"):
-            cmd = text[1:].strip()
+            command = text[1:].strip()
             if self.show_command_printing:
-                self.write_to_output(f"{text}\n", "stdin")
-            self.write_to_output(f"[System] Running: {cmd}\n", "system")
-
-            try:
-                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-                if result.stdout:
-                    self.write_to_output(result.stdout, "stdout")
-                if result.stderr:
-                    self.write_to_output(result.stderr, "stderr")
-            except Exception as e:
-                self.write_to_output(f"[System] Error running command: {e}\n", "system")
+                self.append_text(text + "\n", "stdin")
+            self.start_shell_command(command)
             return
 
-        # Send to subprocess
-        if self.process and self.process.poll() is None:
-            if self.show_command_printing:
-                self.write_to_output(text + "\n", "stdin")
+        if self.show_command_printing:
+            self.append_text(text + "\n", "stdin")
 
-            try:
-                self.process.stdin.write(text + "\n")
-                self.process.stdin.flush()
-            except Exception as e:
-                self.write_to_output(f"\n[System] Error sending input: {e}\n", "system")
-        else:
-            if self.show_command_printing:
-                self.write_to_output(f"{text}\n", "stdin")
-            self.write_to_output("\n[System] Process is not running.\n", "system")
+        if self.main_process and self.main_process.state() == QtCore.QProcess.Running:
+            self.main_process.write((text + "\n").encode())
+            return
 
-    def keyPressEvent(self, event):
-        """Handle key press events"""
-        # History navigation
-        if self.input_entry.hasFocus():
-            if event.key() == Qt.Key_Up:
-                self.navigate_history(-1)
-                return
-            elif event.key() == Qt.Key_Down:
-                self.navigate_history(1)
-                return
+        self.append_text("[System] Process is not running.\n", "system")
 
-        super().keyPressEvent(event)
-
-    def navigate_history(self, direction: int):
-        """Navigate command history"""
+    def navigate_history(self, direction: int) -> None:
         if not self.history:
             return
 
         self.history_index += direction
-        self.history_index = max(0, min(self.history_index, len(self.history)))
+        if self.history_index < 0:
+            self.history_index = 0
+        elif self.history_index > len(self.history):
+            self.history_index = len(self.history)
 
-        if self.history_index < len(self.history):
-            self.input_entry.setText(self.history[self.history_index])
+        if self.history_index == len(self.history):
+            self.input_line.clear()
+            return
+
+        entry = self.history[self.history_index]
+        self.input_line.setText(entry)
+        self.input_line.setCursorPosition(len(entry))
+
+    # ------------------------------------------------------------------ search
+    def toggle_search_bar(self) -> None:
+        if self.search_bar is None:
+            return
+        visible = not self.search_bar.isVisible()
+        self.search_bar.setVisible(visible)
+        if visible:
+            self.search_input.setFocus()
+            self.search_input.selectAll()
+
+    def find_text(self, backward: bool = False) -> None:
+        query = self.search_input.text()
+        if not query:
+            return
+
+        flags = QtGui.QTextDocument.FindFlags()
+        if backward:
+            flags |= QtGui.QTextDocument.FindBackward
+        if self.search_case.isChecked():
+            flags |= QtGui.QTextDocument.FindCaseSensitively
+
+        if self.output.find(query, flags):
+            return
+
+        cursor = self.output.textCursor()
+        if backward:
+            cursor.movePosition(QtGui.QTextCursor.End)
         else:
-            self.input_entry.clear()
+            cursor.movePosition(QtGui.QTextCursor.Start)
+        self.output.setTextCursor(cursor)
+        self.output.find(query, flags)
 
-    def clear_output(self):
-        """Clear the output area"""
-        self.output_text.clear()
-
-    def zoom_in(self):
-        """Increase font size"""
-        font = self.output_text.font()
-        size = font.pointSize()
-        if size < 40:
-            font.setPointSize(size + 1)
-            self.output_text.setFont(font)
-            self.input_entry.setFont(font)
-            self.prompt_label.setFont(font)
-
-    def zoom_out(self):
-        """Decrease font size"""
-        font = self.output_text.font()
-        size = font.pointSize()
-        if size > 6:
-            font.setPointSize(size - 1)
-            self.output_text.setFont(font)
-            self.input_entry.setFont(font)
-            self.prompt_label.setFont(font)
-
-    def show_search_dialog(self):
-        """Show search dialog"""
-        text, ok = QInputDialog.getText(self, "Search", "Find:")
-        if ok and text:
-            self.search_text(text)
-
-    def search_text(self, text: str):
-        """Search for text in output"""
-        cursor = self.output_text.textCursor()
-        cursor.movePosition(QTextCursor.Start)
-        self.output_text.setTextCursor(cursor)
-
-        # Find and highlight
-        found = self.output_text.find(text)
-        if not found:
-            QMessageBox.information(self, "Search", f"'{text}' not found")
-
-    def set_always_on_top(self, enabled: bool):
-        """Set always on top"""
+    # ------------------------------------------------------------------ feature toggles
+    def set_always_on_top(self, enabled: bool) -> None:
         self.always_on_top = enabled
-        self.setWindowFlag(Qt.WindowStaysOnTopHint, enabled)
+        self._sync_toggle_action(self.action_always_on_top, enabled)
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, enabled)
         self.show()
 
-    def set_highlight_on_print(self, enabled: bool):
-        """Set highlight on print"""
+    def set_highlight_on_print(self, enabled: bool) -> None:
         self.highlight_on_print = enabled
+        self._sync_toggle_action(self.action_highlight, enabled)
 
-    def set_confirm_on_close(self, enabled: bool):
-        """Set confirm on close"""
+    def set_confirm_on_close(self, enabled: bool) -> None:
         self.confirm_on_close = enabled
+        self._sync_toggle_action(self.action_confirm, enabled)
 
-    def set_show_command_printing(self, enabled: bool):
-        """Set show command printing"""
+    def set_show_command_printing(self, enabled: bool) -> None:
         self.show_command_printing = enabled
+        self._sync_toggle_action(self.action_echo, enabled)
 
-    def save_settings(self):
-        """Save window settings"""
-        self.settings.setValue("geometry", self.saveGeometry())
-        self.settings.setValue("windowState", self.saveState())
-        self.settings.setValue("fontSize", self.output_text.font().pointSize())
-        self.settings.setValue("alwaysOnTop", self.always_on_top)
-        self.settings.setValue("highlightOnPrint", self.highlight_on_print)
-        self.settings.setValue("confirmOnClose", self.confirm_on_close)
-        self.settings.setValue("showCommandPrinting", self.show_command_printing)
+    def adjust_font_size(self, delta: int) -> None:
+        new_size = max(6, min(40, self.font_size + delta))
+        if new_size == self.font_size:
+            return
 
-    def load_settings(self):
-        """Load window settings"""
-        geometry = self.settings.value("geometry")
-        if geometry:
-            self.restoreGeometry(geometry)
+        self.font_size = new_size
+        font = self.create_monospace_font(self.font_size)
+        self.output.setFont(font)
+        self.input_line.setFont(font)
+        self.prompt_label.setFont(self.create_monospace_font(self.font_size, bold=True))
 
-        state = self.settings.value("windowState")
-        if state:
-            self.restoreState(state)
+    def reset_font_size(self) -> None:
+        self.adjust_font_size(11 - self.font_size)
 
-        font_size = self.settings.value("fontSize", 11, type=int)
-        font = self.output_text.font()
-        font.setPointSize(font_size)
-        self.output_text.setFont(font)
-        self.input_entry.setFont(font)
-        self.prompt_label.setFont(font)
+    def open_script_folder(self) -> None:
+        if not safe_open(self.script_path.parent):
+            self.append_text("[System] Could not open script folder.\n", "stderr")
 
-        # Restore toggle states
-        self.always_on_top = self.settings.value("alwaysOnTop", False, type=bool)
-        self.title_bar.top_btn.setChecked(self.always_on_top)
+    # ------------------------------------------------------------------ events
+    def eventFilter(self, watched: QtCore.QObject, event: QtCore.QEvent) -> bool:
+        output_widget = self.output
+        input_widget = self.input_line
+        if (
+            output_widget is not None
+            and input_widget is not None
+            and watched in {output_widget, input_widget}
+            and event.type() == QtCore.QEvent.Wheel
+            and QtWidgets.QApplication.keyboardModifiers() & QtCore.Qt.ControlModifier
+        ):
+            wheel_event = event
+            if isinstance(wheel_event, QtGui.QWheelEvent):
+                delta = 1 if wheel_event.angleDelta().y() > 0 else -1
+                self.adjust_font_size(delta)
+                return True
+        return super().eventFilter(watched, event)
 
-        self.highlight_on_print = self.settings.value("highlightOnPrint", False, type=bool)
-        self.title_bar.highlight_btn.setChecked(self.highlight_on_print)
-
-        self.confirm_on_close = self.settings.value("confirmOnClose", False, type=bool)
-        self.title_bar.confirm_btn.setChecked(self.confirm_on_close)
-
-        self.show_command_printing = self.settings.value("showCommandPrinting", True, type=bool)
-        self.title_bar.print_btn.setChecked(self.show_command_printing)
-
-    def closeEvent(self, event):
-        """Handle window close event"""
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         if self.confirm_on_close:
-            reply = QMessageBox.question(
-                self, "Confirm Close", "Do you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            answer = QtWidgets.QMessageBox.question(
+                self,
+                "Confirm Close",
+                "Do you want to quit?",
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.No,
             )
-            if reply == QMessageBox.No:
+            if answer != QtWidgets.QMessageBox.Yes:
                 event.ignore()
                 return
 
-        # Save settings
-        self.save_settings()
+        self.save_window_state()
 
-        # Terminate process
-        if self.process and self.process.poll() is None:
-            self.process.terminate()
-            self.process.wait(timeout=2)
+        if self.main_process and self.main_process.state() != QtCore.QProcess.NotRunning:
+            self.main_process.terminate()
+            self.main_process.waitForFinished(1200)
+            if self.main_process.state() != QtCore.QProcess.NotRunning:
+                self.main_process.kill()
 
-        # Hide tray icon
+        for process in list(self.shell_processes):
+            if process.state() != QtCore.QProcess.NotRunning:
+                process.kill()
+            process.deleteLater()
+        self.shell_processes.clear()
+
         if self.tray_icon:
             self.tray_icon.hide()
+            self.tray_icon.deleteLater()
+            self.tray_icon = None
 
         event.accept()
 
-    def resizeEvent(self, event):
-        """Handle resize event"""
-        super().resizeEvent(event)
-        # Position size grip in bottom-right corner
-        self.size_grip.move(self.width() - self.size_grip.width(), self.height() - self.size_grip.height())
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="PySide6 Fancy Terminal")
+    parser.add_argument("script", help="Path to the Python script to run")
+    parser.add_argument("--title", help="Window title (default: script filename)", default=None)
+    parser.add_argument("--icon", help="Path to icon file (.ico/.png)", default=None)
+    parser.add_argument("--on-top", action="store_true", help="Start with always-on-top enabled")
+    parser.add_argument("args", nargs=argparse.REMAINDER, help="Arguments for target script")
+    return parser
 
 
-# ==============================================================================
-# Main Entry Point
-# ==============================================================================
+def create_application() -> QtWidgets.QApplication:
+    QtCore.QCoreApplication.setOrganizationName("FancyTerminal")
+    QtCore.QCoreApplication.setApplicationName("PySide6Terminal")
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyle("Fusion")
+    return app
 
 
-def main():
-    """Main entry point"""
-    try:
-        parser = argparse.ArgumentParser(description="PySide6 Terminal Emulator")
-        parser.add_argument("script", help="Path to the python script to run")
-        parser.add_argument("--title", help="Title of the terminal window", default=None)
-        parser.add_argument("--icon", help="Path to icon file (.ico, .png)", default=None)
-        parser.add_argument("--on-top", action="store_true", help="Keep window always on top")
-        parser.add_argument("args", nargs=argparse.REMAINDER, help="Arguments for the script")
+def main() -> int:
+    args = build_arg_parser().parse_args()
+    script_path = Path(args.script).expanduser().resolve()
 
-        args = parser.parse_args()
+    icon_path = None
+    if args.icon:
+        icon_path = Path(args.icon).expanduser().resolve()
 
-        app = QApplication(sys.argv)
-        app.setStyle("Fusion")  # Modern look
+    script_args = list(args.args)
+    if script_args and script_args[0] == "--":
+        script_args = script_args[1:]
 
-        # Dark palette
-        palette = QPalette()
-        palette.setColor(QPalette.Window, QColor("#1e1e1e"))
-        palette.setColor(QPalette.WindowText, QColor("#d4d4d4"))
-        palette.setColor(QPalette.Base, QColor("#1e1e1e"))
-        palette.setColor(QPalette.AlternateBase, QColor("#2d2d2d"))
-        palette.setColor(QPalette.ToolTipBase, QColor("#2d2d2d"))
-        palette.setColor(QPalette.ToolTipText, QColor("#d4d4d4"))
-        palette.setColor(QPalette.Text, QColor("#d4d4d4"))
-        palette.setColor(QPalette.Button, QColor("#2d2d2d"))
-        palette.setColor(QPalette.ButtonText, QColor("#d4d4d4"))
-        palette.setColor(QPalette.Highlight, QColor("#0078d4"))
-        palette.setColor(QPalette.HighlightedText, QColor("#ffffff"))
-        app.setPalette(palette)
-
-        terminal = PySide6Terminal(args.script, args.title, args.icon, args.on_top, tuple(args.args))
-        terminal.show()
-
-        sys.exit(app.exec())
-
-    except Exception as e:
-        import traceback
-
-        print(f"ERROR: {e}")
-        traceback.print_exc()
-        input("Press Enter to exit...")
-        sys.exit(1)
+    app = create_application()
+    window = TerminalWindow(
+        script_path=script_path,
+        script_args=script_args,
+        title=args.title,
+        icon_path=icon_path,
+        start_on_top=args.on_top,
+    )
+    window.show()
+    return app.exec()
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
