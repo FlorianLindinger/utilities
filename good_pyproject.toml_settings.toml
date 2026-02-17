@@ -1,0 +1,183 @@
+# =======================
+# === PYREFLY SETTING ===
+# =======================
+[tool.pyrefly]
+
+# If true: infer unsolved type variables from first use (Mypy-like).
+# If false: infer Any for unsolved type vars (Pyright-like).
+# Type: bool
+# Default: true
+infer-with-first-use = true
+
+# How to treat functions without parameter/return annotations.
+# Allowed values (documented):
+#   "check-and-infer-return-type" (default)
+#   "check-and-infer-return-any"
+#   "skip-and-infer-return-any"
+# Type: string
+untyped-def-behavior = "check-and-infer-return-type"
+
+# Ignore errors in files containing "@generated"
+ignore-errors-in-generated-code = false
+
+# ===================
+# Files to type-check
+# ===================
+
+# What files Pyrefly should type-check
+project-includes = ["."]
+project-excludes = [
+  "**/.venv/**",
+  "**/build/**",
+  "**/dist/**",
+  "**/__pycache__/**",
+  "**/node_modules/**",
+  "**/.git/**",
+]
+
+# If true: disables Pyrefly’s built-in “extra default excludes”, letting you fully specify
+# project-excludes from scratch.
+# Type: bool
+# Default: false
+disable-project-excludes-heuristics = false
+
+# If true: consult ignore files and auto-add excluded paths to project-excludes.
+# Uses (in order): .gitignore, .ignore, .git/info/excludes (first match wins).
+# Type: bool
+# Default: true
+use-ignore-files = true
+
+# ===================
+# import resolution
+# ===================
+
+# Equivalent of Pylance extraPaths: Paths where to search also for imports. Paths can be relative.
+search-path = ["../python_code_repository"]
+
+# If true: disables automatic search-path heuristics Pyrefly may add behind the scenes.
+# Useful in monorepos / multi-project workspaces.
+# Type: bool
+# Default: false
+disable-search-path-heuristics = false
+
+# ============================
+# Per-error-kind configuration
+# ============================
+[tool.pyrefly.errors]
+
+# You can set severities per error kind (code/slug).
+# Values: "ignore" | "info" | "warn" | "error"
+# (Some configs also use true/false; true = enable at default severity, false = disable.)
+
+# ============================
+# Error flag problems
+
+abstract-method-call = "error"           # calling an @abstractmethod
+annotation-mismatch = "error"            # conflicting annotations for same variable
+assert-type = "error"                    # typing.assert_type() failed (tests)
+bad-argument-count = "error"             # wrong number of call arguments
+bad-argument-type = "error"              # argument type not compatible with parameter
+bad-assignment = "error"                 # assignment incompatible with annotation (incl Final, invalid attr annotation)
+bad-class-definition = "error"           # invalid class definition (e.g. duplicates in dynamic Enum)
+bad-context-manager = "error"            # `with` used on non-context-manager type
+bad-dunder-all = "error"                 # __all__ contains names not defined/exportable
+bad-function-definition = "error"        # invalid function definition (rare; more specific errors often used)
+bad-index = "error"                      # invalid index access (e.g. tuple index out of range)
+bad-instantiation = "error"              # instantiating non-instantiable type (e.g. Protocol)
+bad-keyword-argument = "error"           # same keyword argument provided multiple times
+bad-match = "error"                      # invalid `match` usage / __match_args__ issues
+bad-override = "error"                   # unsafe override in subclass (type/variance mismatch)
+bad-param-name-override = "error"        # override changed positional param name (breaks callers using keyword)
+bad-raise = "error"                      # raising non-exception / invalid `raise ... from ...`
+bad-return = "error"                     # return value incompatible with return annotation
+bad-specialization = "error"             # invalid generic specialization/type arguments
+bad-typed-dict = "error"                 # invalid TypedDict definition keywords (only `total=` allowed)
+bad-typed-dict-key = "error"             # invalid TypedDict key access / key doesn’t exist
+bad-unpacking = "error"                  # unpacking wrong number of elements (when statically known)
+
+implicit-import = "error"                # module exists but wasn’t imported (keep error; avoids “works by accident”)
+inconsistent-inheritance = "error"       # base classes / MRO incompatible in some way
+inconsistent-overload = "error"          # overload signatures inconsistent / incompatible
+internal-error = "error"                 # checker internal error (should be rare; keep visible)
+invalid-annotation = "error"             # invalid type annotation form
+invalid-argument = "error"               # invalid argument usage in typing constructs/calls
+invalid-decorator = "error"              # decorator usage/type invalid
+invalid-inheritance = "error"            # illegal inheritance relationships
+invalid-literal = "error"                # invalid Literal[] usage/value
+invalid-overload = "error"               # overload definition invalid
+invalid-param-spec = "error"             # ParamSpec misused/ill-formed
+invalid-pattern = "error"                # invalid match pattern typing
+invalid-self-type = "error"              # invalid Self typing usage
+invalid-super-call = "error"             # invalid super() usage (typing-wise)
+invalid-syntax = "error"                 # syntax invalid (parser-level)
+invalid-type-alias = "error"             # invalid TypeAlias definition/value
+invalid-type-var = "error"               # invalid TypeVar definition/usage
+invalid-type-var-tuple = "error"         # invalid TypeVarTuple usage
+invalid-variance = "error"               # variance declared/used incorrectly
+invalid-yield = "error"                  # yield/return in generators invalid wrt annotations
+
+missing-argument = "error"               # specific required argument missing
+missing-attribute = "error"              # attribute not present on type
+missing-import = "error"                 # import cannot be resolved
+missing-module-attribute = "error"       # module attribute missing
+no-access = "error"                      # access denied (e.g., private/protected rules)
+no-matching-overload = "error"           # call doesn’t match any overload
+non-exhaustive-match = "error"           # match statement not covering all cases (when checkable)
+not-a-type = "error"                     # value used where a type form is required
+not-async = "error"                      # await/async usage invalid
+not-callable = "error"                   # calling something not callable
+not-iterable = "error"                   # iterating/indexing non-iterable (as inferred)
+not-required-key-access = "error"        # accessing TypedDict key that’s not required without checks
+open-unpacking = "error"                 # unsafe/unbounded unpacking in type contexts
+parse-error = "error"                    # parse error (recovered AST but still an error)
+protocol-implicitly-defined-attribute = "error"  # protocol attribute implied in unsupported way
+read-only = "error"                      # assignment to read-only property/field
+redefinition = "error"                   # name redefined in incompatible way
+redundant-condition = "error"            # condition is always truthy/falsey / function object used as bool
+unbound-name = "error"                   # NameError-like: variable doesn’t exist in scope
+unexpected-keyword = "error"             # extra keyword passed to function call
+unexpected-positional-argument = "error" # positional used for keyword-only parameter
+unknown-name = "error"                   # global/nonlocal/other-scope name cannot be found
+unreachable = "error"                    # unreachable code after definite exit
+unsafe-overlap = "error"                 # runtime_checkable Protocol overlap unsafe (types mismatch)
+unsupported = "error"                    # typing feature not supported by Pyrefly yet
+unsupported-delete = "error"             # illegal `del` target (incl protected/required fields)
+unsupported-operation = "error"          # operation between incompatible types
+unused-coroutine = "error"               # async call result not awaited/used
+
+# ============================
+# Warning flag problems
+# Note: in Pyrefly, "warn" still triggers nonzero exit in CLI. :contentReference[oaicite:1]{index=1}
+
+deprecated = "warn"                      # use of @deprecated APIs (default warn)
+redundant-cast = "warn"                  # typing.cast() to a type already compatible (default warn)
+unnecessary-comparison = "warn"          # identity compare of literals with known result (default warn)
+unused-ignore = "warn"                   # You wrote a `# pyrefly: ignore[...]` that isn’t needed anymore (cleanup hint).
+missing-override-decorator = "warn"      # You override a method but didn’t add @override (only affects clarity; runtime is fine).
+implicit-abstract-class = "warn"         # You defined abstract methods, but didn’t mark the class as abstract; mostly a “be explicit” reminder.
+
+# ============================
+# Info flags
+# Note: It still appears in editors/IDEs, but as an info-level diagnostic (typically not highlighted as strongly as warnings/errors).
+
+reveal-type = "info"                     # typing.reveal_type() now outputs into (default info)
+
+# ============================
+# Ignored problems
+
+implicit-any = "ignore"                  # Pyrefly couldn’t figure out a type, so it falls back to Any (type checking becomes weaker there).
+implicitly-defined-attribute = "ignore"  # You assign self.x in a way that isn’t guaranteed to run before use (e.g., only in some branches).
+
+missing-source = "ignore"                # Pyrefly can’t find the source for a module (common with some env setups); typing may be incomplete.
+missing-source-for-stubs = "ignore"      # Stubs exist but Pyrefly can’t find matching source; usually a packaging/layout issue.
+
+unannotated-attribute = "ignore"         # Class attribute has no type hint (Pyrefly must guess, often as Any or Optional).
+unannotated-parameter = "ignore"         # Function parameter has no type hint; Pyrefly guesses, which can miss mistakes.
+unannotated-return = "ignore"            # Function has no return type hint; Pyrefly guesses the return type.
+
+untyped-import = "ignore"                # Imported library has no type hints/stubs, so Pyrefly treats it as Any (less checking for that library).
+
+# ============================
+
+
+
