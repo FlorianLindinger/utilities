@@ -90,6 +90,7 @@
   },
   // =====================================
   // python (some settings in other groups)
+  "python.analysis.autoImportCompletions": false,
   "python.defaultInterpreterPath": "~\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
   "python.venvFolders": [
     "Documents\\python_envs"
@@ -108,7 +109,8 @@
   "ruff.lint.preview": false,
   "ruff.logLevel": "info",
   "editor.codeActionsOnSave": {
-    "source.organizeImports.ruff": "explicit"
+    "source.organizeImports.ruff": "explicit",
+    "source.addMissingImports": false,
   },
   // =====================================
   // Antigravity specific
