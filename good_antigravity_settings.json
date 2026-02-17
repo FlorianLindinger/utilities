@@ -54,8 +54,9 @@
   "editor.hover.delay": 800,
   "editor.mouseWheelScrollSensitivity": 3,
   "editor.folding": true,
-  "editor.showFoldingControls": "always",
-  "editor.foldingStrategy": "indentation",
+  "editor.showFoldingControls": "always", // show folding button always
+  "editor.foldingStrategy": "auto", // "indentation" or "auto"
+  "editor.foldingHighlight": true,
   // =====================================
   // notebooks
   "notebook.compactView": true,
