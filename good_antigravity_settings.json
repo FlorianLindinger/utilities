@@ -110,7 +110,7 @@
   "ruff.logLevel": "info",
   "editor.codeActionsOnSave": {
     "source.organizeImports.ruff": "explicit",
-    "source.addMissingImports": false,
+    "source.addMissingImports": "never",
   },
   // =====================================
   // Antigravity specific
