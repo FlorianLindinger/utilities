@@ -7,6 +7,7 @@
   "workbench.list.mouseWheelScrollSensitivity": 4,
   "security.workspace.trust.untrustedFiles": "open",
   "typescript.tsserver.watchOptions": "vscode",
+  "json.schemaDownload.enable": true,
   // =====================================
   // terminal
   "terminal.integrated.inheritEnv": true,
@@ -44,19 +45,6 @@
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
   "notebook.defaultFormatter": "charliermarsh.ruff",
-  // =====================================
-  // AI
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
-  // =====================================// git & diff
-  "git.enableSmartCommit": true,
-  "git.autofetch": true,
-  "git.autofetchPeriod": 180, //seconds
-  "git.confirmSync": false,
-  "git.openRepositoryInParentFolders": "always",
-  "git.postCommitCommand": "push",
-  "diffEditor.ignoreTrimWhitespace": true,
-  "diffEditor.maxComputationTime": 0,
   // =====================================
   // editor  
   "editor.suggest.showStatusBar": true,
@@ -122,12 +110,51 @@
     "source.organizeImports.ruff": "explicit"
   },
   // =====================================
-  // pyrefly - type checker and LSP (alternative to basedpyright)
+  // Antigravity specific
+  "antigravity.marketplaceGalleryItemURL": "https://marketplace.visualstudio.com/items",
+  "antigravity.marketplaceExtensionGalleryServiceURL": "https://marketplace.visualstudio.com/_apis/public/gallery",
+  // =====================================
+  // indent-rainbow extension
+  "indentRainbow.indicatorStyle": "light",
+  "indentRainbow.lightIndicatorStyleLineWidth": 2,
+  "indentRainbow.errorColor": "rgba(128,32,32,0.6)",
+  "indentRainbow.tabmixColor": "rgba(128,32,96,0.6)",
+  "indentRainbow.colors": [
+    "rgba(255,255,64,0.3)",
+    "rgba(127,255,127,0.3)",
+    "rgba(255,127,255,0.3)",
+    "rgba(79,236,236,0.3)"
+  ],
+  // =====================================
+  // AI
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  // =====================================
+  // git & diff
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  "git.autofetchPeriod": 180, //seconds
+  "git.confirmSync": false,
+  "git.openRepositoryInParentFolders": "always",
+  "git.postCommitCommand": "push",
+  "diffEditor.ignoreTrimWhitespace": true,
+  "diffEditor.maxComputationTime": 0,
+  // =====================================
+  // other extensions
   //
-  "python.pyrefly.displayTypeErrors": "force-on",
   //
   // =====================================
-  // basedpyright (python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems)(alternative to pyrefly)
+  //     === type checker and LSP ===
+  // =====================================
+  //
+  // =====================================
+  // pyrefly (alternative to basedpyright)
+  //
+  "python.pyrefly.displayTypeErrors": "force-on",
+  "python.languageServer": "None",
+  //
+  // =====================================
+  // basedpyright (alternative to pyrefly)
   //
   // "files.watcherExclude": {
   //   "**/node_modules/**": true,
@@ -138,6 +165,7 @@
   //   "comments": true,
   //   "strings": true
   // },
+  // "basedpyright.disableLanguageServices": true,
   // "basedpyright.disableLanguageServices": true,
   // "basedpyright.analysis.typeCheckingMode": "basic", // Type checking
   // "basedpyright.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
@@ -156,15 +184,6 @@
   //   "**/__pycache__/**",
   //   "**/.git/**"
   // ],
-  //
-  // =====================================
-  // Antigravity specific
-  // =====================================
-  //
-  "antigravity.marketplaceGalleryItemURL": "https://marketplace.visualstudio.com/items",
-  "antigravity.marketplaceExtensionGalleryServiceURL": "https://marketplace.visualstudio.com/_apis/public/gallery",
-  "python.languageServer": "None",
-  "json.schemaDownload.enable": true,
   //
   // =====================================
   // =====================================
