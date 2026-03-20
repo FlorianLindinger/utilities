@@ -13,10 +13,10 @@ magick "icon.png" -define icon:auto-resize=16,32,48,64,128,256 -compress zip "ic
 import sys
 from pathlib import Path
 
+from PIL import Image # install as pillow (e.g., "pip install pillow")
 import PIL.BmpImagePlugin  # for nuitka compile nudging
 import PIL.IcoImagePlugin  # for nuitka compile nudging
 import PIL.PngImagePlugin  # for nuitka compile nudging
-from PIL import Image
 
 
 def create_icon(
