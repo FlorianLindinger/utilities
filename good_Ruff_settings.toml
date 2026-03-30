@@ -91,6 +91,7 @@ ignore = [
   "B905",    # allow for zip without explicit strict setting
   "BLE001",  # don't replace "try ... except: pass" #3
   "COM812",  # require trailing comma (formatter handles)
+  "C408",    # allow dict creation with "dict" instead of "{}"
   "D100",    # allow missing docstring in public module
   "D102",    # allow missing docstring in public method
   "D105",    # allow missing docstring in magic method
