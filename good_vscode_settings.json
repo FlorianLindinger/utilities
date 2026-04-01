@@ -11,6 +11,7 @@
   // terminal
   "terminal.integrated.inheritEnv": true,
   "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "terminal.integrated.enableMultiLinePasteWarning": "never",
   // =====================================
   // explorer
   "explorer.excludeGitIgnore": false,
@@ -57,6 +58,7 @@
   "git.postCommitCommand": "push",
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
+  "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
   "editor.showFoldingControls": "always",
@@ -110,12 +112,22 @@
     "All"
   ],
   // =====================================
+  // Java
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-25",
+      "path": "C:\\Program Files\\Java\\jdk-25.0.2",
+      "default": true
+    }
+  ]
+  // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
   "autoDocstring.customTemplatePath": "utilities\\python_autodocstring_extension_template.mustache",
   // =====================================
   // gitlens (if "gitlens" extension installed)
   "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
   // =====================================
   // Ruff formatter/linter settings (python)
   "ruff.nativeServer": "on",
@@ -189,11 +201,5 @@
     "markdown": false,
     "scminput": false,
     "python": true
-  },
-  "chat.viewSessions.orientation": "stacked",
-  // =====================================
-  //
-  // ============================
-  // ==== new settings below ====
-  // ============================
+  }, // ==== new settings below ====
 }
