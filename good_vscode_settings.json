@@ -6,7 +6,7 @@
   "window.newWindowProfile": "Default",
   "workbench.list.mouseWheelScrollSensitivity": 4,
   "security.workspace.trust.untrustedFiles": "open",
-  "typescript.tsserver.watchOptions": "vscode",
+  "js/ts.tsserver.watchOptions": "vscode",
   // =====================================
   // terminal
   "terminal.integrated.inheritEnv": true,
@@ -119,7 +119,7 @@
       "path": "C:\\Program Files\\Java\\jdk-25.0.2",
       "default": true
     }
-  ]
+  ],
   // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
