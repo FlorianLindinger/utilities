@@ -1,5 +1,5 @@
 :: Description:
-:: Create a virtual python environment at path "<target_dir>\virt_env" using the portable Python runtime at "<python_folder_rel_path>\python.exe". Should work for Python version 3.5-3.14 and likely later versions when the virtual environment is activated via Script\activate.bat.
+:: Create a virtual python environment at path "<target_dir>\virt_env" using the portable Python runtime at "<target_dir>\<python_folder_rel_path>\python.exe". Should work for Python version 3.5-3.14 and likely later versions when the virtual environment is activated via Script\activate.bat.
 ::
 :: Usage:
 :: create_portable_venv.bat "<target_dir>" "<python_folder_rel_path>"
@@ -21,7 +21,7 @@
 :: ==== Settings ====
 :: ==================
 
-set "fallback_python_folder=py_dist"
+set "fallback_python_folder_rel_path=py_dist"
 set "venv_name=virt_env"
 set "venv_portable_scripts_folder_name=portable_Scripts"
 SET "tmp_file_path_for_code_execution=%temp%\tmp_relpath.py"
@@ -33,11 +33,11 @@ SET "tmp_file_path_for_code_execution=%temp%\tmp_relpath.py"
 
 :: process args
 set "TARGET_DIR=%~1"
-set "PYTHON_FOLDER=%~2"
+set "PYTHON_FOLDER_REL_PATH=%~2"
 
 :: set default arg if not given
-if "%PYTHON_FOLDER%"=="" (
-    set "PYTHON_FOLDER=%fallback_python_folder%"
+if "%PYTHON_FOLDER_REL_PATH%"=="" (
+    set "PYTHON_FOLDER_REL_PATH=%fallback_python_folder_rel_path%"
 )
 
 :: make path absolute
@@ -47,7 +47,7 @@ call :set_abs_path "%TARGET_DIR%" "TARGET_DIR"
 set "VENV_PATH=%TARGET_DIR%\%venv_name%"
 
 :: make path absolute
-call :set_abs_path "%PYTHON_FOLDER%" "PYTHON_FOLDER"
+call :set_abs_path "%TARGET_DIR%\%PYTHON_FOLDER_REL_PATH%" "PYTHON_FOLDER"
 
 set "portable_scripts_path=%VENV_PATH%\%venv_portable_scripts_folder_name%"
 
