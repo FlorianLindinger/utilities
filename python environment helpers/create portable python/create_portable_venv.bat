@@ -188,7 +188,7 @@ if not exist "%portable_scripts_path%\python.bat" (
 
 :: replace old activate.bat with new one that works for portable folder (changeing old one because other code might expect activate.bat to be there):
 > "%VENV_PATH%\Scripts\activate.bat" (
-echo :: The following script is the normal activate.bat file that is created by venv for python 3.13 but with modifications that allow it to work for portable virtual environments as long as the relative path to the python.exe file is the same. The modifications are labeled in the codeb below.
+echo :: The following script is the normal activate.bat file that is created by venv for python 3.13 but with modifications that allow it to work for portable virtual environments as long as the relative path to the python.exe file is the same. The modifications are labeled in the code below.
 echo.
 echo @echo off
 echo.
