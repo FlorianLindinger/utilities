@@ -102,7 +102,7 @@
   },
   // =====================================
   // python (some settings in other groups)
-  "python.defaultInterpreterPath": "~\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
   "python.venvFolders": [
     "Documents\\python_envs"
   ],
@@ -120,6 +120,7 @@
       "default": true
     }
   ],
+  "jdk.telemetry.enabled": false,
   // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
@@ -201,5 +202,6 @@
     "markdown": false,
     "scminput": false,
     "python": true
-  }, // ==== new settings below ====
+  }
+  // <- new settings
 }
