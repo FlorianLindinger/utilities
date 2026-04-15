@@ -87,7 +87,8 @@ for /f "usebackq delims=" %%A in (`
     "exit 1"
 `) do set "FULL_VER=%%A"
 :: abort if fail
-if not defined FULL_VER (
+if "%FULL_VER%"==" " set "FULL_VER="
+if "%FULL_VER%"=="" (
     echo [ERROR] Could not determine latest implemented version for specified version (%PY_VER%^) or download method not implemented for this version or no internet connection. This code needs "https://www.python.org/ftp/python/{full-python-version}/amd64/" to exist. Aborting. Press any key to exit.
     PAUSE > NUL
     exit /b 1
