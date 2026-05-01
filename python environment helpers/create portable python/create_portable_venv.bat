@@ -203,7 +203,10 @@ echo.
 echo :: Default code: set "VIRTUAL_ENV=path example for default code"
 echo :: === Replacement code start ===
 echo :: set VIRTUAL_ENV to parent folder of folder of this file
-echo set "VIRTUAL_ENV=%%~dp0..\"
+echo set "VIRTUAL_ENV=%%~dp0.."
+echo if not defined VIRTUAL_ENV_PROMPT (
+echo    for %%%%I in ("%%VIRTUAL_ENV%%\."^) do set "VIRTUAL_ENV_PROMPT=%%%%~nxI"
+echo ^)
 echo :: === Replacement code end ===
 echo.
 echo if not defined PROMPT set PROMPT=$P$G
@@ -214,7 +217,7 @@ echo.
 echo set "_OLD_VIRTUAL_PROMPT=%%PROMPT%%"
 echo :: Default code: set "PROMPT=(example virtual environment name) %%PROMPT%%"
 echo :: === Replacement code start ===
-echo set "PROMPT=(%venv_portable_scripts_folder_name%) %%PROMPT%%"
+echo set "PROMPT=(%%VIRTUAL_ENV_PROMPT%%) %%PROMPT%%"
 echo :: === Replacement code end ===
 echo.
 echo if defined PYTHONHOME set _OLD_VIRTUAL_PYTHONHOME=%%PYTHONHOME%%
@@ -227,7 +230,6 @@ echo :: Default code: set "PATH=%%VIRTUAL_ENV%%\Scripts;%%PATH%%"
 echo :: Default code: set "VIRTUAL_ENV_PROMPT=example virtual environment name"
 echo :: === Replacement code start ===
 echo set "PATH=%%VIRTUAL_ENV%%\%venv_portable_scripts_folder_name%;%%VIRTUAL_ENV%%\Scripts;%%PATH%%"
-echo set "VIRTUAL_ENV_PROMPT=%venv_portable_scripts_folder_name%"
 echo :: === Replacement code end ===
 echo.
 echo :END
