@@ -4,9 +4,8 @@
   "breadcrumbs.enabled": true,
   "files.autoSave": "afterDelay",
   "window.newWindowProfile": "Default",
-  "workbench.list.mouseWheelScrollSensitivity": 4,
   "security.workspace.trust.untrustedFiles": "open",
-  "js/ts.tsserver.watchOptions": "vscode",
+  "workbench.list.mouseWheelScrollSensitivity": 2,
   // =====================================
   // terminal
   "terminal.integrated.inheritEnv": true,
@@ -61,6 +60,7 @@
   "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
+  "editor.codeLens": true,
   "editor.showFoldingControls": "always",
   "editor.foldingStrategy": "auto",
   "editor.suggest.showStatusBar": true,
@@ -101,8 +101,32 @@
     "editor.insertSpaces": true
   },
   // =====================================
-  // python (some settings in other groups)
-  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  // vscode
+  "settingsSync.ignoredExtensions": [],
+  "settingsSync.ignoredSettings": [],
+  // =====================================
+  // copilot/chat
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "python": true
+  },
+  "chat.tools.terminal.autoApprove": {
+    "/^python -m py_compile live_plot\\.py$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  },
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+  // =====================================
+  // Python
+  "python.defaultInterpreterPath": "c:\\Users\\agpup\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
   "python.venvFolders": [
     "Documents\\python_envs"
   ],
@@ -111,8 +135,11 @@
   "python.experiments.optOutFrom": [
     "All"
   ],
+  "python.analysis.inlayHints.variableTypes": false,
+  "python.analysis.inlayHints.functionReturnTypes": false,
   // =====================================
-  // Java
+  // java
+  "js/ts.tsserver.watchOptions": "vscode",
   "java.configuration.runtimes": [
     {
       "name": "JavaSE-25",
@@ -141,67 +168,15 @@
     "source.organizeImports.ruff": "explicit"
   },
   // =====================================
-  // python - live static type checker, autocomplete, symbol naviation, hover documentation, real-time problems
+  // type checker settings (general)
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/.venv/**": true
   },
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": true,
-    "strings": true
-  },
-  //
-  //
-  //
   // =====================================
   // pyrefly - type checker and LSP (alternative to pylance)
-  //
   "python.languageServer": "None",
   "python.pyrefly.displayTypeErrors": "force-on",
-  //
   // =====================================
-  // pylance - type checker and LSP (alternative to pyrefly)
-  //
-  // "python.languageServer": "Pylance",
-  // "python.analysis.generateWithTypeAnnotation": true,
-  // "python.analysis.userFileIndexingLimit": -1, //2000
-  // "python.analysis.diagnosticMode": "openFilesOnly", //"openFilesOnly","workspace" 
-  // "python.analysis.logLevel": "Trace",
-  // "python.analysis.autoFormatStrings": true,
-  // "python.analysis.completeFunctionParens": true,
-  // "python.analysis.inlayHints.functionReturnTypes": true,
-  // "python.analysis.inlayHints.pytestParameters": true,
-  // "python.analysis.typeCheckingMode": "basic", // Type checking
-  // "python.analysis.indexing": true,
-  // "python.analysis.autoImportCompletions": false, //auto add imports
-  // "python.analysis.importFormat": "absolute", //prefer absolute import paths
-  // "python.analysis.useLibraryCodeForTypes": true, //reduce strictness for 3rd-party libs
-  // "python.analysis.exclude": [
-  //   "**/.venv/**",
-  //   "**/build/**",
-  //   "**/dist/**",
-  //   "**/__pycache__/**",
-  //   "**/node_modules",
-  //   "**/.git/**",
-  //   "~/Documents/Repositories/*"
-  // ],
-  // "python.analysis.extraPaths": [
-  //   "~/Documents/Repositories/python_code_repository"
-  // ],
-  //
-  // =====================================
-  // vscode
-  "settingsSync.ignoredExtensions": [],
-  "settingsSync.ignoredSettings": [],
-  // =====================================
-  // github copilot
-  "github.copilot.enable": {
-    "*": true,
-    "plaintext": false,
-    "markdown": false,
-    "scminput": false,
-    "python": true
-  }
-  // <- new settings
+  // <-- new setting
 }
