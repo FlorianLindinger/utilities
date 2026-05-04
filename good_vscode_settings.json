@@ -117,6 +117,10 @@
     "/^python -m py_compile live_plot\\.py$/": {
       "approve": true,
       "matchCommandLine": true
+    },
+    "/^cd \"c:\\\\Users\\\\agpup\\\\Documents\\\\Repositories\\\\fieldmax_power_meter_python\" ; python -m py_compile live_plot\\.py$/": {
+      "approve": true,
+      "matchCommandLine": true
     }
   },
   "editor.quickSuggestions": {
@@ -137,6 +141,7 @@
   ],
   "python.analysis.inlayHints.variableTypes": false,
   "python.analysis.inlayHints.functionReturnTypes": false,
+  "python.analysis.autoImportCompletions": false,
   // =====================================
   // java
   "js/ts.tsserver.watchOptions": "vscode",
