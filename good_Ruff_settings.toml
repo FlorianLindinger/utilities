@@ -151,6 +151,7 @@ ignore = [
   "PLW0603", # allow for use of globals
   "PLW1510", # allow to not define "check" arg for "subprocess" function
   "PLW2901", # allow for redefinition of iterated elem in for loops
+  "PLW3301", # allow for nested min/max
   "RET504",  # allow for unnecessary new variable before return
   "RET505",  # allow for unnecessary else before return
   "RET506",  # allow for unnecessary else after raise
