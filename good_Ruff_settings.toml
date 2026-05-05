@@ -140,6 +140,7 @@ ignore = [
   "N816",    # allow mixed capitalization in global variable label
   "N999",    # allow for unconventional module names
   "PERF203", # allow try/except in loop
+  "PLC0415", # allow for imports not on top of file
   "PLR0911", # allow too many returns
   "PLR0912", # too many branches in function/method
   "PLR0913", # too many function parameters
