@@ -43,6 +43,13 @@ if "%PYTHON_FOLDER_REL_PATH%"=="" (
 :: make path absolute
 call :set_abs_path "%TARGET_DIR%" "TARGET_DIR"
 
+:: keep temporary bootstrap files inside the portable environment folder
+mkdir "%TARGET_DIR%" >nul 2>&1
+set "LOCAL_TEMP_PATH=%TARGET_DIR%\.tmp"
+mkdir "%LOCAL_TEMP_PATH%" >nul 2>&1
+set "TEMP=%LOCAL_TEMP_PATH%"
+set "TMP=%LOCAL_TEMP_PATH%"
+
 :: add "virt_env" for delete safety 
 set "VENV_PATH=%TARGET_DIR%\%venv_name%"
 
@@ -104,9 +111,6 @@ if exist "%VENV_PATH%\" (
 )
 :skip_delete_old_venv
 :: === [end] delete old venv ===============
-
-:: create venv parent folder if missing
-mkdir "%TARGET_DIR%" >nul 2>&1
 
 :: create venv
 echo: Creating virtual environment "%VENV_PATH%"
