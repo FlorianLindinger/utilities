@@ -43,9 +43,6 @@
   "[jsonc]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff"
-  },
   "notebook.defaultFormatter": "charliermarsh.ruff",
   // =====================================
   // git & diff
@@ -57,7 +54,6 @@
   "git.postCommitCommand": "push",
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
-  "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
   "editor.codeLens": true,
@@ -130,7 +126,7 @@
   },
   // =====================================
   // Python
-  "python.defaultInterpreterPath": "c:\\Users\\agpup\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
   "python.venvFolders": [
     "Documents\\python_envs"
   ],
@@ -142,9 +138,18 @@
   "python.analysis.inlayHints.variableTypes": false,
   "python.analysis.inlayHints.functionReturnTypes": false,
   "python.analysis.autoImportCompletions": false,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit",
+      "source.organizeImports": "explicit",
+      "source.addMissingImports": "never"
+    },
+  },
   // =====================================
   // java
   "js/ts.tsserver.watchOptions": "vscode",
+  "jdk.telemetry.enabled": false,
   "java.configuration.runtimes": [
     {
       "name": "JavaSE-25",
@@ -152,7 +157,6 @@
       "default": true
     }
   ],
-  "jdk.telemetry.enabled": false,
   // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
@@ -169,9 +173,6 @@
   "ruff.lint.enable": true,
   "ruff.lint.preview": false,
   "ruff.logLevel": "info",
-  "editor.codeActionsOnSave": {
-    "source.organizeImports.ruff": "explicit"
-  },
   // =====================================
   // type checker settings (general)
   "files.watcherExclude": {
@@ -180,8 +181,9 @@
   },
   // =====================================
   // pyrefly - type checker and LSP (alternative to pylance)
-  "python.languageServer": "None",
-  "python.pyrefly.displayTypeErrors": "force-on",
+  "python.languageServer": "None", //"None" == pyrefly ; "Default"=Pylance
+  "python.pyrefly.typeCheckingMode": "strict", //"off"/"basic"/"auto"/"default"/"strict"
+  "python.pyrefly.disableTypeErrors": false,
   // =====================================
   // <-- new setting
 }
