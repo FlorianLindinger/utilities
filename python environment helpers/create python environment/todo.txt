@@ -1,29 +1,5 @@
-print what full version is actually installed.
-
-checkl waht happens if packages are not available. try to list sucessfull and unsuccesfull installs in end
-
-add and fix path adding from jupyter file to others. maybe again try to have code copy paste same
-
-prompt to add to global variables?
-
-make a global script that acts like conda activate env
-
-write readme and instructions ontop of scripts
-
-make easy possible to update/reset/recreate env
-make at least installing the packages default if already present
-
-
-add "install package" launcher to env folder and shortcut to it to desktop
-
-fix: does it matter? will conda delete folder after installation?
-Creating conda list C:\Users\Maxi Zwingt Mich\.conda\environments.txt
-Das System kann den angegebenen Pfad nicht finden.
- --Registering environment with conda: C:\Users\Maxi Zwingt Mich\Documents\python_envs\default_env
-Das System kann den angegebenen Pfad nicht finden.
-
-add prompt to recreate venv if already there or tell where is and to delete
-
 mention what settings where changed in vscode and where the file is. maybe prompt if it would change a setting that exists and is not correct alreafy
 
-make behavior if existing that it tells and just installs the packages
+make it very low level python so it still runs. anyway only for winget i guess. mention somewhere the lowest possible.
+
+gray out jupyter path if not enables
