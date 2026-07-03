@@ -1,16 +1,10 @@
 print what full version is actually installed.
 
-Allow for upgrade/dwonagead/change of version/packages by deleting venv. but that is intrinsicallly unsafe because venv signatures could have been spawned in any folder
-
 checkl waht happens if packages are not available. try to list sucessfull and unsuccesfull installs in end
-
-make a version that only makes env and installs python if necessary
 
 add and fix path adding from jupyter file to others. maybe again try to have code copy paste same
 
 prompt to add to global variables?
-
-promt if to replace vscode settings if would change?
 
 make a global script that acts like conda activate env
 
@@ -31,3 +25,5 @@ Das System kann den angegebenen Pfad nicht finden.
 add prompt to recreate venv if already there or tell where is and to delete
 
 mention what settings where changed in vscode and where the file is. maybe prompt if it would change a setting that exists and is not correct alreafy
+
+make behavior if existing that it tells and just installs the packages
