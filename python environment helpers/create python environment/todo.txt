@@ -1,5 +1,70 @@
-mention what settings where changed in vscode and where the file is. maybe prompt if it would change a setting that exists and is not correct alreafy
+make it very low level python so it still runs ask AI what lowest is
 
-make it very low level python so it still runs. anyway only for winget i guess. mention somewhere the lowest possible.
 
-gray out jupyter path if not enables
+does it spwan the jupyter shrotcut also in venv
+
+need to isntall ipykernel for jupyter support
+
+call it classing notebook installaiotn
+
+swithct to nbclassic instad of  "notebook<7"
+
+
+maybe have setting for jupyter notebook inclusion (aka for vscode)
+and one for extra stuff for jupyter
+
+it fails for no package jupyter install+ can i install via uv probalby missing ipykernel:
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\Flo\Documents\python_envs\default_env5\Scripts\jupyter-contrib.EXE\__main__.py", line 2, in <module>
+    from jupyter_contrib_core.application import main
+  File "C:\Users\Flo\Documents\python_envs\default_env5\Lib\site-packages\jupyter_contrib_core\application.py", line 12, in <module>
+    import pkg_resources
+ModuleNotFoundError: No module named 'pkg_resources'
+
+
+
+it still installs all apckages for empty packages field
+
+do i want to add to path:
+  if "%checkPath%"=="%userpath%" (
+    echo Adding python path...
+    if "!userpath:~-1!"==";" set "userpath=!userpath:~0,-1!"
+    setx PATH "!userpath!;%pyPath%" >NUL
+  ) else (
+    echo Python path already present.
+  )
+
+promtp:
+it still does for an existing folder of differnet verwsion if it has to install pythoin:
+
+ --Resolving newest compatible Python release for "3.14.1"--
+ Resolved Python 3.14.1 to 3.14.1.
+                                                                                                  
+ --Settings--                                                                                     
+                                                                                                  
+ Environment path: C:\Users\Flo\Documents\python_envs\default_env                                 
+ Python version request: 3.14.1
+ Python final release: 3.14.1
+ Python packages: cupy-cuda12x html5lib ipykernel ipympl ipywidgets matplotlib numba nuitka numpy nvmath-python nptdms opencv-python openpyxl pandas pillow py7zr pyarrow pyautogui pyserial pyside6 pywin32 pywinauto pyyaml scipy scipy-stubs tifffile tqdm
+ Update VS Code settings: N
+ Register with conda: N
+ Setup Jupyter: N
+ Notebooks folder: C:\Users\Flo\Documents\python_notebooks
+
+
+ --Installing Python 3.14.1--
+
+Gefunden Python 3.14 [Python.Python.3.14] Version 3.14.6
+Diese Anwendung wird von ihrem Besitzer an Sie lizenziert.
+Microsoft ist nicht verantwortlich und erteilt keine Lizenzen für Pakete von Drittanbietern.
+Download läuft https://www.python.org/ftp/python/3.14.6/python-3.14.6-amd64.exe
+  ██████████████████████████████  29.3 MB / 29.3 MB
+Der Installer-Hash wurde erfolgreich überprüft
+Paketinstallation wird gestartet...
+Erfolgreich installiert
+
+
+ ERROR: Failed python environment setup (See errors above).
+ If this keeps happening, try deleting the environment folder ("C:\Users\Flo\Documents\python_envs\default_env") and run this script again.
+ Press any key to exit.

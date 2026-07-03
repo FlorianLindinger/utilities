@@ -207,7 +207,7 @@ IF /I "%register_conda%"=="Y" (
 :: Optionally update VS Code user settings.
 IF /I "%set_vscode_default%"=="Y" (
   set "PY_ENV_HELPER_VSCODE_PYTHON=%env_path%\Scripts\python.exe"
-  py -x "%~f0"
+  "%env_path%\Scripts\python.exe" -x "%~f0"
 ) 
 
 echo:
@@ -408,7 +408,7 @@ exit /b 0
     )
     echo: --Installing Python %version%--
     echo:
-    winget install --id Python.Python.%launcher_version% -e --force --source winget --accept-source-agreements --accept-package-agreements --silent --override "InstallAllUsers=0 Include_pip=1 Include_launcher=0 PrependPath=1 SimpleInstall=1 /quiet /norestart"
+    winget install --id Python.Python.%launcher_version% -e --force --source winget --accept-source-agreements --accept-package-agreements --silent --override "InstallAllUsers=0 Include_pip=1 Include_launcher=1 PrependPath=0 SimpleInstall=1 /quiet /norestart"
     IF EXIST "%installed_python_exe%" (
       "%installed_python_exe%" -c "import platform, sys; sys.exit(0 if platform.python_version() == '%version%' else 1)" >nul 2>&1
       IF NOT ERRORLEVEL 1 set "python_exe=%installed_python_exe%"
@@ -645,15 +645,15 @@ def write_text(p, txt):
     with open(p, "w", encoding="utf-8") as f:
         f.write(txt)
 
-def set_key_value(jsonc: str, key: str, value_json: str, replace_existing: bool = True) -> str:
+def set_key_value(jsonc, key, value_json, replace_existing=True):
     pattern = re.compile(
-        rf'^(?P<indent>\s*)"{re.escape(key)}"\s*:\s*(?P<val>[^\r\n]*?)(?P<comma>\s*,?)\s*(?P<cmt>//[^\r\n]*)?$',
+        r'^(?P<indent>\s*)"' + re.escape(key) + r'"\s*:\s*(?P<val>[^\r\n]*?)(?P<comma>\s*,?)\s*(?P<cmt>//[^\r\n]*)?$',
         re.M,
     )
     if replace_existing:
         def repl(m):
             cmt = (" " + m.group("cmt")) if m.group("cmt") else ""
-            return f'{m.group("indent")}"{key}": {value_json}{m.group("comma") or ""}{cmt}'
+            return '{0}"{1}": {2}{3}{4}'.format(m.group("indent"), key, value_json, m.group("comma") or "", cmt)
         new, n = pattern.subn(repl, jsonc, count=1)
         if n:
             return new
@@ -671,7 +671,7 @@ def set_key_value(jsonc: str, key: str, value_json: str, replace_existing: bool 
     if prev_non_ws and before[::-1][prev_non_ws.start()] not in "{,":
         before += ","
     eol = "\r\n" if "\r\n" in jsonc else "\n"
-    return before + f'{eol}{base_indent}"{key}": {value_json}{eol}' + after
+    return before + '{0}{1}"{2}": {3}{0}'.format(eol, base_indent, key, value_json) + after
 
 txt = read_text(path)
 for setting_key, value in settings.items():
