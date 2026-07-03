@@ -1,28 +1,10 @@
 make it very low level python so it still runs ask AI what lowest is
 
+remove support for jupyter and conda bc noobs also should use
 
-does it spwan the jupyter shrotcut also in venv
+also install ipympl
 
-need to isntall ipykernel for jupyter support
-
-call it classing notebook installaiotn
-
-swithct to nbclassic instad of  "notebook<7"
-
-
-maybe have setting for jupyter notebook inclusion (aka for vscode)
-and one for extra stuff for jupyter
-
-it fails for no package jupyter install+ can i install via uv probalby missing ipykernel:
-  File "<frozen runpy>", line 203, in _run_module_as_main
-  File "<frozen runpy>", line 88, in _run_code
-  File "C:\Users\Flo\Documents\python_envs\default_env5\Scripts\jupyter-contrib.EXE\__main__.py", line 2, in <module>
-    from jupyter_contrib_core.application import main
-  File "C:\Users\Flo\Documents\python_envs\default_env5\Lib\site-packages\jupyter_contrib_core\application.py", line 12, in <module>
-    import pkg_resources
-ModuleNotFoundError: No module named 'pkg_resources'
-
-
+add chedkbox for install "jupyter notebooks" to install ipykernel and the other one. maybe as grayed out package windwo and checknbox to enable
 
 it still installs all apckages for empty packages field
 
