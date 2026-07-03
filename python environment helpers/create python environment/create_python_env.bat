@@ -1,37 +1,72 @@
 @setlocal EnableDelayedExpansion & @echo off
-REM=r""" <- this is needed for python to ignore the batch part of the code. The first line is ignored via launching with flag "-X" (Python code is on bottom)
+REM=r""" <- lets Python ignore the batch part of this file.
+:: The first line is skipped when this file is launched with `py -x`.
+:: The Python code starts near the bottom.
 CALL :process_args %* || goto :fail
-:: Creates or reuses a Python virtual environment, optionally adds Jupyter/Notebook tooling, optionally sets the env as the VS Code default interpreter, installs Python with winget when the requested launcher version is missing, installs uv, installs packages one by one with uv and pip fallback, registers an ipykernel, and creates helper shortcuts.
 
-:: ########################
-:: ### Default Settings ###
-:: ########################
+:: ---------------------------------------------------------------------------
+:: Python Environment Helper
+:: ---------------------------------------------------------------------------
+:: Creates or reuses a Python virtual environment, installs requested packages,
+:: optionally installs Jupyter tooling, registers the env as a Jupyter kernel,
+:: optionally exposes it to conda-based tools, and can update VS Code settings.
+
+:: ---------------------------------------------------------------------------
+:: Command-line flags
+:: ---------------------------------------------------------------------------
+:: --path PATH              Environment folder path.
+:: --packages "PKG PKG"     Space-separated packages to install.
+:: --version VERSION        Python version prefix or exact release, e.g. 3, 3.13, 3.13.5.
+:: --vscode-default Y|N     Set this env as VS Code's default interpreter.
+:: --register-conda Y|N     Add the env path to conda's environments list.
+:: --jupyter Y|N            Install Jupyter tools and create a shortcut.
+:: --folder PATH            Jupyter notebooks folder.
+::
+:: If any flag is supplied, the settings dialog is skipped. Any omitted values
+:: fall back to the defaults below.
+
+:: ---------------------------------------------------------------------------
+:: Defaults
+:: ---------------------------------------------------------------------------
+:: def_env_path          Full fallback path when no env path is provided.
+:: def_folder            Jupyter notebook start folder.
+:: def_* checkbox values Default GUI checkbox states.
 
 SET "def_env_path=%USERPROFILE%\Documents\python_envs\default_env"
-SET "def_env_root=%USERPROFILE%\Documents\python_envs"
 SET "def_folder=%USERPROFILE%\Documents\python_notebooks"
 SET "def_version=3"
 SET "def_do_jupyter=N"
-SET "def_set_vscode_default=Y"
-SET "def_register_conda=Y"
-SET "def_packages=ipykernel ipympl numpy matplotlib scipy ipywidgets pyqt5 pandas pillow pyyaml tqdm openpyxl pyarrow html5lib pyserial tifffile py7zr numba pyautogui nptdms pywinauto opencv-python scipy-stubs cupy-cuda12x nvmath-python pyside6 pywin32 nuitka"
+SET "def_set_vscode_default=N"
+SET "def_register_conda=N"
+SET "def_packages=cupy-cuda12x html5lib ipykernel ipympl ipywidgets matplotlib numba nuitka numpy nvmath-python nptdms opencv-python openpyxl pandas pillow py7zr pyarrow pyautogui pyserial pyside6 pywin32 pywinauto pyyaml scipy scipy-stubs tifffile tqdm"
 
-:: #####################
-:: ### Resolve Setup ###
-:: #####################
+:: ---------------------------------------------------------------------------
+:: Resolve configuration
+:: ---------------------------------------------------------------------------
+:: Merge command-line args, GUI values, and defaults into final settings before
+:: touching Python, folders, packages, shortcuts, or editor settings.
 
 IF "%folder%"=="" SET "folder=%def_folder%"
 IF "%packages%"=="" SET "packages=%def_packages%"
-IF "%env_name%"=="" (
-  IF NOT "%env_path%"=="" for %%F in ("%env_path%") do set "env_name=%%~nxF"
+IF "%env_path%"=="" SET "env_path=%def_env_path%"
+IF /I "%skip_settings_dialog%"=="Y" (
+  IF "%version%"=="" SET "version=%def_version%"
+  IF "%do_jupyter%"=="" SET "do_jupyter=%def_do_jupyter%"
+  IF "%set_vscode_default%"=="" SET "set_vscode_default=%def_set_vscode_default%"
+  IF "%register_conda%"=="" SET "register_conda=%def_register_conda%"
+) ELSE (
+  SET "needs_settings_dialog="
+  IF "%version%"=="" SET "needs_settings_dialog=Y"
+  IF "%do_jupyter%"=="" SET "needs_settings_dialog=Y"
+  IF "%set_vscode_default%"=="" SET "needs_settings_dialog=Y"
+  IF "%register_conda%"=="" SET "needs_settings_dialog=Y"
+  IF "!needs_settings_dialog!"=="Y" (
+    CALL :prompt_environment_settings
+    IF ERRORLEVEL 2 GOTO :cancelled
+    IF ERRORLEVEL 1 GOTO :fail
+  )
 )
-IF "%env_name%"=="" SET "env_name=default_env"
-IF "%env_path%"=="" SET "env_path=%def_env_root%\%env_name%"
-IF "%version%"=="" CALL :prompt_environment_settings || goto :fail
-IF "%do_jupyter%"=="" CALL :prompt_environment_settings || goto :fail
-IF "%set_vscode_default%"=="" CALL :prompt_environment_settings || goto :fail
-IF "%register_conda%"=="" CALL :prompt_environment_settings || goto :fail
-IF "%env_path%"=="" SET "env_path=%def_env_root%\%env_name%"
+IF "%env_path%"=="" SET "env_path=%def_env_path%"
 CALL :normalize_yes_no "do_jupyter" || goto :fail
 CALL :normalize_yes_no "set_vscode_default" || goto :fail
 CALL :normalize_yes_no "register_conda" || goto :fail
@@ -44,9 +79,11 @@ SET "folder=%OUTPUT%"
 
 for %%F in ("%env_path%") do set "env_name=%%~nxF"
 
-:: ##########################
-:: ### Environment Setup  ###
-:: ##########################
+:: ---------------------------------------------------------------------------
+:: Create and configure environment
+:: ---------------------------------------------------------------------------
+:: Ensure the requested Python exists, create/activate the venv, install
+:: packages, add optional tooling, create shortcuts, and apply integrations.
 
 echo: --Settings--
 echo:
@@ -62,20 +99,34 @@ echo:
 echo:
 
 CALL :ensure_python || goto :fail
+CALL :resolve_venv_python_version || goto :fail
 
 IF /I "%do_jupyter%"=="Y" (
   CALL :ensure_python_path || goto :fail
 )
 
-:: Create or activate venv.
-call "%env_path%\Scripts\activate.bat" > NUL 2>&1 || goto :create_venv
-echo: --Environment already exists--
-GOTO :skip_venv_creation
-:create_venv
-py -%launcher_version% -m venv "%env_path%" || goto :fail
-echo: --Created python environment--
+:: Create and activate venv.
+IF EXIST "%env_path%" (
+  CALL :existing_env_is_empty
+  IF ERRORLEVEL 1 (
+    CALL :existing_env_matches_version
+    IF ERRORLEVEL 1 (
+      CALL :wait_for_existing_env_deletion || goto :fail
+      py -%launcher_version% -m venv "%env_path%" || goto :fail
+      echo: --Created python environment--
+    ) ELSE (
+      echo: --Environment already exists with Python %venv_python_version%--
+    )
+  ) ELSE (
+    echo: --Environment folder exists and is empty--
+    py -%launcher_version% -m venv "%env_path%" || goto :fail
+    echo: --Created python environment--
+  )
+) ELSE (
+  py -%launcher_version% -m venv "%env_path%" || goto :fail
+  echo: --Created python environment--
+)
 call "%env_path%\Scripts\activate.bat" || goto :fail
-:skip_venv_creation
 echo:
 echo: --Activated python environment--
 echo:
@@ -169,9 +220,15 @@ echo: Press any key to exit.
 pause > nul
 exit /b 0
 
-:: #################
-:: ### Functions ###
-:: #################
+:cancelled
+echo:
+echo: Setup cancelled.
+exit /b 0
+
+:: ---------------------------------------------------------------------------
+:: Batch subroutines
+:: ---------------------------------------------------------------------------
+:: Keep the main flow above readable. Each label exits with a batch errorlevel.
 
 :fail
   echo:
@@ -184,30 +241,86 @@ exit /b 0
 
 :process_args
   IF "%~1"=="" GOTO :EOF
-  IF "%~1"=="--path" SET "env_path=%~2" & shift & shift & GOTO process_args
-  IF "%~1"=="--name" SET "env_name=%~2" & shift & shift & GOTO process_args
-  IF "%~1"=="--env-name" SET "env_name=%~2" & shift & shift & GOTO process_args
-  IF "%~1"=="--folder" SET "folder=%~2" & shift & shift & GOTO process_args
-  IF "%~1"=="--packages" SET "packages=%~2" & shift & shift & GOTO process_args
-  IF "%~1"=="--version" SET "version=%~2" & shift & shift & GOTO process_args
-  IF "%~1"=="--jupyter" SET "do_jupyter=%~2" & shift & shift & GOTO process_args
-  IF "%~1"=="--vscode-default" SET "set_vscode_default=%~2" & shift & shift & GOTO process_args
-  IF "%~1"=="--register-conda" SET "register_conda=%~2" & shift & shift & GOTO process_args
+  IF "%~1"=="--path" SET "skip_settings_dialog=Y" & SET "env_path=%~2" & shift & shift & GOTO process_args
+  IF "%~1"=="--folder" SET "skip_settings_dialog=Y" & SET "folder=%~2" & shift & shift & GOTO process_args
+  IF "%~1"=="--packages" SET "skip_settings_dialog=Y" & SET "packages=%~2" & shift & shift & GOTO process_args
+  IF "%~1"=="--version" SET "skip_settings_dialog=Y" & SET "version=%~2" & shift & shift & GOTO process_args
+  IF "%~1"=="--jupyter" SET "skip_settings_dialog=Y" & SET "do_jupyter=%~2" & shift & shift & GOTO process_args
+  IF "%~1"=="--vscode-default" SET "skip_settings_dialog=Y" & SET "set_vscode_default=%~2" & shift & shift & GOTO process_args
+  IF "%~1"=="--register-conda" SET "skip_settings_dialog=Y" & SET "register_conda=%~2" & shift & shift & GOTO process_args
   IF "%env_path%"=="" SET "env_path=%~1" & shift & GOTO process_args
   IF "%version%"=="" SET "version=%~1" & shift & GOTO process_args
   IF "%packages%"=="" SET "packages=%~1" & shift & GOTO process_args
   GOTO :EOF
 
+:existing_env_is_empty
+  for /f "delims=" %%F in ('dir /a /b "%env_path%" 2^>nul') do exit /b 1
+  exit /b 0
+
+:existing_env_matches_version
+  IF NOT EXIST "%env_path%\Scripts\python.exe" (
+    echo:
+    echo: Existing environment folder does not contain Scripts\python.exe.
+    exit /b 1
+  )
+  "%env_path%\Scripts\python.exe" -c "import platform, sys; sys.exit(0 if platform.python_version() == '%venv_python_version%' else 1)" >nul 2>&1
+  IF ERRORLEVEL 1 (
+    set "existing_env_python_version="
+    for /f "delims=" %%V in ('"%env_path%\Scripts\python.exe" -c "import platform; print(platform.python_version())" 2^>nul') do set "existing_env_python_version=%%V"
+    echo:
+    echo: Existing environment Python version does not match.
+    echo:   Environment path: "%env_path%"
+    echo:   Existing version:  !existing_env_python_version!
+    echo:   Required version:  %venv_python_version%
+    exit /b 1
+  )
+  exit /b 0
+
+:resolve_venv_python_version
+  set "venv_python_version="
+  for /f "delims=" %%V in ('py -%launcher_version% -c "import platform; print(platform.python_version())"') do set "venv_python_version=%%V"
+  IF "%venv_python_version%"=="" (
+    echo: [Error] Could not determine Python version used by py -%launcher_version%.
+    exit /b 1
+  )
+  echo: --Using Python %venv_python_version% for virtual environment--
+  echo:
+  exit /b 0
+
+:wait_for_existing_env_deletion
+  echo:
+  echo: --Environment already exists--
+  echo: Environment path:
+  echo:   "%env_path%"
+  echo:
+  echo: Opened the existing environment folder.
+  echo: Delete that folder, then press any key here to continue.
+  echo: Press Ctrl+C to cancel.
+  start "" explorer "%env_path%"
+:wait_for_env_delete
+  pause > nul
+  IF EXIST "%env_path%" (
+    echo:
+    echo: Environment folder still exists:
+    echo:   "%env_path%"
+    echo: Delete it, then press any key to check again.
+    GOTO wait_for_env_delete
+  )
+  echo:
+  echo: --Environment folder deleted. Continuing--
+  echo:
+  exit /b 0
+
 :prompt_environment_settings
-  IF "%env_name%"=="" set "env_name=default_env"
-  IF "%env_path%"=="" set "env_path=%def_env_root%\%env_name%"
+  IF "%env_path%"=="" set "env_path=%def_env_path%"
   IF "%folder%"=="" set "folder=%def_folder%"
   IF "%packages%"=="" set "packages=%def_packages%"
   IF "%version%"=="" set "version=%def_version%"
   IF "%do_jupyter%"=="" set "do_jupyter=%def_do_jupyter%"
   IF "%set_vscode_default%"=="" set "set_vscode_default=%def_set_vscode_default%"
   IF "%register_conda%"=="" set "register_conda=%def_register_conda%"
-  for /f "tokens=1,* delims==" %%A in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $form=New-Object System.Windows.Forms.Form; $form.Text='Python environment settings'; $form.StartPosition='CenterScreen'; $form.FormBorderStyle='FixedDialog'; $form.MaximizeBox=$false; $form.MinimizeBox=$false; $form.ClientSize=New-Object System.Drawing.Size(640,460); $pathLabel=New-Object System.Windows.Forms.Label; $pathLabel.Text='Environment path:'; $pathLabel.Location=New-Object System.Drawing.Point(12,16); $pathLabel.AutoSize=$true; $form.Controls.Add($pathLabel); $pathText=New-Object System.Windows.Forms.TextBox; $pathText.Location=New-Object System.Drawing.Point(165,13); $pathText.Size=New-Object System.Drawing.Size(430,22); $pathText.Text='%env_path%'; $form.Controls.Add($pathText); $versionLabel=New-Object System.Windows.Forms.Label; $versionLabel.Text='Python version prefix:'; $versionLabel.Location=New-Object System.Drawing.Point(12,50); $versionLabel.AutoSize=$true; $form.Controls.Add($versionLabel); $text=New-Object System.Windows.Forms.TextBox; $text.Location=New-Object System.Drawing.Point(165,47); $text.Size=New-Object System.Drawing.Size(160,22); $text.Text='%version%'; $form.Controls.Add($text); $packagesLabel=New-Object System.Windows.Forms.Label; $packagesLabel.Text='Packages:'; $packagesLabel.Location=New-Object System.Drawing.Point(12,84); $packagesLabel.AutoSize=$true; $form.Controls.Add($packagesLabel); $packagesText=New-Object System.Windows.Forms.TextBox; $packagesText.Location=New-Object System.Drawing.Point(165,81); $packagesText.Size=New-Object System.Drawing.Size(430,135); $packagesText.Multiline=$true; $packagesText.ScrollBars='Vertical'; $packagesText.WordWrap=$true; $packagesText.Text='%packages%'; $form.Controls.Add($packagesText); $v=New-Object System.Windows.Forms.CheckBox; $v.Text='Set as VS Code default interpreter'; $v.Location=New-Object System.Drawing.Point(15,240); $v.Size=New-Object System.Drawing.Size(360,24); $v.Checked=('%set_vscode_default%' -ieq 'Y' -or '%set_vscode_default%' -ieq 'YES'); $form.Controls.Add($v); $c=New-Object System.Windows.Forms.CheckBox; $c.Text='Register environment with conda'; $c.Location=New-Object System.Drawing.Point(15,270); $c.Size=New-Object System.Drawing.Size(360,24); $c.Checked=('%register_conda%' -ieq 'Y' -or '%register_conda%' -ieq 'YES'); $form.Controls.Add($c); $j=New-Object System.Windows.Forms.CheckBox; $j.Text='Install Jupyter Notebook tools and shortcut'; $j.Location=New-Object System.Drawing.Point(15,300); $j.Size=New-Object System.Drawing.Size(360,24); $j.Checked=('%do_jupyter%' -ieq 'Y' -or '%do_jupyter%' -ieq 'YES'); $form.Controls.Add($j); $folderLabel=New-Object System.Windows.Forms.Label; $folderLabel.Text='Jupyter notebook folder:'; $folderLabel.Location=New-Object System.Drawing.Point(12,338); $folderLabel.AutoSize=$true; $form.Controls.Add($folderLabel); $folderText=New-Object System.Windows.Forms.TextBox; $folderText.Location=New-Object System.Drawing.Point(165,335); $folderText.Size=New-Object System.Drawing.Size(430,22); $folderText.Text='%folder%'; $form.Controls.Add($folderText); $ok=New-Object System.Windows.Forms.Button; $ok.Text='OK'; $ok.Location=New-Object System.Drawing.Point(450,410); $ok.DialogResult=[System.Windows.Forms.DialogResult]::OK; $form.AcceptButton=$ok; $form.Controls.Add($ok); $cancel=New-Object System.Windows.Forms.Button; $cancel.Text='Cancel'; $cancel.Location=New-Object System.Drawing.Point(535,410); $cancel.DialogResult=[System.Windows.Forms.DialogResult]::Cancel; $form.CancelButton=$cancel; $form.Controls.Add($cancel); $result=$form.ShowDialog(); if ($result -eq [System.Windows.Forms.DialogResult]::OK) { $ep=$pathText.Text.Trim(); if (-not $ep) { $ep='%def_env_path%' }; $nf=$folderText.Text.Trim(); if (-not $nf) { $nf='%def_folder%' }; $pv=$text.Text.Trim(); if (-not $pv) { $pv='%def_version%' }; $pk=($packagesText.Text -replace '[\r\n\t]+',' ').Trim(); if (-not $pk) { $pk='%def_packages%' }; Write-Output ('env_path=' + $ep); Write-Output ('folder=' + $nf); Write-Output ('version=' + $pv); Write-Output ('packages=' + $pk); Write-Output ('do_jupyter=' + $(if ($j.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_default=' + $(if ($v.Checked) { 'Y' } else { 'N' })); Write-Output ('register_conda=' + $(if ($c.Checked) { 'Y' } else { 'N' })) } else { Write-Output 'env_path=%env_path%'; Write-Output 'folder=%folder%'; Write-Output 'version=%version%'; Write-Output 'packages=%packages%'; Write-Output 'do_jupyter=%do_jupyter%'; Write-Output 'set_vscode_default=%set_vscode_default%'; Write-Output 'register_conda=%register_conda%' }"') do set "%%A=%%B"
+  for /f "tokens=1,* delims==" %%A in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $form=New-Object System.Windows.Forms.Form; $form.Text='Python environment settings'; $form.StartPosition='CenterScreen'; $form.FormBorderStyle='FixedDialog'; $form.MaximizeBox=$false; $form.MinimizeBox=$false; $form.ClientSize=New-Object System.Drawing.Size(640,460); $pathLabel=New-Object System.Windows.Forms.Label; $pathLabel.Text='Environment path:'; $pathLabel.Location=New-Object System.Drawing.Point(12,16); $pathLabel.AutoSize=$true; $form.Controls.Add($pathLabel); $pathText=New-Object System.Windows.Forms.TextBox; $pathText.Location=New-Object System.Drawing.Point(250,13); $pathText.Size=New-Object System.Drawing.Size(345,22); $pathText.Text='%env_path%'; $form.Controls.Add($pathText); $versionLabel=New-Object System.Windows.Forms.Label; $versionLabel.Text='Python version (picks newest' + [Environment]::NewLine + 'compatible full release):'; $versionLabel.Location=New-Object System.Drawing.Point(12,47); $versionLabel.Size=New-Object System.Drawing.Size(235,36); $form.Controls.Add($versionLabel); $text=New-Object System.Windows.Forms.TextBox; $text.Location=New-Object System.Drawing.Point(250,53); $text.Size=New-Object System.Drawing.Size(160,22); $text.Text='%version%'; $form.Controls.Add($text); $packagesLabel=New-Object System.Windows.Forms.Label; $packagesLabel.Text='Packages:'; $packagesLabel.Location=New-Object System.Drawing.Point(12,96); $packagesLabel.AutoSize=$true; $form.Controls.Add($packagesLabel); $packagesText=New-Object System.Windows.Forms.TextBox; $packagesText.Location=New-Object System.Drawing.Point(250,93); $packagesText.Size=New-Object System.Drawing.Size(345,135); $packagesText.Multiline=$true; $packagesText.ScrollBars='Vertical'; $packagesText.WordWrap=$true; $packagesText.Text='%packages%'; $form.Controls.Add($packagesText); $v=New-Object System.Windows.Forms.CheckBox; $v.Text='Set as VS Code default interpreter'; $v.Location=New-Object System.Drawing.Point(15,250); $v.Size=New-Object System.Drawing.Size(360,24); $v.Checked=('%set_vscode_default%' -ieq 'Y' -or '%set_vscode_default%' -ieq 'YES'); $form.Controls.Add($v); $c=New-Object System.Windows.Forms.CheckBox; $c.Text='Register environment with conda'; $c.Location=New-Object System.Drawing.Point(15,280); $c.Size=New-Object System.Drawing.Size(360,24); $c.Checked=('%register_conda%' -ieq 'Y' -or '%register_conda%' -ieq 'YES'); $form.Controls.Add($c); $j=New-Object System.Windows.Forms.CheckBox; $j.Text='Install Jupyter Notebook tools and shortcut'; $j.Location=New-Object System.Drawing.Point(15,310); $j.Size=New-Object System.Drawing.Size(360,24); $j.Checked=('%do_jupyter%' -ieq 'Y' -or '%do_jupyter%' -ieq 'YES'); $form.Controls.Add($j); $folderLabel=New-Object System.Windows.Forms.Label; $folderLabel.Text='Jupyter notebooks folder:'; $folderLabel.Location=New-Object System.Drawing.Point(12,348); $folderLabel.AutoSize=$true; $form.Controls.Add($folderLabel); $folderText=New-Object System.Windows.Forms.TextBox; $folderText.Location=New-Object System.Drawing.Point(165,345); $folderText.Size=New-Object System.Drawing.Size(430,22); $folderText.Text='%folder%'; $form.Controls.Add($folderText); $ok=New-Object System.Windows.Forms.Button; $ok.Text='Create'; $ok.Location=New-Object System.Drawing.Point(450,410); $ok.DialogResult=[System.Windows.Forms.DialogResult]::OK; $form.AcceptButton=$ok; $form.Controls.Add($ok); $cancel=New-Object System.Windows.Forms.Button; $cancel.Text='Cancel'; $cancel.Location=New-Object System.Drawing.Point(535,410); $cancel.DialogResult=[System.Windows.Forms.DialogResult]::Cancel; $form.CancelButton=$cancel; $form.Controls.Add($cancel); $result=$form.ShowDialog(); if ($result -eq [System.Windows.Forms.DialogResult]::OK) { $ep=$pathText.Text.Trim(); if (-not $ep) { $ep='%def_env_path%' }; $nf=$folderText.Text.Trim(); if (-not $nf) { $nf='%def_folder%' }; $pv=$text.Text.Trim(); if (-not $pv) { $pv='%def_version%' }; $pk=($packagesText.Text -replace '[\r\n\t]+',' ').Trim(); if (-not $pk) { $pk='%def_packages%' }; Write-Output ('env_path=' + $ep); Write-Output ('folder=' + $nf); Write-Output ('version=' + $pv); Write-Output ('packages=' + $pk); Write-Output ('do_jupyter=' + $(if ($j.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_default=' + $(if ($v.Checked) { 'Y' } else { 'N' })); Write-Output ('register_conda=' + $(if ($c.Checked) { 'Y' } else { 'N' })) } else { Write-Output 'cancelled=1' }"') do set "%%A=%%B"
+  IF "%cancelled%"=="1" exit /b 2
   IF "%env_path%"=="" set "env_path=%def_env_path%"
   IF "%folder%"=="" set "folder=%def_folder%"
   IF "%version%"=="" set "version=%def_version%"
@@ -275,12 +388,14 @@ exit /b 0
       py -%launcher_version% -c "import sys" >nul 2>&1 || exit /b 1
     )
     echo:
-    echo: --Finished installing Python %version%--
+    echo: --Finished installing Python %version% on computer--
   ) ELSE (
+    set "computer_python_version="
+    for /f "delims=" %%V in ('py -%launcher_version% -c "import platform; print(platform.python_version())"') do set "computer_python_version=%%V"
     IF /I "%exact_version_requested%"=="Y" (
-      echo: --Exact Python version already installed--
+      echo: --Exact Python %computer_python_version% already installed on computer--
     ) ELSE (
-      echo: --Compatible Python %launcher_version% already installed--
+      echo: --Compatible Python %computer_python_version% already installed on computer--
     )
   )
   echo:
@@ -461,11 +576,13 @@ exit /b 0
   SET "OUTPUT=%~f1"
   GOTO :EOF
 
-:: this is needed for python to ignore the batch code -> """
+:: End the Python raw string that hides the batch code. -> """
 
-##########################################
-## Python code for VS Code settings     ##
-##########################################
+# ---------------------------------------------------------------------------
+# VS Code settings updater
+# ---------------------------------------------------------------------------
+# Runs only when the batch section calls `py -x "%~f0"`. It updates the user
+# settings JSONC while preserving comments where practical.
 
 replace_existing = True
 import os, re, json, sys
