@@ -1,52 +1,30 @@
-make it very low level python so it still runs ask AI what lowest is
+it failed to set correct jston:
+  "python.defaultInterpreterPath": "C:\Users\Flo\Documents\python_envs\default_env\Scripts\python.exe",
 
-remove support for jupyter and conda bc noobs also should use
+add setting to change and use parent:
+{
+  "python-envs.globalSearchPaths": [
+    "C:\\Users\\Flo\\Documents\\python_envs"
+  ]
+}
 
-also install ipympl
+ask again if best way to install python
 
-add chedkbox for install "jupyter notebooks" to install ipykernel and the other one. maybe as grayed out package windwo and checknbox to enable
+make it allow 3 for any 3.x folder
 
-it still installs all apckages for empty packages field
+make it install packages last. change printing of messages if that changes sometihng
 
-do i want to add to path:
-  if "%checkPath%"=="%userpath%" (
-    echo Adding python path...
-    if "!userpath:~-1!"==";" set "userpath=!userpath:~0,-1!"
-    setx PATH "!userpath!;%pyPath%" >NUL
-  ) else (
-    echo Python path already present.
-  )
+is warned:WARNUNG: Die gespeicherten Daten werden auf to 1024 Zeichen gekürzt.
+ --Added environment to user PATH--
 
-promtp:
-it still does for an existing folder of differnet verwsion if it has to install pythoin:
+change wording: (picks installed if compatible or installs newest compatible)
 
- --Resolving newest compatible Python release for "3.14.1"--
- Resolved Python 3.14.1 to 3.14.1.
-                                                                                                  
- --Settings--                                                                                     
-                                                                                                  
- Environment path: C:\Users\Flo\Documents\python_envs\default_env                                 
- Python version request: 3.14.1
- Python final release: 3.14.1
- Python packages: cupy-cuda12x html5lib ipykernel ipympl ipywidgets matplotlib numba nuitka numpy nvmath-python nptdms opencv-python openpyxl pandas pillow py7zr pyarrow pyautogui pyserial pyside6 pywin32 pywinauto pyyaml scipy scipy-stubs tifffile tqdm
- Update VS Code settings: N
- Register with conda: N
- Setup Jupyter: N
- Notebooks folder: C:\Users\Flo\Documents\python_notebooks
+it is printing:
+    Installing collected packages: pywin32, pickleshare, ipython-genutils, backcall, widgetsnbextension, wcwidth, typing-extensions, traitlets, tornado, six, pyzmq, pyparsing, pygments, psutil, pillow, parso, packaging, nest-asyncio, jupyterlab_widgets, fonttools, entrypoints, decorator, debugpy, cycler, colorama, python-dateutil, prompt-toolkit, matplotlib-inline, kiwisolver, jupyter-core, jedi, comm, matplotlib, jupyter-client, ipython, ipywidgets, ipykernel, ipympl
+but i have only selected numpy
 
 
- --Installing Python 3.14.1--
-
-Gefunden Python 3.14 [Python.Python.3.14] Version 3.14.6
-Diese Anwendung wird von ihrem Besitzer an Sie lizenziert.
-Microsoft ist nicht verantwortlich und erteilt keine Lizenzen für Pakete von Drittanbietern.
-Download läuft https://www.python.org/ftp/python/3.14.6/python-3.14.6-amd64.exe
-  ██████████████████████████████  29.3 MB / 29.3 MB
-Der Installer-Hash wurde erfolgreich überprüft
-Paketinstallation wird gestartet...
-Erfolgreich installiert
+ask if i want launcerh t obe installed or if setting or what default
 
 
- ERROR: Failed python environment setup (See errors above).
- If this keeps happening, try deleting the environment folder ("C:\Users\Flo\Documents\python_envs\default_env") and run this script again.
- Press any key to exit.
+ask AI to improve code and layout and for suggestions
