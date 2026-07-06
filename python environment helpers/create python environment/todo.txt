@@ -1,3 +1,0 @@
-ask AI to improve code and layout and for suggestions
-
-ask again if best way to install python
