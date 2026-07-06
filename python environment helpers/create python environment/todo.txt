@@ -8,18 +8,23 @@ add setting to change and use parent:
   ]
 }
 
-ask again if best way to install python
+make it for set version to 3 accept any 3.x exsinting venv folder for example
 
-make it allow 3 for any 3.x folder
+make it install packages last. do i still need a kind of install summary then?
 
-make it install packages last. change printing of messages if that changes sometihng
 
-is warned:WARNUNG: Die gespeicherten Daten werden auf to 1024 Zeichen gekürzt.
+
+
+
+
+
+
+it warned:WARNUNG: Die gespeicherten Daten werden auf to 1024 Zeichen gekürzt.
  --Added environment to user PATH--
 
 change wording: (picks installed if compatible or installs newest compatible)
 
-it is printing:
+it was printing before:
     Installing collected packages: pywin32, pickleshare, ipython-genutils, backcall, widgetsnbextension, wcwidth, typing-extensions, traitlets, tornado, six, pyzmq, pyparsing, pygments, psutil, pillow, parso, packaging, nest-asyncio, jupyterlab_widgets, fonttools, entrypoints, decorator, debugpy, cycler, colorama, python-dateutil, prompt-toolkit, matplotlib-inline, kiwisolver, jupyter-core, jedi, comm, matplotlib, jupyter-client, ipython, ipywidgets, ipykernel, ipympl
 but i have only selected numpy
 
@@ -27,4 +32,10 @@ but i have only selected numpy
 ask if i want launcerh t obe installed or if setting or what default
 
 
+
+
+
+
 ask AI to improve code and layout and for suggestions
+
+ask again if best way to install python
