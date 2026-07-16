@@ -1,0 +1,1 @@
+make it chage to %usernaeme% in path for setting vscode path
