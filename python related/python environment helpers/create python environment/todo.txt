@@ -1,9 +1,0 @@
-make it chage to %usernaeme% in path for setting vscode path "${env:USERPROFILE}"
-
-
-migrate from   "python.venvFolders": [
-    "~\\Documents\\python_envs"
-  ],
-  
-  to 
-  "python-envs.globalSearchPaths": ["~\\Documents\\python_envs"],

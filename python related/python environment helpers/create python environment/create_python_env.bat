@@ -16,6 +16,7 @@ CALL :process_args %* || goto :fail
 :: It can change these keys:
 ::   python.defaultInterpreterPath
 ::   python-envs.globalSearchPaths
+:: It also migrates the deprecated python.venvFolders setting.
 
 :: ---------------------------------------------------------------------------
 :: Command-line flags
@@ -45,6 +46,7 @@ SET "def_set_vscode_default=N"
 SET "def_set_vscode_search_path=N"
 SET "def_create_desktop_shortcuts=Y"
 SET "def_add_to_path=N"
+SET "validate_jupyter_kernel=N"
 SET "def_packages=numpy matplotlib scipy pandas pyyaml pillow tqdm pyarrow openpyxl opencv-python ipywidgets pywin32 pyserial numba pyside6 html5lib rich tifffile pyautogui nuitka py7zr pywinauto nptdms scipy-stubs cupy-cuda12x nvmath-python"
 
 :: ---------------------------------------------------------------------------
@@ -197,10 +199,13 @@ IF /I "%update_vscode_settings%"=="Y" (
   set "PY_ENV_HELPER_VSCODE_SEARCH_PATH="
   IF /I "%set_vscode_default%"=="Y" set "PY_ENV_HELPER_VSCODE_PYTHON=%env_path%\Scripts\python.exe"
   IF /I "%set_vscode_search_path%"=="Y" set "PY_ENV_HELPER_VSCODE_SEARCH_PATH=%env_parent_path%"
+  set "PY_ENV_HELPER_ACTION=update_vscode_settings"
   "%env_path%\Scripts\python.exe" -x "%~f0"
+  set "PY_ENV_HELPER_ACTION="
 ) 
 
-:: Install packages last so environment setup and integrations are already in place.
+:: Install requested packages first. Install and validate Jupyter last so later
+:: package installs cannot silently replace one of its runtime dependencies.
 set "needs_package_install="
 IF NOT "%packages%"=="" set "needs_package_install=Y"
 IF /I "%install_notebook_support%"=="Y" set "needs_package_install=Y"
@@ -214,37 +219,21 @@ IF /I "%needs_package_install%"=="Y" (
     echo: [Warning] Failed to upgrade pip. Continuing with package installation.
   )
   CALL :ensure_uv
-  IF /I "%install_notebook_support%"=="Y" (
-    CALL :install_jupyter_support
-    python -m ipykernel install --user --name "%env_name%" --display-name "%env_name%" >NUL
-    IF ERRORLEVEL 1 (
-      set "jupyter_kernel_failed=Y"
-      echo: [Warning] Failed to register kernel with ipykernel.
-    ) ELSE (
-      echo: --Registered kernel with ipykernel--
-    )
+  IF NOT "%packages%"=="" (
+    echo: --Installing requested packages--
+    echo:
+    CALL :install_packages "%packages%"
+    echo:
+    echo: --Finished installing requested packages--
     echo:
   )
-  echo: --Installing requested packages--
-  echo:
-  CALL :install_packages "%packages%"
-  echo:
-  echo: --Finished installing requested packages--
-  echo:
+  IF /I "%install_notebook_support%"=="Y" CALL :finish_jupyter_setup
 ) ELSE (
   echo:
   echo: --No package installation requested--
   echo:
 )
 
-echo:
-echo:
-echo: Setup finished.
-echo: Created environment in "%env_path%".
-IF "%python_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("python (%env_name%)"^) for launching Python.
-IF "%python_desktop_shortcut_created%"=="1" echo: Created shortcut on Desktop ("python (%env_name%)"^) for launching Python.
-IF "%install_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("Install package (%env_name%)"^) for installing packages.
-IF "%install_shortcut_created%"=="1" echo: Created shortcut on Desktop ("Install package (%env_name%)") for installing packages.
 set "setup_warnings="
 IF "%pip_upgrade_failed%"=="Y" (
   echo: [Warning] pip upgrade failed.
@@ -262,7 +251,22 @@ IF "%jupyter_kernel_failed%"=="Y" (
   echo: [Warning] Jupyter kernel registration failed.
   set "setup_warnings=Y"
 )
-IF "%setup_warnings%"=="Y" echo: Environment setup and integrations completed before package installation. Review warnings above.
+IF "%jupyter_kernel_test_failed%"=="Y" (
+  echo: [Warning] Jupyter kernel handshake test failed.
+  set "setup_warnings=Y"
+)
+echo:
+echo:
+IF "%setup_warnings%"=="Y" (
+  echo: Setup completed with warnings. Review the warnings above.
+) ELSE (
+  echo: Setup finished successfully.
+)
+echo: Created environment in "%env_path%".
+IF "%python_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("python (%env_name%)"^) for launching Python.
+IF "%python_desktop_shortcut_created%"=="1" echo: Created shortcut on Desktop ("python (%env_name%)"^) for launching Python.
+IF "%install_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("Install package (%env_name%)"^) for installing packages.
+IF "%install_shortcut_created%"=="1" echo: Created shortcut on Desktop ("Install package (%env_name%)") for installing packages.
 echo: Press any key to exit.
 pause > nul
 exit /b 0
@@ -844,6 +848,35 @@ exit /b 0
   echo:
   exit /b 0
 
+:finish_jupyter_setup
+  CALL :install_jupyter_support
+  IF "%jupyter_support_failed%"=="Y" exit /b 0
+
+  python -m ipykernel install --user --name "%env_name%" --display-name "%env_name%" >NUL
+  IF ERRORLEVEL 1 (
+    set "jupyter_kernel_failed=Y"
+    echo: [Warning] Failed to register kernel with ipykernel.
+  ) ELSE (
+    echo: --Registered kernel with ipykernel--
+  )
+  echo:
+
+  IF /I "%validate_jupyter_kernel%"=="Y" (
+    echo: --Testing Jupyter kernel handshake--
+    set "PY_ENV_HELPER_ACTION=validate_jupyter_kernel"
+    "%env_path%\Scripts\python.exe" -x "%~f0"
+    set "jupyter_kernel_test_exit_code=!ERRORLEVEL!"
+    set "PY_ENV_HELPER_ACTION="
+    IF NOT "!jupyter_kernel_test_exit_code!"=="0" (
+      set "jupyter_kernel_test_failed=Y"
+      echo: [Warning] The installed Jupyter kernel did not complete its startup handshake.
+    ) ELSE (
+      echo: --Jupyter kernel handshake succeeded--
+    )
+    echo:
+  )
+  exit /b 0
+
 :create_python_shortcut
   set "shortcut_name=%~1"
   set "shortcut_target=%~2"
@@ -966,15 +999,35 @@ exit /b 0
 replace_existing = True
 import json, os, re, sys
 
+action = os.environ.get("PY_ENV_HELPER_ACTION", "update_vscode_settings")
+
+
+def vscode_userprofile_path(p):
+    """Use VS Code's portable USERPROFILE variable for paths below the profile."""
+    full_path = os.path.normpath(os.path.abspath(p))
+    user_profile = os.environ.get("USERPROFILE")
+    if user_profile:
+        user_profile = os.path.normpath(os.path.abspath(user_profile))
+        try:
+            inside_profile = os.path.normcase(os.path.commonpath([full_path, user_profile])) == os.path.normcase(user_profile)
+        except ValueError:
+            inside_profile = False
+        if inside_profile:
+            relative = os.path.relpath(full_path, user_profile)
+            if relative == ".":
+                return "${env:USERPROFILE}"
+            return "${env:USERPROFILE}" + os.sep + relative
+    return full_path
+
 settings = {}
 
 vscode_python = os.environ.get("PY_ENV_HELPER_VSCODE_PYTHON")
 if vscode_python:
-    settings["python.defaultInterpreterPath"] = vscode_python
+    settings["python.defaultInterpreterPath"] = vscode_userprofile_path(vscode_python)
 
 vscode_search_path = os.environ.get("PY_ENV_HELPER_VSCODE_SEARCH_PATH")
 if vscode_search_path:
-    settings["python-envs.globalSearchPaths"] = [vscode_search_path]
+    settings["python-envs.globalSearchPaths"] = [vscode_userprofile_path(vscode_search_path)]
 
 appdata = os.environ["APPDATA"]
 path = os.path.join(appdata, "Code", "User", "settings.json")
@@ -1024,7 +1077,65 @@ def set_key_value(jsonc, key, value_json, replace_existing=True):
     eol = "\r\n" if "\r\n" in jsonc else "\n"
     return before + '{0}{1}"{2}": {3}{0}'.format(eol, base_indent, key, value_json) + after
 
+
+def has_setting(jsonc, key):
+    return re.search(r'^\s*"' + re.escape(key) + r'"\s*:', jsonc, re.M) is not None
+
+
+def migrate_array_setting(jsonc, old_key, new_key):
+    """Rename an obsolete array setting, preserving its formatting and comments."""
+    old_key_pattern = re.compile(r'^(?P<indent>\s*)"' + re.escape(old_key) + r'"(?P<suffix>\s*:)', re.M)
+    if not old_key_pattern.search(jsonc):
+        return jsonc
+    if not has_setting(jsonc, new_key):
+        return old_key_pattern.sub(
+            lambda match: match.group("indent") + '"' + new_key + '"' + match.group("suffix"),
+            jsonc,
+            count=1,
+        )
+
+    # If both settings exist, prefer the supported setting and remove the obsolete duplicate.
+    old_array_pattern = re.compile(
+        r'^\s*"' + re.escape(old_key) + r'"\s*:\s*\[[\s\S]*?\][ \t]*,?[ \t]*(?://[^\r\n]*)?\r?\n?',
+        re.M,
+    )
+    return old_array_pattern.sub("", jsonc, count=1)
+
+
+def validate_jupyter_kernel():
+    from jupyter_client import KernelManager
+
+    manager = KernelManager(kernel_name="python3")
+    client = None
+    try:
+        # The bundled python3 kernelspec normally says "python". Make the test
+        # independent of PATH and guarantee that it checks this environment.
+        manager.kernel_spec.argv[0] = sys.executable
+        manager.start_kernel()
+        client = manager.client()
+        client.start_channels()
+        client.wait_for_ready(timeout=20)
+        print(" --Kernel started and completed the Jupyter handshake--")
+    finally:
+        if client is not None:
+            client.stop_channels()
+        if manager.has_kernel:
+            manager.shutdown_kernel(now=True)
+
+if action == "validate_jupyter_kernel":
+    try:
+        validate_jupyter_kernel()
+    except Exception as exc:
+        print(" [Error] Jupyter kernel handshake failed: {0}: {1}".format(type(exc).__name__, exc))
+        sys.exit(1)
+    sys.exit(0)
+
+if action != "update_vscode_settings":
+    print(" [Error] Unknown embedded Python action: " + action)
+    sys.exit(2)
+
 txt = read_text(path)
+txt = migrate_array_setting(txt, "python.venvFolders", "python-envs.globalSearchPaths")
 for setting_key, value in settings.items():
     txt = set_key_value(txt, setting_key, json.dumps(value), replace_existing)
 write_text(path, txt)
