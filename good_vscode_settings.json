@@ -54,6 +54,7 @@
   "git.postCommitCommand": "push",
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
+  "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
   "editor.codeLens": true,
@@ -127,14 +128,12 @@
   // =====================================
   // Python
   "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
-  "python.venvFolders": [
-    "Documents\\python_envs"
-  ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "python.experiments.optOutFrom": [
     "All"
   ],
+  "python-envs.globalSearchPaths": ["~\\Documents\\python_envs"],
   "python.analysis.inlayHints.variableTypes": false,
   "python.analysis.inlayHints.functionReturnTypes": false,
   "python.analysis.autoImportCompletions": false,
@@ -160,7 +159,7 @@
   // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
-  "autoDocstring.customTemplatePath": "utilities\\python_autodocstring_extension_template.mustache",
+  "autoDocstring.customTemplatePath": "utilities\\python related\\python_autodocstring_extension_template.mustache",
   // =====================================
   // gitlens (if "gitlens" extension installed)
   "gitlens.ai.model": "vscode",
@@ -168,7 +167,7 @@
   // =====================================
   // Ruff formatter/linter settings (python)
   "ruff.nativeServer": "on",
-  "ruff.configuration": "~\\Documents\\Repositories\\utilities\\good_Ruff_settings.toml",
+  "ruff.configuration": "~\\Documents\\Repositories\\utilities\\python related\\good_Ruff_settings.toml",
   "ruff.configurationPreference": "filesystemFirst", //"filesystemFirst" "editorFirst"
   "ruff.lint.enable": true,
   "ruff.lint.preview": false,
