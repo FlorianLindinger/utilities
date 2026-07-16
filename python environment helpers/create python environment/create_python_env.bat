@@ -26,7 +26,7 @@ CALL :process_args %* || goto :fail
 :: --vscode-default Y|N     Set VS Code default interpreter.
 :: --vscode-search-path Y|N Add the env parent folder to VS Code env search paths.
 :: --notebook-support Y|N   Install notebook support: ipykernel ipympl.
-:: --desktop-shortcuts Y|N  Create Desktop shortcuts.
+:: --desktop-shortcuts Y|N  Copy environment shortcuts to the Desktop.
 :: --add-to-path Y|N        Add env and Scripts to user PATH for new terminals.
 ::
 :: If any flag is supplied, the settings dialog is skipped. Any omitted values
@@ -106,7 +106,7 @@ echo: Set VS Code default interpreter: %set_vscode_default%
 echo: Add VS Code env search path: %set_vscode_search_path%
 IF /I "%set_vscode_search_path%"=="Y" echo: VS Code env search path: %env_parent_path%
 echo: Install Jupyter notebook support (ipykernel ipympl): %install_notebook_support%
-echo: Create Desktop shortcuts: %create_desktop_shortcuts%
+echo: Copy environment shortcuts to Desktop: %create_desktop_shortcuts%
 echo: Add environment to user PATH: %add_to_path%
 echo:
 echo:
@@ -144,7 +144,10 @@ echo:
 
 mkdir "%USERPROFILE%\Documents\Repositories" 2> NUL
 
-:: Create launch and package-install shortcuts.
+:: Create Python launch and package-install shortcuts.
+SET "python_shortcut_name=python (%env_name%)"
+CALL :create_python_shortcut "%python_shortcut_name%" "%env_path%\Scripts\python.exe" "%env_path%" || goto :fail
+
 SET "install_shortcut_name=Install package (%env_name%)"
 SET "install_cmd_path=%env_path%\%install_shortcut_name%.cmd"
 > "!install_cmd_path!" (
@@ -238,8 +241,10 @@ echo:
 echo:
 echo: Setup finished.
 echo: Created environment in "%env_path%".
-IF "%install_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("Install package (%env_name%)") for installing packages.
-IF "%install_shortcut_created%"=="1" echo: Created shortcut in Desktop ("Install package (%env_name%)") for installing packages.
+IF "%python_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("python (%env_name%)"^) for launching Python.
+IF "%python_desktop_shortcut_created%"=="1" echo: Created shortcut on Desktop ("python (%env_name%)"^) for launching Python.
+IF "%install_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("Install package (%env_name%)"^) for installing packages.
+IF "%install_shortcut_created%"=="1" echo: Created shortcut on Desktop ("Install package (%env_name%)") for installing packages.
 set "setup_warnings="
 IF "%pip_upgrade_failed%"=="Y" (
   echo: [Warning] pip upgrade failed.
@@ -615,7 +620,7 @@ exit /b 0
   IF "%set_vscode_search_path%"=="" set "set_vscode_search_path=%def_set_vscode_search_path%"
   IF "%create_desktop_shortcuts%"=="" set "create_desktop_shortcuts=%def_create_desktop_shortcuts%"
   IF "%add_to_path%"=="" set "add_to_path=%def_add_to_path%"
-  for /f "tokens=1,* delims==" %%A in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $form=New-Object System.Windows.Forms.Form; $form.Text='Python environment settings'; $form.StartPosition='CenterScreen'; $form.FormBorderStyle='FixedDialog'; $form.MaximizeBox=$false; $form.MinimizeBox=$false; $form.ClientSize=New-Object System.Drawing.Size(640,510); $pathLabel=New-Object System.Windows.Forms.Label; $pathLabel.Text='Environment path:'; $pathLabel.Location=New-Object System.Drawing.Point(12,16); $pathLabel.AutoSize=$true; $form.Controls.Add($pathLabel); $pathText=New-Object System.Windows.Forms.TextBox; $pathText.Location=New-Object System.Drawing.Point(250,13); $pathText.Size=New-Object System.Drawing.Size(345,22); $pathText.Text='%env_path%'; $form.Controls.Add($pathText); $versionLabel=New-Object System.Windows.Forms.Label; $versionLabel.Text='Python version:' + [Environment]::NewLine + '(existing env if compatible, else newest compatible)'; $versionLabel.Location=New-Object System.Drawing.Point(12,47); $versionLabel.Size=New-Object System.Drawing.Size(235,36); $form.Controls.Add($versionLabel); $text=New-Object System.Windows.Forms.TextBox; $text.Location=New-Object System.Drawing.Point(250,53); $text.Size=New-Object System.Drawing.Size(160,22); $text.Text='%version%'; $form.Controls.Add($text); $packagesLabel=New-Object System.Windows.Forms.Label; $packagesLabel.Text='Packages:'; $packagesLabel.Location=New-Object System.Drawing.Point(12,96); $packagesLabel.AutoSize=$true; $form.Controls.Add($packagesLabel); $packagesText=New-Object System.Windows.Forms.TextBox; $packagesText.Location=New-Object System.Drawing.Point(250,93); $packagesText.Size=New-Object System.Drawing.Size(345,135); $packagesText.Multiline=$true; $packagesText.ScrollBars='Vertical'; $packagesText.WordWrap=$true; $packagesText.Text='%packages%'; $form.Controls.Add($packagesText); $v=New-Object System.Windows.Forms.CheckBox; $v.Text='Set VS Code default interpreter'; $v.Location=New-Object System.Drawing.Point(15,250); $v.Size=New-Object System.Drawing.Size(360,24); $v.Checked=('%set_vscode_default%' -ieq 'Y' -or '%set_vscode_default%' -ieq 'YES'); $form.Controls.Add($v); $vs=New-Object System.Windows.Forms.Label; $vs.Text='(Writes python.defaultInterpreterPath in %APPDATA%\Code\User\settings.json)'; $vs.Location=New-Object System.Drawing.Point(35,274); $vs.Size=New-Object System.Drawing.Size(560,34); $form.Controls.Add($vs); $s=New-Object System.Windows.Forms.CheckBox; $s.Text='Set VS Code environment search path'; $s.Location=New-Object System.Drawing.Point(15,315); $s.Size=New-Object System.Drawing.Size(520,24); $s.Checked=('%set_vscode_search_path%' -ieq 'Y' -or '%set_vscode_search_path%' -ieq 'YES'); $form.Controls.Add($s); $ss=New-Object System.Windows.Forms.Label; $ss.Text='(Writes python-envs.globalSearchPaths to the parent folder of the environment)'; $ss.Location=New-Object System.Drawing.Point(35,339); $ss.Size=New-Object System.Drawing.Size(580,34); $form.Controls.Add($ss); $j=New-Object System.Windows.Forms.CheckBox; $j.Text='Install Jupyter notebook support (ipykernel ipympl + dependencies)'; $j.Location=New-Object System.Drawing.Point(15,380); $j.Size=New-Object System.Drawing.Size(610,24); $j.Checked=('%install_notebook_support%' -ieq 'Y' -or '%install_notebook_support%' -ieq 'YES'); $form.Controls.Add($j); $d=New-Object System.Windows.Forms.CheckBox; $d.Text='Create Desktop shortcut for package installer'; $d.Location=New-Object System.Drawing.Point(15,410); $d.Size=New-Object System.Drawing.Size(520,24); $d.Checked=('%create_desktop_shortcuts%' -ieq 'Y' -or '%create_desktop_shortcuts%' -ieq 'YES'); $form.Controls.Add($d); $p=New-Object System.Windows.Forms.CheckBox; $p.Text='Add environment to user PATH (lets python and pip from this env run in new terminals)'; $p.Location=New-Object System.Drawing.Point(15,440); $p.Size=New-Object System.Drawing.Size(610,24); $p.Checked=('%add_to_path%' -ieq 'Y' -or '%add_to_path%' -ieq 'YES'); $form.Controls.Add($p); $ok=New-Object System.Windows.Forms.Button; $ok.Text='Create'; $ok.Location=New-Object System.Drawing.Point(450,470); $ok.DialogResult=[System.Windows.Forms.DialogResult]::OK; $form.AcceptButton=$ok; $form.Controls.Add($ok); $cancel=New-Object System.Windows.Forms.Button; $cancel.Text='Cancel'; $cancel.Location=New-Object System.Drawing.Point(535,470); $cancel.DialogResult=[System.Windows.Forms.DialogResult]::Cancel; $form.CancelButton=$cancel; $form.Controls.Add($cancel); $result=$form.ShowDialog(); if ($result -eq [System.Windows.Forms.DialogResult]::OK) { $ep=$pathText.Text.Trim(); if (-not $ep) { $ep='%def_env_path%' }; $pv=$text.Text.Trim(); if (-not $pv) { $pv='%def_version%' }; $pk=($packagesText.Text -replace '[\r\n\t]+',' ').Trim(); Write-Output ('env_path=' + $ep); Write-Output ('version=' + $pv); Write-Output ('packages_was_set=Y'); Write-Output ('packages=' + $pk); Write-Output ('install_notebook_support=' + $(if ($j.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_default=' + $(if ($v.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_search_path=' + $(if ($s.Checked) { 'Y' } else { 'N' })); Write-Output ('create_desktop_shortcuts=' + $(if ($d.Checked) { 'Y' } else { 'N' })); Write-Output ('add_to_path=' + $(if ($p.Checked) { 'Y' } else { 'N' })) } else { Write-Output 'cancelled=1' }"') do set "%%A=%%B"
+  for /f "tokens=1,* delims==" %%A in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $form=New-Object System.Windows.Forms.Form; $form.Text='Python environment settings'; $form.StartPosition='CenterScreen'; $form.FormBorderStyle='FixedDialog'; $form.MaximizeBox=$false; $form.MinimizeBox=$false; $form.ClientSize=New-Object System.Drawing.Size(640,510); $pathLabel=New-Object System.Windows.Forms.Label; $pathLabel.Text='Environment path:'; $pathLabel.Location=New-Object System.Drawing.Point(12,16); $pathLabel.AutoSize=$true; $form.Controls.Add($pathLabel); $pathText=New-Object System.Windows.Forms.TextBox; $pathText.Location=New-Object System.Drawing.Point(250,13); $pathText.Size=New-Object System.Drawing.Size(345,22); $pathText.Text='%env_path%'; $form.Controls.Add($pathText); $versionLabel=New-Object System.Windows.Forms.Label; $versionLabel.Text='Python version:' + [Environment]::NewLine + '(existing env if compatible, else newest compatible)'; $versionLabel.Location=New-Object System.Drawing.Point(12,47); $versionLabel.Size=New-Object System.Drawing.Size(235,36); $form.Controls.Add($versionLabel); $text=New-Object System.Windows.Forms.TextBox; $text.Location=New-Object System.Drawing.Point(250,53); $text.Size=New-Object System.Drawing.Size(160,22); $text.Text='%version%'; $form.Controls.Add($text); $packagesLabel=New-Object System.Windows.Forms.Label; $packagesLabel.Text='Packages:'; $packagesLabel.Location=New-Object System.Drawing.Point(12,96); $packagesLabel.AutoSize=$true; $form.Controls.Add($packagesLabel); $packagesText=New-Object System.Windows.Forms.TextBox; $packagesText.Location=New-Object System.Drawing.Point(250,93); $packagesText.Size=New-Object System.Drawing.Size(345,135); $packagesText.Multiline=$true; $packagesText.ScrollBars='Vertical'; $packagesText.WordWrap=$true; $packagesText.Text='%packages%'; $form.Controls.Add($packagesText); $v=New-Object System.Windows.Forms.CheckBox; $v.Text='Set VS Code default interpreter'; $v.Location=New-Object System.Drawing.Point(15,250); $v.Size=New-Object System.Drawing.Size(360,24); $v.Checked=('%set_vscode_default%' -ieq 'Y' -or '%set_vscode_default%' -ieq 'YES'); $form.Controls.Add($v); $vs=New-Object System.Windows.Forms.Label; $vs.Text='(Writes python.defaultInterpreterPath in %APPDATA%\Code\User\settings.json)'; $vs.Location=New-Object System.Drawing.Point(35,274); $vs.Size=New-Object System.Drawing.Size(560,34); $form.Controls.Add($vs); $s=New-Object System.Windows.Forms.CheckBox; $s.Text='Set VS Code environment search path'; $s.Location=New-Object System.Drawing.Point(15,315); $s.Size=New-Object System.Drawing.Size(520,24); $s.Checked=('%set_vscode_search_path%' -ieq 'Y' -or '%set_vscode_search_path%' -ieq 'YES'); $form.Controls.Add($s); $ss=New-Object System.Windows.Forms.Label; $ss.Text='(Writes python-envs.globalSearchPaths to the parent folder of the environment)'; $ss.Location=New-Object System.Drawing.Point(35,339); $ss.Size=New-Object System.Drawing.Size(580,34); $form.Controls.Add($ss); $j=New-Object System.Windows.Forms.CheckBox; $j.Text='Install Jupyter notebook support (ipykernel ipympl + dependencies)'; $j.Location=New-Object System.Drawing.Point(15,380); $j.Size=New-Object System.Drawing.Size(610,24); $j.Checked=('%install_notebook_support%' -ieq 'Y' -or '%install_notebook_support%' -ieq 'YES'); $form.Controls.Add($j); $d=New-Object System.Windows.Forms.CheckBox; $d.Text='Copy environment shortcuts to Desktop'; $d.Location=New-Object System.Drawing.Point(15,410); $d.Size=New-Object System.Drawing.Size(520,24); $d.Checked=('%create_desktop_shortcuts%' -ieq 'Y' -or '%create_desktop_shortcuts%' -ieq 'YES'); $form.Controls.Add($d); $p=New-Object System.Windows.Forms.CheckBox; $p.Text='Add environment to user PATH (lets python and pip from this env run in new terminals)'; $p.Location=New-Object System.Drawing.Point(15,440); $p.Size=New-Object System.Drawing.Size(610,24); $p.Checked=('%add_to_path%' -ieq 'Y' -or '%add_to_path%' -ieq 'YES'); $form.Controls.Add($p); $ok=New-Object System.Windows.Forms.Button; $ok.Text='Create'; $ok.Location=New-Object System.Drawing.Point(450,470); $ok.DialogResult=[System.Windows.Forms.DialogResult]::OK; $form.AcceptButton=$ok; $form.Controls.Add($ok); $cancel=New-Object System.Windows.Forms.Button; $cancel.Text='Cancel'; $cancel.Location=New-Object System.Drawing.Point(535,470); $cancel.DialogResult=[System.Windows.Forms.DialogResult]::Cancel; $form.CancelButton=$cancel; $form.Controls.Add($cancel); $result=$form.ShowDialog(); if ($result -eq [System.Windows.Forms.DialogResult]::OK) { $ep=$pathText.Text.Trim(); if (-not $ep) { $ep='%def_env_path%' }; $pv=$text.Text.Trim(); if (-not $pv) { $pv='%def_version%' }; $pk=($packagesText.Text -replace '[\r\n\t]+',' ').Trim(); Write-Output ('env_path=' + $ep); Write-Output ('version=' + $pv); Write-Output ('packages_was_set=Y'); Write-Output ('packages=' + $pk); Write-Output ('install_notebook_support=' + $(if ($j.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_default=' + $(if ($v.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_search_path=' + $(if ($s.Checked) { 'Y' } else { 'N' })); Write-Output ('create_desktop_shortcuts=' + $(if ($d.Checked) { 'Y' } else { 'N' })); Write-Output ('add_to_path=' + $(if ($p.Checked) { 'Y' } else { 'N' })) } else { Write-Output 'cancelled=1' }"') do set "%%A=%%B"
   IF "%cancelled%"=="1" exit /b 2
   IF "%env_path%"=="" set "env_path=%def_env_path%"
   IF "%version%"=="" set "version=%def_version%"
@@ -839,6 +844,40 @@ exit /b 0
   echo:
   exit /b 0
 
+:create_python_shortcut
+  set "shortcut_name=%~1"
+  set "shortcut_target=%~2"
+  set "shortcut_workdir=%~3"
+  set "python_env_shortcut_created=0"
+  set "python_desktop_shortcut_created=0"
+  set "python_env_lnk=%env_path%\%shortcut_name%.lnk"
+  set "PY_ENV_HELPER_SHORTCUT_PATH=%python_env_lnk%"
+  set "PY_ENV_HELPER_SHORTCUT_TARGET=%shortcut_target%"
+  set "PY_ENV_HELPER_SHORTCUT_WORKDIR=%shortcut_workdir%"
+  powershell -NoProfile -Command "$s=New-Object -ComObject WScript.Shell;$l=$s.CreateShortcut($env:PY_ENV_HELPER_SHORTCUT_PATH);$l.TargetPath=$env:PY_ENV_HELPER_SHORTCUT_TARGET;$l.WorkingDirectory=$env:PY_ENV_HELPER_SHORTCUT_WORKDIR;$l.IconLocation=$env:PY_ENV_HELPER_SHORTCUT_TARGET + ',0';$l.WindowStyle=1;$l.Save()"
+  IF EXIST "%python_env_lnk%" (
+    set "python_env_shortcut_created=1"
+  ) ELSE (
+    echo: [Warning] Failed to create environment shortcut "%python_env_lnk%".
+  )
+  IF /I "%create_desktop_shortcuts%"=="Y" IF EXIST "%python_env_lnk%" (
+    set "desktop_path="
+    for /f "delims=" %%D in ('powershell -NoProfile -Command "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)"') do set "desktop_path=%%D"
+    IF "!desktop_path!"=="" (
+      echo: [Warning] Could not determine Desktop folder. Python shortcut was not copied.
+    ) ELSE (
+      copy /Y "%python_env_lnk%" "!desktop_path!\%shortcut_name%.lnk" >nul
+      IF EXIST "!desktop_path!\%shortcut_name%.lnk" (
+        set "python_desktop_shortcut_created=1"
+      ) ELSE (
+        echo: [Warning] Failed to copy Python shortcut to Desktop.
+      )
+    )
+  )
+  set "PY_ENV_HELPER_SHORTCUT_PATH="
+  set "PY_ENV_HELPER_SHORTCUT_TARGET="
+  set "PY_ENV_HELPER_SHORTCUT_WORKDIR="
+  exit /b 0
 :create_cmd_shortcut
   set "shortcut_name=%~1"
   set "shortcut_target=%~2"
