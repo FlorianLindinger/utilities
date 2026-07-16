@@ -54,7 +54,6 @@
   "git.postCommitCommand": "push",
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
-  "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
   "editor.codeLens": true,
@@ -133,7 +132,7 @@
   "python.experiments.optOutFrom": [
     "All"
   ],
-  "python-envs.globalSearchPaths": ["~\\Documents\\python_envs"],
+  "python-envs.globalSearchPaths": ["${env:USERPROFILE}\\Documents\\python_envs"],
   "python.analysis.inlayHints.variableTypes": false,
   "python.analysis.inlayHints.functionReturnTypes": false,
   "python.analysis.autoImportCompletions": false,
@@ -183,6 +182,7 @@
   "python.languageServer": "None", //"None" == pyrefly ; "Default"=Pylance
   "python.pyrefly.typeCheckingMode": "strict", //"off"/"basic"/"auto"/"default"/"strict"
   "python.pyrefly.disableTypeErrors": false,
+  "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // <-- new setting
 }
