@@ -17,3 +17,6 @@ in order to have batch script with relative icon:make a c# script that either ca
 
 
 make antigravity extensions file and generator
+
+
+add docstring to generate_vscode_extensions_file
