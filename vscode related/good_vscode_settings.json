@@ -132,7 +132,9 @@
   "python.experiments.optOutFrom": [
     "All"
   ],
-  "python-envs.globalSearchPaths": ["${env:USERPROFILE}\\Documents\\python_envs"],
+  "python-envs.globalSearchPaths": [
+    "${env:USERPROFILE}\\Documents\\python_envs"
+  ],
   "python.analysis.inlayHints.variableTypes": false,
   "python.analysis.inlayHints.functionReturnTypes": false,
   "python.analysis.autoImportCompletions": false,
@@ -180,9 +182,80 @@
   // =====================================
   // pyrefly - type checker and LSP (alternative to pylance)
   "python.languageServer": "None", //"None" == pyrefly ; "Default"=Pylance
-  "python.pyrefly.typeCheckingMode": "strict", //"off"/"basic"/"auto"/"default"/"strict"
+  "python.pyrefly.typeCheckingMode": "default", //"off"/"basic"/"auto"/"default"/"strict"
   "python.pyrefly.disableTypeErrors": false,
   "diffEditor.hideUnchangedRegions.enabled": true,
+  // =====================================
+  // buttons in GUI using "commands"-extension
+  "commands.commands": {
+    "Pyrefly type checking": {
+      "nestedItems": {
+        "Auto": {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "python.pyrefly.typeCheckingMode",
+            "value": "auto",
+            "target": "workspace"
+          }
+        },
+        "Off": {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "python.pyrefly.typeCheckingMode",
+            "value": "off",
+            "target": "workspace"
+          }
+        },
+        "Basic": {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "python.pyrefly.typeCheckingMode",
+            "value": "basic",
+            "target": "workspace"
+          }
+        },
+        "Legacy": {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "python.pyrefly.typeCheckingMode",
+            "value": "legacy",
+            "target": "workspace"
+          }
+        },
+        "Default": {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "python.pyrefly.typeCheckingMode",
+            "value": "default",
+            "target": "workspace"
+          }
+        },
+        "Strict": {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "python.pyrefly.typeCheckingMode",
+            "value": "strict",
+            "target": "workspace"
+          }
+        }
+      },
+      "statusBar": {
+        "alignment": "right",
+        "name": "Pyrefly type checking",
+        "text": "Pyrefly: ${config:python.pyrefly.typeCheckingMode} $(chevron-down)",
+        "tooltip": "Select Pyrefly type-checking mode",
+        "activeEditorLanguage": "python",
+        "updateEvents": [
+          {
+            "kind": "onDidConfigurationChange",
+            "settings": [
+              "python.pyrefly.typeCheckingMode"
+            ]
+          }
+        ]
+      }
+    }
+  }
   // =====================================
   // <-- new setting
 }
