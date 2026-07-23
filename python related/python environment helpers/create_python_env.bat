@@ -21,14 +21,25 @@ CALL :process_args %* || goto :fail
 :: ---------------------------------------------------------------------------
 :: Command-line flags
 :: ---------------------------------------------------------------------------
-:: --path PATH              Environment folder path.
-:: --packages "PKG PKG"     Space-separated packages to install.
-:: --version VERSION        Python version prefix or exact release, e.g. 3, 3.13, 3.13.5.
-:: --vscode-default Y|N     Set VS Code default interpreter.
-:: --vscode-search-path Y|N Add the env parent folder to VS Code env search paths.
-:: --notebook-support Y|N   Install notebook support: ipykernel ipympl.
-:: --desktop-shortcuts Y|N  Copy environment shortcuts to the Desktop.
-:: --add-to-path Y|N        Add env and Scripts to user PATH for new terminals.
+:: --path PATH              Folder where the virtual environment is created or reused.
+::                         If it already contains a compatible environment, it is reused.
+::                         The selected packages, Jupyter support, shortcuts, PATH, and
+::                         VS Code settings are then applied to that environment.
+:: --packages "PKG PKG"     Package names to install into this environment, separated by spaces.
+:: --version VERSION        Python version to use. Reuses a compatible installed Python,
+::                         or finds or installs the newest compatible release; e.g. 3, 3.13, 3.13.5.
+:: --vscode-default Y|N     Make VS Code use this environment by default for Python files.
+:: --vscode-search-path Y|N Let VS Code discover environments in this environment folder.
+:: --notebook-support Y|N   Install Jupyter support so this environment can run notebooks.
+:: --desktop-shortcuts Y|N  Add Desktop shortcuts for opening Python and installing packages here.
+:: --add-to-path Y|N        Make this environment the default when you type
+::                         `python` or `pip` in newly opened Command Prompt or
+::                         PowerShell windows. PATH is Windows' ordered list of
+::                         program folders: Windows uses the first matching
+::                         program it finds. This puts the env's Scripts folder,
+::                         then its root folder, before older Python entries.
+::                         It does not affect terminals that are already open,
+::                         and it does not change VS Code interpreter settings.
 ::
 :: If any flag is supplied, the settings dialog is skipped. Any omitted values
 :: fall back to the defaults below.
@@ -109,7 +120,7 @@ echo: Add VS Code env search path: %set_vscode_search_path%
 IF /I "%set_vscode_search_path%"=="Y" echo: VS Code env search path: %env_parent_path%
 echo: Install Jupyter notebook support (ipykernel ipympl): %install_notebook_support%
 echo: Copy environment shortcuts to Desktop: %create_desktop_shortcuts%
-echo: Add environment to user PATH: %add_to_path%
+echo: Put environment first in user PATH: %add_to_path%
 echo:
 echo:
 
@@ -624,7 +635,7 @@ exit /b 0
   IF "%set_vscode_search_path%"=="" set "set_vscode_search_path=%def_set_vscode_search_path%"
   IF "%create_desktop_shortcuts%"=="" set "create_desktop_shortcuts=%def_create_desktop_shortcuts%"
   IF "%add_to_path%"=="" set "add_to_path=%def_add_to_path%"
-  for /f "tokens=1,* delims==" %%A in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $form=New-Object System.Windows.Forms.Form; $form.Text='Python environment settings'; $form.StartPosition='CenterScreen'; $form.FormBorderStyle='FixedDialog'; $form.MaximizeBox=$false; $form.MinimizeBox=$false; $form.ClientSize=New-Object System.Drawing.Size(640,510); $pathLabel=New-Object System.Windows.Forms.Label; $pathLabel.Text='Environment path:'; $pathLabel.Location=New-Object System.Drawing.Point(12,16); $pathLabel.AutoSize=$true; $form.Controls.Add($pathLabel); $pathText=New-Object System.Windows.Forms.TextBox; $pathText.Location=New-Object System.Drawing.Point(250,13); $pathText.Size=New-Object System.Drawing.Size(345,22); $pathText.Text='%env_path%'; $form.Controls.Add($pathText); $versionLabel=New-Object System.Windows.Forms.Label; $versionLabel.Text='Python version:' + [Environment]::NewLine + '(existing env if compatible, else newest compatible)'; $versionLabel.Location=New-Object System.Drawing.Point(12,47); $versionLabel.Size=New-Object System.Drawing.Size(235,36); $form.Controls.Add($versionLabel); $text=New-Object System.Windows.Forms.TextBox; $text.Location=New-Object System.Drawing.Point(250,53); $text.Size=New-Object System.Drawing.Size(160,22); $text.Text='%version%'; $form.Controls.Add($text); $packagesLabel=New-Object System.Windows.Forms.Label; $packagesLabel.Text='Packages:'; $packagesLabel.Location=New-Object System.Drawing.Point(12,96); $packagesLabel.AutoSize=$true; $form.Controls.Add($packagesLabel); $packagesText=New-Object System.Windows.Forms.TextBox; $packagesText.Location=New-Object System.Drawing.Point(250,93); $packagesText.Size=New-Object System.Drawing.Size(345,135); $packagesText.Multiline=$true; $packagesText.ScrollBars='Vertical'; $packagesText.WordWrap=$true; $packagesText.Text='%packages%'; $form.Controls.Add($packagesText); $v=New-Object System.Windows.Forms.CheckBox; $v.Text='Set VS Code default interpreter'; $v.Location=New-Object System.Drawing.Point(15,250); $v.Size=New-Object System.Drawing.Size(360,24); $v.Checked=('%set_vscode_default%' -ieq 'Y' -or '%set_vscode_default%' -ieq 'YES'); $form.Controls.Add($v); $vs=New-Object System.Windows.Forms.Label; $vs.Text='(Writes python.defaultInterpreterPath in %APPDATA%\Code\User\settings.json)'; $vs.Location=New-Object System.Drawing.Point(35,274); $vs.Size=New-Object System.Drawing.Size(560,34); $form.Controls.Add($vs); $s=New-Object System.Windows.Forms.CheckBox; $s.Text='Set VS Code environment search path'; $s.Location=New-Object System.Drawing.Point(15,315); $s.Size=New-Object System.Drawing.Size(520,24); $s.Checked=('%set_vscode_search_path%' -ieq 'Y' -or '%set_vscode_search_path%' -ieq 'YES'); $form.Controls.Add($s); $ss=New-Object System.Windows.Forms.Label; $ss.Text='(Writes python-envs.globalSearchPaths to the parent folder of the environment)'; $ss.Location=New-Object System.Drawing.Point(35,339); $ss.Size=New-Object System.Drawing.Size(580,34); $form.Controls.Add($ss); $j=New-Object System.Windows.Forms.CheckBox; $j.Text='Install Jupyter notebook support (ipykernel ipympl + dependencies)'; $j.Location=New-Object System.Drawing.Point(15,380); $j.Size=New-Object System.Drawing.Size(610,24); $j.Checked=('%install_notebook_support%' -ieq 'Y' -or '%install_notebook_support%' -ieq 'YES'); $form.Controls.Add($j); $d=New-Object System.Windows.Forms.CheckBox; $d.Text='Copy environment shortcuts to Desktop'; $d.Location=New-Object System.Drawing.Point(15,410); $d.Size=New-Object System.Drawing.Size(520,24); $d.Checked=('%create_desktop_shortcuts%' -ieq 'Y' -or '%create_desktop_shortcuts%' -ieq 'YES'); $form.Controls.Add($d); $p=New-Object System.Windows.Forms.CheckBox; $p.Text='Add environment to user PATH (lets python and pip from this env run in new terminals)'; $p.Location=New-Object System.Drawing.Point(15,440); $p.Size=New-Object System.Drawing.Size(610,24); $p.Checked=('%add_to_path%' -ieq 'Y' -or '%add_to_path%' -ieq 'YES'); $form.Controls.Add($p); $ok=New-Object System.Windows.Forms.Button; $ok.Text='Create'; $ok.Location=New-Object System.Drawing.Point(450,470); $ok.DialogResult=[System.Windows.Forms.DialogResult]::OK; $form.AcceptButton=$ok; $form.Controls.Add($ok); $cancel=New-Object System.Windows.Forms.Button; $cancel.Text='Cancel'; $cancel.Location=New-Object System.Drawing.Point(535,470); $cancel.DialogResult=[System.Windows.Forms.DialogResult]::Cancel; $form.CancelButton=$cancel; $form.Controls.Add($cancel); $result=$form.ShowDialog(); if ($result -eq [System.Windows.Forms.DialogResult]::OK) { $ep=$pathText.Text.Trim(); if (-not $ep) { $ep='%def_env_path%' }; $pv=$text.Text.Trim(); if (-not $pv) { $pv='%def_version%' }; $pk=($packagesText.Text -replace '[\r\n\t]+',' ').Trim(); Write-Output ('env_path=' + $ep); Write-Output ('version=' + $pv); Write-Output ('packages_was_set=Y'); Write-Output ('packages=' + $pk); Write-Output ('install_notebook_support=' + $(if ($j.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_default=' + $(if ($v.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_search_path=' + $(if ($s.Checked) { 'Y' } else { 'N' })); Write-Output ('create_desktop_shortcuts=' + $(if ($d.Checked) { 'Y' } else { 'N' })); Write-Output ('add_to_path=' + $(if ($p.Checked) { 'Y' } else { 'N' })) } else { Write-Output 'cancelled=1' }"') do set "%%A=%%B"
+  for /f "tokens=1,* delims==" %%A in ('powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $form=New-Object System.Windows.Forms.Form; $form.Text='Python environment settings'; $form.StartPosition='CenterScreen'; $form.FormBorderStyle='FixedDialog'; $form.MaximizeBox=$false; $form.MinimizeBox=$false; $form.ClientSize=New-Object System.Drawing.Size(640,650); $pathLabel=New-Object System.Windows.Forms.Label; $pathLabel.Text='Environment path:' + [Environment]::NewLine + '(Reuses an existing environment' + [Environment]::NewLine + 'at that path when its Python version' + [Environment]::NewLine + 'is compatible.)'; $pathLabel.Location=New-Object System.Drawing.Point(12,16); $pathLabel.AutoSize=$true; $form.Controls.Add($pathLabel); $pathText=New-Object System.Windows.Forms.TextBox; $pathText.Location=New-Object System.Drawing.Point(250,13); $pathText.Size=New-Object System.Drawing.Size(345,22); $pathText.Text='%env_path%'; $form.Controls.Add($pathText); $versionLabel=New-Object System.Windows.Forms.Label; $versionLabel.Text='Python version:' + [Environment]::NewLine + '(existing Python if compatible, else newest compatible)'; $versionLabel.Location=New-Object System.Drawing.Point(12,83); $versionLabel.Size=New-Object System.Drawing.Size(235,36); $form.Controls.Add($versionLabel); $text=New-Object System.Windows.Forms.TextBox; $text.Location=New-Object System.Drawing.Point(250,89); $text.Size=New-Object System.Drawing.Size(160,22); $text.Text='%version%'; $form.Controls.Add($text); $packagesLabel=New-Object System.Windows.Forms.Label; $packagesLabel.Text='Packages:'; $packagesLabel.Location=New-Object System.Drawing.Point(12,132); $packagesLabel.AutoSize=$true; $form.Controls.Add($packagesLabel); $packagesText=New-Object System.Windows.Forms.TextBox; $packagesText.Location=New-Object System.Drawing.Point(250,129); $packagesText.Size=New-Object System.Drawing.Size(345,135); $packagesText.Multiline=$true; $packagesText.ScrollBars='Vertical'; $packagesText.WordWrap=$true; $packagesText.Text='%packages%'; $form.Controls.Add($packagesText); $v=New-Object System.Windows.Forms.CheckBox; $v.Text='Set VS Code default interpreter'; $v.Location=New-Object System.Drawing.Point(15,286); $v.Size=New-Object System.Drawing.Size(360,24); $v.Checked=('%set_vscode_default%' -ieq 'Y' -or '%set_vscode_default%' -ieq 'YES'); $form.Controls.Add($v); $vs=New-Object System.Windows.Forms.Label; $vs.Text='(VS Code will select this Python automatically when you work with Python files.)'; $vs.Location=New-Object System.Drawing.Point(35,310); $vs.Size=New-Object System.Drawing.Size(560,34); $form.Controls.Add($vs); $s=New-Object System.Windows.Forms.CheckBox; $s.Text='Set VS Code environment search path'; $s.Location=New-Object System.Drawing.Point(15,351); $s.Size=New-Object System.Drawing.Size(520,24); $s.Checked=('%set_vscode_search_path%' -ieq 'Y' -or '%set_vscode_search_path%' -ieq 'YES'); $form.Controls.Add($s); $ss=New-Object System.Windows.Forms.Label; $ss.Text='(Makes VS Code list virtual environments stored in this folder.)'; $ss.Location=New-Object System.Drawing.Point(35,375); $ss.Size=New-Object System.Drawing.Size(580,34); $form.Controls.Add($ss); $j=New-Object System.Windows.Forms.CheckBox; $j.Text='Install Jupyter notebook support (ipykernel ipympl + dependencies)'; $j.Location=New-Object System.Drawing.Point(15,416); $j.Size=New-Object System.Drawing.Size(610,24); $j.Checked=('%install_notebook_support%' -ieq 'Y' -or '%install_notebook_support%' -ieq 'YES'); $form.Controls.Add($j); $d=New-Object System.Windows.Forms.CheckBox; $d.Text='Copy environment shortcuts to Desktop'; $d.Location=New-Object System.Drawing.Point(15,446); $d.Size=New-Object System.Drawing.Size(520,24); $d.Checked=('%create_desktop_shortcuts%' -ieq 'Y' -or '%create_desktop_shortcuts%' -ieq 'YES'); $form.Controls.Add($d); $shortcutHelp=New-Object System.Windows.Forms.Label; $shortcutHelp.Text='(Creates Desktop shortcuts to launch Python in a terminal and install packages in this environment.)'; $shortcutHelp.Location=New-Object System.Drawing.Point(35,470); $shortcutHelp.Size=New-Object System.Drawing.Size(560,20); $form.Controls.Add($shortcutHelp); $p=New-Object System.Windows.Forms.CheckBox; $p.Text='Make this environment the default Python in new terminals'; $p.Location=New-Object System.Drawing.Point(15,506); $p.Size=New-Object System.Drawing.Size(610,24); $p.Checked=('%add_to_path%' -ieq 'Y' -or '%add_to_path%' -ieq 'YES'); $form.Controls.Add($p); $pathHelp=New-Object System.Windows.Forms.Label; $pathHelp.Text='(PATH is the ordered list Windows uses to find programs. New terminals will use this environment for python and pip before older Python entries. It does not affect terminals already open.)'; $pathHelp.Location=New-Object System.Drawing.Point(35,530); $pathHelp.Size=New-Object System.Drawing.Size(570,38); $form.Controls.Add($pathHelp); $ok=New-Object System.Windows.Forms.Button; $ok.Text='Create'; $ok.Location=New-Object System.Drawing.Point(450,586); $ok.DialogResult=[System.Windows.Forms.DialogResult]::OK; $form.AcceptButton=$ok; $form.Controls.Add($ok); $cancel=New-Object System.Windows.Forms.Button; $cancel.Text='Cancel'; $cancel.Location=New-Object System.Drawing.Point(535,586); $cancel.DialogResult=[System.Windows.Forms.DialogResult]::Cancel; $form.CancelButton=$cancel; $form.Controls.Add($cancel); $result=$form.ShowDialog(); if ($result -eq [System.Windows.Forms.DialogResult]::OK) { $ep=$pathText.Text.Trim(); if (-not $ep) { $ep='%def_env_path%' }; $pv=$text.Text.Trim(); if (-not $pv) { $pv='%def_version%' }; $pk=($packagesText.Text -replace '[\r\n\t]+',' ').Trim(); Write-Output ('env_path=' + $ep); Write-Output ('version=' + $pv); Write-Output ('packages_was_set=Y'); Write-Output ('packages=' + $pk); Write-Output ('install_notebook_support=' + $(if ($j.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_default=' + $(if ($v.Checked) { 'Y' } else { 'N' })); Write-Output ('set_vscode_search_path=' + $(if ($s.Checked) { 'Y' } else { 'N' })); Write-Output ('create_desktop_shortcuts=' + $(if ($d.Checked) { 'Y' } else { 'N' })); Write-Output ('add_to_path=' + $(if ($p.Checked) { 'Y' } else { 'N' })) } else { Write-Output 'cancelled=1' }"') do set "%%A=%%B"
   IF "%cancelled%"=="1" exit /b 2
   IF "%env_path%"=="" set "env_path=%def_env_path%"
   IF "%version%"=="" set "version=%def_version%"
@@ -956,30 +967,20 @@ exit /b 0
 
 :add_env_to_path
   set "env_scripts_path=%env_path%\Scripts"
-  for /f "tokens=2,*" %%A in ('reg query HKCU\Environment /v PATH 2^>nul') do set "userpath=%%B"
-  IF "%userpath%"=="" set "userpath="
-  set "new_userpath=%userpath%"
-  CALL :append_path_entry "%env_path%"
-  CALL :append_path_entry "%env_scripts_path%"
-  IF "%new_userpath%"=="%userpath%" (
-    echo: --Environment already present in user PATH--
-  ) ELSE (
-    setx PATH "%new_userpath%" >NUL || exit /b 1
-    echo: --Added environment to user PATH--
-  )
+  REM PATH is searched left-to-right. Remove existing copies, then add two
+  REM separate entries at the beginning so this environment wins over older
+  REM Python installations. SetEnvironmentVariable avoids setx's length limit.
+  set "PY_ENV_HELPER_PATH_FIRST=%env_scripts_path%"
+  set "PY_ENV_HELPER_PATH_SECOND=%env_path%"
+  powershell -NoProfile -Command "$first=$env:PY_ENV_HELPER_PATH_FIRST; $second=$env:PY_ENV_HELPER_PATH_SECOND; $current=[Environment]::GetEnvironmentVariable('Path','User'); $entries=@(); if ($current) { $entries=$current -split ';' | Where-Object { $entry=$_.Trim(); $entry -and -not [string]::Equals($entry,$first,[StringComparison]::OrdinalIgnoreCase) -and -not [string]::Equals($entry,$second,[StringComparison]::OrdinalIgnoreCase) } }; $newPath=(@($first,$second)+$entries) -join ';'; [Environment]::SetEnvironmentVariable('Path',$newPath,'User')" || exit /b 1
+  set "PY_ENV_HELPER_PATH_FIRST="
+  set "PY_ENV_HELPER_PATH_SECOND="
+  echo: --Placed environment at the start of user PATH--
+  echo:   1. %env_scripts_path%
+  echo:   2. %env_path%
+  echo: New terminals will use this environment's Python before older PATH entries.
   echo:
   exit /b 0
-
-:append_path_entry
-  set "path_entry=%~1"
-  IF "%path_entry%"=="" exit /b 0
-  echo:;%new_userpath%;| findstr /I /C:";%path_entry%;" >NUL
-  IF ERRORLEVEL 1 (
-    IF NOT "%new_userpath%"=="" IF NOT "%new_userpath:~-1%"==";" set "new_userpath=%new_userpath%;"
-    set "new_userpath=%new_userpath%%path_entry%"
-  )
-  exit /b 0
-
 :print_separator
   echo: ============================================================
   exit /b 0
