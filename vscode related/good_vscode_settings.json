@@ -6,6 +6,7 @@
   "window.newWindowProfile": "Default",
   "security.workspace.trust.untrustedFiles": "open",
   "workbench.list.mouseWheelScrollSensitivity": 2,
+  "workbench.browser.showInTitleBar": false,
   // =====================================
   // terminal
   "terminal.integrated.inheritEnv": true,
@@ -54,6 +55,7 @@
   "git.postCommitCommand": "push",
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
+  "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
   "editor.codeLens": true,
@@ -101,7 +103,7 @@
   "settingsSync.ignoredExtensions": [],
   "settingsSync.ignoredSettings": [],
   // =====================================
-  // copilot/chat
+  // copilot/chat/AI
   "github.copilot.enable": {
     "*": true,
     "plaintext": false,
@@ -109,6 +111,7 @@
     "scminput": false,
     "python": true
   },
+  "chat.titleBar.openInAgentsWindow.enabled": false,
   "chat.tools.terminal.autoApprove": {
     "/^python -m py_compile live_plot\\.py$/": {
       "approve": true,
@@ -126,14 +129,14 @@
   },
   // =====================================
   // Python
-  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "C:\\Users\\Flo\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.venvFolders": [
+    "Documents\\python_envs"
+  ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "python.experiments.optOutFrom": [
     "All"
-  ],
-  "python-envs.globalSearchPaths": [
-    "${env:USERPROFILE}\\Documents\\python_envs"
   ],
   "python.analysis.inlayHints.variableTypes": false,
   "python.analysis.inlayHints.functionReturnTypes": false,
@@ -184,7 +187,9 @@
   "python.languageServer": "None", //"None" == pyrefly ; "Default"=Pylance
   "python.pyrefly.typeCheckingMode": "default", //"off"/"basic"/"auto"/"default"/"strict"
   "python.pyrefly.disableTypeErrors": false,
-  "diffEditor.hideUnchangedRegions.enabled": true,
+  "python-envs.globalSearchPaths": [
+    "${env:USERPROFILE}\\Documents\\python_envs"
+  ],
   // =====================================
   // buttons in GUI using "commands"-extension
   "commands.commands": {
