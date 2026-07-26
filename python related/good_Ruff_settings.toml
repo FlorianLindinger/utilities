@@ -145,6 +145,7 @@ ignore = [
   "PLR0912", # too many branches in function/method
   "PLR0913", # too many function parameters
   "PLR0915", # too many statements in function/method
+  "PLR0917", # allow mor ethan 5 positional arguments
   "PLR1730", # allow for comparison where max/min would have worked
   "PLR2004", # allow for numbers in comparison
   "PLR5501", # allow for "else: if" instead of "elif"
