@@ -13,7 +13,7 @@
   "terminal.integrated.defaultProfile.windows": "Command Prompt",
   "terminal.integrated.enableMultiLinePasteWarning": "never",
   // =====================================
-  // explorer
+  // explorer and search
   "explorer.excludeGitIgnore": false,
   "explorer.confirmDelete": false,
   "files.exclude": { // not visible in explorer:
@@ -27,6 +27,15 @@
     "**/*.pid": true,
     "**/*.ome.tif": true,
     "**/*.tiff": true,
+    "**/bin": true, // Hide compiled output folders
+    "**/obj": true // Hide temporary build folders
+  },
+  "search.exclude": {
+    "**/bin": true,                                   // Do not search C# build output
+    "**/obj": true,                                   // Do not search C# intermediate files
+    "**/__pycache__": true,                           // Do not search Python bytecode caches
+    "**/.pytest_cache": true,                         // Do not search pytest caches
+    "**/.ruff_cache": true                            // Do not search Ruff caches
   },
   // =====================================
   // default formatters
@@ -46,7 +55,7 @@
   },
   "notebook.defaultFormatter": "charliermarsh.ruff",
   // =====================================
-  // git & diff
+  // git & diff & github
   "git.enableSmartCommit": true,
   "git.autofetch": true,
   "git.autofetchPeriod": 180, //seconds
@@ -56,6 +65,7 @@
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
   "diffEditor.hideUnchangedRegions.enabled": true,
+  "githubPullRequests.pushBranch": "always",
   // =====================================
   // editor  
   "editor.codeLens": true,
@@ -156,6 +166,18 @@
       "default": true
     }
   ],
+  // =====================================
+  // C#
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp", // Use Microsoft's C# formatter
+    "editor.formatOnSave": true, // Format C# files when saving
+    "editor.inlayHints.enabled": "on", // Hide parameter and type hints inside the code
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always" // Do not automatically change using directives
+    }
+  },
+  "dotnet.server.useOmnisharp": false, // Use the modern Roslyn language server
+  "editor.acceptSuggestionOnCommitCharacter": false, // Do not accept suggestions when typing punctuation
   // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
