@@ -10,10 +10,7 @@ cache-dir = ".ruff_cache"
 # files to check/correct
 include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"]
 # files to exclude from check/correct
-exclude = [
-  ".git",
-  ".mypy_cache",
-  ".ruff_cache",
+extend-exclude = [
   "__pycache__",
   "**/*.build",
   "**/*.dist",
