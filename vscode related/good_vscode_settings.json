@@ -31,11 +31,11 @@
     "**/obj": true // Hide temporary build folders
   },
   "search.exclude": {
-    "**/bin": true,                                   // Do not search C# build output
-    "**/obj": true,                                   // Do not search C# intermediate files
-    "**/__pycache__": true,                           // Do not search Python bytecode caches
-    "**/.pytest_cache": true,                         // Do not search pytest caches
-    "**/.ruff_cache": true                            // Do not search Ruff caches
+    "**/bin": true, // Do not search C# build output
+    "**/obj": true, // Do not search C# intermediate files
+    "**/__pycache__": true, // Do not search Python bytecode caches
+    "**/.pytest_cache": true, // Do not search pytest caches
+    "**/.ruff_cache": true // Do not search Ruff caches
   },
   // =====================================
   // default formatters
@@ -275,10 +275,10 @@
         ]
       }
     },
-    "Run current C# project": {
+    "Run current C# project (.cs)": {
       "command": "commands.runInTerminal",
       "args": {
-        "text": "@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
+        "text": "\u0003@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
         "name": "C# EXE",
         "reuse": "newest",
         "reveal": true
@@ -289,7 +289,24 @@
         "alignment": "right",
         "priority": 100,
         "tooltip": "Run the newest compiled EXE for the active C# project",
-        "activeEditorLanguage": "csharp"
+        "activeEditorLanguage": "csharp",
+      }
+    },
+    "Run current C# project (.csproj=xml)": {
+      "command": "commands.runInTerminal",
+      "args": {
+        "text": "\u0003@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
+        "name": "C# EXE",
+        "reuse": "newest",
+        "reveal": true
+      },
+      "activeEditorLanguage": "xml",
+      "statusBar": {
+        "text": "$(play) Run EXE",
+        "alignment": "right",
+        "priority": 100,
+        "tooltip": "Run the newest compiled EXE for the active C# project",
+        "activeEditorLanguage": "xml",
       }
     }
   },
