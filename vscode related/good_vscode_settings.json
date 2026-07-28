@@ -117,10 +117,6 @@
       "approve": true,
       "matchCommandLine": true
     },
-    "/^cd \"c:\\\\Users\\\\agpup\\\\Documents\\\\Repositories\\\\fieldmax_power_meter_python\" ; python -m py_compile live_plot\\.py$/": {
-      "approve": true,
-      "matchCommandLine": true
-    }
   },
   "editor.quickSuggestions": {
     "other": true,
@@ -129,9 +125,9 @@
   },
   // =====================================
   // Python
-  "python.defaultInterpreterPath": "C:\\Users\\Flo\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
-  "python.venvFolders": [
-    "Documents\\python_envs"
+  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python-envs.globalSearchPaths": [
+    "${env:USERPROFILE}\\Documents\\python_envs"
   ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
@@ -187,9 +183,6 @@
   "python.languageServer": "None", //"None" == pyrefly ; "Default"=Pylance
   "python.pyrefly.typeCheckingMode": "default", //"off"/"basic"/"auto"/"default"/"strict"
   "python.pyrefly.disableTypeErrors": false,
-  "python-envs.globalSearchPaths": [
-    "${env:USERPROFILE}\\Documents\\python_envs"
-  ],
   // =====================================
   // buttons in GUI using "commands"-extension
   "commands.commands": {
@@ -260,7 +253,7 @@
         ]
       }
     }
-  }
+  },
   // =====================================
   // <-- new setting
 }
