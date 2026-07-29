@@ -190,7 +190,7 @@
     "editor.inlayHints.enabled": "on", // Hide parameter and type hints inside the code
     "editor.codeActionsOnSave": {
       "source.organizeImports": "always" // Do not automatically change using directives
-    },
+    }
   },
   "csharp.debug.console": "integratedTerminal",
   "dotnet.server.useOmnisharp": false, // Use the modern Roslyn language server
