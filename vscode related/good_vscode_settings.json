@@ -80,11 +80,11 @@
   "git.postCommitCommand": "push",
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
-  "diffEditor.hideUnchangedRegions.enabled": true,
   "githubPullRequests.pushBranch": "always",
+  "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
-  "editor.codeLens": true,
+  "editor.codeLens": false,
   "editor.showFoldingControls": "always",
   "editor.foldingStrategy": "auto",
   "editor.suggest.showStatusBar": true,
