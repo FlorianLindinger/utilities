@@ -30,7 +30,7 @@
   },
   // =====================================
   // explorer and search
-  "explorer.excludeGitIgnore": false,
+  "explorer.excludeGitIgnore": true,
   "explorer.confirmDelete": false,
   "files.exclude": { // not visible in explorer:
     "**/__pycache__": true,
