@@ -6,9 +6,6 @@
 include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"]
 # files to exclude from check/correct
 extend-exclude = [
-  ".git",
-  ".mypy_cache",
-  ".ruff_cache",
   "__pycache__",
   "**/*.build",
   "**/*.dist",

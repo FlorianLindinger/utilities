@@ -10,11 +10,27 @@
   // =====================================
   // terminal
   "terminal.integrated.inheritEnv": true,
-  "terminal.integrated.defaultProfile.windows": "Command Prompt",
   "terminal.integrated.enableMultiLinePasteWarning": "never",
+  "terminal.integrated.defaultProfile.windows": "Command Prompt UTF-8",
+  "terminal.integrated.profiles.windows": {
+    "Command Prompt UTF-8": {
+      "path": "${env:windir}\\System32\\cmd.exe",
+      "args": [
+        "/K",
+        "chcp 65001 > nul"
+      ]
+    },
+    "terminal.integrated.automationProfile.windows": {
+      "path": "${env:windir}\\System32\\cmd.exe",
+      "args": [
+        "/K",
+        "chcp 65001 > nul"
+      ]
+    }
+  },
   // =====================================
-  // explorer
-  "explorer.excludeGitIgnore": false,
+  // explorer and search
+  "explorer.excludeGitIgnore": true,
   "explorer.confirmDelete": false,
   "files.exclude": { // not visible in explorer:
     "**/__pycache__": true,
@@ -27,6 +43,15 @@
     "**/*.pid": true,
     "**/*.ome.tif": true,
     "**/*.tiff": true,
+    "**/bin": true, // Hide compiled output folders
+    "**/obj": true // Hide temporary build folders
+  },
+  "search.exclude": {
+    "**/bin": true, // Do not search C# build output
+    "**/obj": true, // Do not search C# intermediate files
+    "**/__pycache__": true, // Do not search Python bytecode caches
+    "**/.pytest_cache": true, // Do not search pytest caches
+    "**/.ruff_cache": true // Do not search Ruff caches
   },
   // =====================================
   // default formatters
@@ -46,7 +71,7 @@
   },
   "notebook.defaultFormatter": "charliermarsh.ruff",
   // =====================================
-  // git & diff
+  // git & diff & github
   "git.enableSmartCommit": true,
   "git.autofetch": true,
   "git.autofetchPeriod": 180, //seconds
@@ -55,10 +80,11 @@
   "git.postCommitCommand": "push",
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
+  "githubPullRequests.pushBranch": "always",
   "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
-  "editor.codeLens": true,
+  "editor.codeLens": false,
   "editor.showFoldingControls": "always",
   "editor.foldingStrategy": "auto",
   "editor.suggest.showStatusBar": true,
@@ -116,7 +142,7 @@
     "/^python -m py_compile live_plot\\.py$/": {
       "approve": true,
       "matchCommandLine": true
-    },
+    }
   },
   "editor.quickSuggestions": {
     "other": true,
@@ -143,7 +169,7 @@
       "source.organizeImports.ruff": "explicit",
       "source.organizeImports": "explicit",
       "source.addMissingImports": "never"
-    },
+    }
   },
   // =====================================
   // java
@@ -156,6 +182,19 @@
       "default": true
     }
   ],
+  // =====================================
+  // C#
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp", // Use Microsoft's C# formatter
+    "editor.formatOnSave": true, // Format C# files when saving
+    "editor.inlayHints.enabled": "on", // Hide parameter and type hints inside the code
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always" // Do not automatically change using directives
+    }
+  },
+  "csharp.debug.console": "integratedTerminal",
+  "dotnet.server.useOmnisharp": false, // Use the modern Roslyn language server
+  "editor.acceptSuggestionOnCommitCharacter": false, // Do not accept suggestions when typing punctuation
   // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
@@ -252,8 +291,42 @@
           }
         ]
       }
+    },
+    "Run current C# project (.cs)": {
+      "command": "commands.runInTerminal",
+      "args": {
+        "text": "\u0003@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
+        "name": "C# EXE",
+        "reuse": "newest",
+        "reveal": true
+      },
+      "activeEditorLanguage": "csharp",
+      "statusBar": {
+        "text": "$(play) Run EXE",
+        "alignment": "right",
+        "priority": 100,
+        "tooltip": "Run the newest compiled EXE for the active C# project",
+        "activeEditorLanguage": "csharp"
+      }
+    },
+    "Run current C# project (.csproj=xml)": {
+      "command": "commands.runInTerminal",
+      "args": {
+        "text": "\u0003@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
+        "name": "C# EXE",
+        "reuse": "newest",
+        "reveal": true
+      },
+      "activeEditorLanguage": "xml",
+      "statusBar": {
+        "text": "$(play) Run EXE",
+        "alignment": "right",
+        "priority": 100,
+        "tooltip": "Run the newest compiled EXE for the active C# project",
+        "activeEditorLanguage": "xml"
+      }
     }
-  },
+  }
   // =====================================
   // <-- new setting
 }
