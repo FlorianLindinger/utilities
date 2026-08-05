@@ -2,15 +2,10 @@
 # Ruff (python linter/formatter) configuration file
 # =================================================
 
-# (Global settings go at the top)
-# Explicitly set the cache to a relative folder. 
-# This stops Ruff from searching for %USERPROFILE% to store its cache.
-cache-dir = ".ruff_cache"
-
 # files to check/correct
 include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"]
 # files to exclude from check/correct
-exclude = [
+extend-exclude = [
   ".git",
   ".mypy_cache",
   ".ruff_cache",
