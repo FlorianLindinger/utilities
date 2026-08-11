@@ -2,6 +2,11 @@
 REM=r""" <- lets Python ignore the batch part of this file.
 :: The first line is skipped when this file is launched with `py -x`.
 :: The Python code starts near the bottom.
+:: Use green for normal setup output and red for warnings/failures.
+for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "ESC=%%E"
+set "GREEN=!ESC![92m"
+set "RED=!ESC![91m"
+set "RESET=!ESC![0m"
 CALL :process_args %* || goto :fail
 
 :: ---------------------------------------------------------------------------
@@ -96,7 +101,6 @@ CALL :normalize_yes_no "set_vscode_search_path" || goto :fail
 CALL :normalize_yes_no "create_desktop_shortcuts" || goto :fail
 CALL :normalize_yes_no "add_to_path" || goto :fail
 CALL :resolve_python_version || goto :fail
-CALL :print_installed_python_that_would_be_used
 
 CALL :make_absolute_path "%env_path%" || goto :fail
 SET "env_path=%OUTPUT%"
@@ -110,18 +114,17 @@ for %%F in ("%env_path%") do set "env_name=%%~nxF"
 :: Ensure the requested Python exists, create/activate the venv, install
 :: packages, add optional tooling, create shortcuts, and apply integrations.
 
-echo: --Settings--
+echo:!GREEN!--Settings--!RESET!
 echo:
-echo: Environment path: %env_path%
-echo: Python version request: %version_request%
-echo: Python packages: %packages%
-echo: Set VS Code default interpreter: %set_vscode_default%
-echo: Add VS Code env search path: %set_vscode_search_path%
-IF /I "%set_vscode_search_path%"=="Y" echo: VS Code env search path: %env_parent_path%
-echo: Install Jupyter notebook support (ipykernel ipympl): %install_notebook_support%
-echo: Copy environment shortcuts to Desktop: %create_desktop_shortcuts%
-echo: Put environment first in user PATH: %add_to_path%
-echo:
+echo:!GREEN!Environment path: %env_path%!RESET!
+echo:!GREEN!Python version request: %version_request%!RESET!
+echo:!GREEN!Python packages: %packages%!RESET!
+echo:!GREEN!Set VS Code default interpreter: %set_vscode_default%!RESET!
+echo:!GREEN!Add VS Code env search path: %set_vscode_search_path%!RESET!
+IF /I "%set_vscode_search_path%"=="Y" echo:!GREEN!VS Code env search path: %env_parent_path%!RESET!
+echo:!GREEN!Install Jupyter notebook support (ipykernel ipympl): %install_notebook_support%!RESET!
+echo:!GREEN!Copy environment shortcuts to Desktop: %create_desktop_shortcuts%!RESET!
+echo:!GREEN!Put environment first in user PATH: %add_to_path%!RESET!
 echo:
 
 SET "venv_python_version=%version%"
@@ -135,25 +138,23 @@ IF EXIST "%env_path%" (
       CALL :fail_existing_env_reuse || goto :fail
       CALL :ensure_python || goto :fail
       CALL :create_venv || goto :fail
-      echo: --Created python environment--
+      echo:!GREEN!--Created python environment--!RESET!
     ) ELSE (
-      echo: --Environment already exists with Python %venv_python_version%--
+      echo:!GREEN!--Environment already exists with Python %venv_python_version%--!RESET!
+      echo:
     )
   ) ELSE (
-    echo: --Environment folder exists and is empty--
+    echo:!GREEN!--Environment folder exists and is empty--!RESET!
     CALL :ensure_python || goto :fail
     CALL :create_venv || goto :fail
-    echo: --Created python environment--
+    echo:!GREEN!--Created python environment--!RESET!
   )
 ) ELSE (
   CALL :ensure_python || goto :fail
   CALL :create_venv || goto :fail
-  echo: --Created python environment--
+  echo:!GREEN!--Created python environment--!RESET!
 )
 call "%env_path%\Scripts\activate.bat" || goto :fail
-echo:
-echo: --Activated python environment--
-echo:
 
 mkdir "%USERPROFILE%\Documents\Repositories" 2> NUL
 
@@ -222,69 +223,70 @@ IF NOT "%packages%"=="" set "needs_package_install=Y"
 IF /I "%install_notebook_support%"=="Y" set "needs_package_install=Y"
 IF /I "%needs_package_install%"=="Y" (
   echo:
-  echo: --Preparing package installer--
+  echo:!GREEN!--Updating pip--!RESET!
   echo:
   python -m pip install --upgrade pip
   IF ERRORLEVEL 1 (
     set "pip_upgrade_failed=Y"
-    echo: [Warning] Failed to upgrade pip. Continuing with package installation.
+    CALL :print_red [Warning] Failed to upgrade pip. Continuing with package installation.
   )
+  echo:
   CALL :ensure_uv
   IF NOT "%packages%"=="" (
-    echo: --Installing requested packages--
+    echo:!GREEN!--Installing requested packages--!RESET!
     echo:
     CALL :install_packages "%packages%"
     echo:
-    echo: --Finished installing requested packages--
+    echo:!GREEN!--Finished installing requested packages--!RESET!
     echo:
   )
   IF /I "%install_notebook_support%"=="Y" CALL :finish_jupyter_setup
 ) ELSE (
   echo:
-  echo: --No package installation requested--
+  echo:!GREEN!--No package installation requested--!RESET!
   echo:
 )
 
 set "setup_warnings="
 IF "%pip_upgrade_failed%"=="Y" (
-  echo: [Warning] pip upgrade failed.
+  CALL :print_red [Warning] pip upgrade failed.
   set "setup_warnings=Y"
 )
 IF NOT "!failed_packages!"=="" (
-  echo: [Warning] Failed packages:!failed_packages!
+  CALL :print_red [Warning] Failed packages:!failed_packages!
   set "setup_warnings=Y"
 )
 IF "%jupyter_support_failed%"=="Y" (
-  echo: [Warning] Jupyter notebook support install failed.
+  CALL :print_red [Warning] Jupyter notebook support install failed.
   set "setup_warnings=Y"
 )
 IF "%jupyter_kernel_failed%"=="Y" (
-  echo: [Warning] Jupyter kernel registration failed.
+  CALL :print_red [Warning] Jupyter kernel registration failed.
   set "setup_warnings=Y"
 )
 IF "%jupyter_kernel_test_failed%"=="Y" (
-  echo: [Warning] Jupyter kernel handshake test failed.
+  CALL :print_red [Warning] Jupyter kernel handshake test failed.
   set "setup_warnings=Y"
 )
 echo:
 echo:
 IF "%setup_warnings%"=="Y" (
-  echo: Setup completed with warnings. Review the warnings above.
+  CALL :print_red Setup completed with warnings. Review the warnings above.
 ) ELSE (
-  echo: Setup finished successfully.
+  echo:!GREEN!Setup finished successfully.!RESET!
 )
-echo: Created environment in "%env_path%".
-IF "%python_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("python (%env_name%)"^) for launching Python.
-IF "%python_desktop_shortcut_created%"=="1" echo: Created shortcut on Desktop ("python (%env_name%)"^) for launching Python.
-IF "%install_env_shortcut_created%"=="1" echo: Created shortcut in environment folder ("Install package (%env_name%)"^) for installing packages.
-IF "%install_shortcut_created%"=="1" echo: Created shortcut on Desktop ("Install package (%env_name%)") for installing packages.
-echo: Press any key to exit.
+echo:!GREEN!Created environment in "%env_path%".!RESET!
+IF "%python_env_shortcut_created%"=="1" echo:!GREEN!Created shortcut in environment folder ("python (%env_name%)"^) for launching Python.!RESET!
+IF "%python_desktop_shortcut_created%"=="1" echo:!GREEN!Created shortcut on Desktop ("python (%env_name%)"^) for launching Python.!RESET!
+IF "%install_env_shortcut_created%"=="1" echo:!GREEN!Created shortcut in environment folder ("Install package (%env_name%)"^) for installing packages.!RESET!
+IF "%install_shortcut_created%"=="1" echo:!GREEN!Created shortcut on Desktop ("Install package (%env_name%)") for installing packages.!RESET!
+echo:!GREEN!Press any key to exit.!RESET!
 pause > nul
 exit /b 0
 
 :cancelled
 echo:
-echo: Setup cancelled.
+echo:!GREEN!Setup cancelled.!RESET!
 exit /b 0
 
 :: ---------------------------------------------------------------------------
@@ -295,14 +297,14 @@ exit /b 0
 :fail
   echo:
   echo:
-  echo: ERROR: Failed python environment setup (See errors above^).
-  echo: Fix the error shown above, then run this script again.
-  echo: Press any key to exit.
+  echo:!RED!ERROR: Failed python environment setup (See errors above^).!RESET!
+  echo:!RED!Fix the error shown above, then run this script again.!RESET!
+  echo:!RED!Press any key to exit.!RESET!
   pause > nul
   exit /b 1
 
 :process_args
-  IF "%~1"=="" GOTO :EOF
+  IF "%~1"=="" exit /b 0
   IF "%~1"=="--path" (
     SET "skip_settings_dialog=Y"
     SET "env_path=%~2"
@@ -386,7 +388,7 @@ exit /b 0
     shift
     GOTO process_args
   )
-  GOTO :EOF
+  exit /b 0
 
 :existing_env_is_empty
   for /f "delims=" %%F in ('dir /a /b "%env_path%" 2^>nul') do (
@@ -404,8 +406,8 @@ exit /b 0
     set "existing_env_python_version=unknown"
     set "existing_env_warning=Cannot read the existing environment Python version. The folder might not be a Python virtual environment."
     echo:
-    echo: !existing_env_problem!
-    echo: !existing_env_warning!
+    CALL :print_red !existing_env_problem!
+    CALL :print_red !existing_env_warning!
     exit /b 1
   )
   CALL :read_python_version "%env_path%\Scripts\python.exe" existing_env_python_version
@@ -431,17 +433,17 @@ exit /b 0
   )
   set "existing_env_problem=Existing environment Python version does not match the requested version."
   echo:
-  echo: !existing_env_problem!
-  echo:   Environment path: "%env_path%"
-  echo:   Existing version:  !existing_env_python_version!
+  CALL :print_red !existing_env_problem!
+  CALL :print_red   Environment path: "%env_path%"
+  CALL :print_red   Existing version:  !existing_env_python_version!
   IF /I "%exact_version_requested%"=="Y" (
-    echo:   Required version:  %version%
+    CALL :print_red   Required version:  %version%
   ) ELSE (
-    echo:   Required version:  Any Python %version_request%.x compatible version
-    echo:   New environments use: %version%
+    CALL :print_red   Required version:  Any Python %version_request%.x compatible version
+    CALL :print_red   New environments use: %version%
   )
   IF NOT "!existing_env_warning!"=="" (
-    echo:   Warning: !existing_env_warning!
+    CALL :print_red   Warning: !existing_env_warning!
   )
   exit /b 1
 
@@ -567,35 +569,6 @@ exit /b 0
   CALL :find_path_python
   exit /b 0
 
-:print_installed_python_that_would_be_used
-  set "preview_python_exe="
-  set "preview_python_version="
-  set "preview_installed_python_exe="
-  set "preview_installed_python_version="
-  CALL :find_existing_python
-  IF DEFINED python_exe (
-    set "preview_python_exe=!python_exe!"
-    CALL :read_python_version "!preview_python_exe!" preview_python_version
-    IF "!preview_python_version!"=="" set "preview_python_version=unknown"
-    echo: Installed Python that would be used: !preview_python_version!
-    echo:   "!preview_python_exe!"
-  ) ELSE (
-    set "std_py_path=%LocalAppData%\Programs\Python\"
-    for /f "tokens=1,2 delims=." %%A in ("%launcher_version%") do set "preview_installed_python_exe=!std_py_path!Python%%A%%B\python.exe"
-    IF EXIST "!preview_installed_python_exe!" (
-      CALL :read_python_version "!preview_installed_python_exe!" preview_installed_python_version
-      IF "!preview_installed_python_version!"=="" set "preview_installed_python_version=unknown"
-      echo: Installed Python in requested version slot: !preview_installed_python_version!
-      echo:   "!preview_installed_python_exe!"
-      echo: Installed Python that would be used: none found. Required Python is %version%.
-    ) ELSE (
-      echo: Installed Python that would be used: none found. Python %version% will be installed.
-    )
-  )
-  set "python_exe="
-  echo:
-  exit /b 0
-
 :read_venv_cfg_version
   set "%~1="
   IF NOT EXIST "%env_path%\pyvenv.cfg" exit /b 0
@@ -611,15 +584,15 @@ exit /b 0
 
 :fail_existing_env_reuse
   echo:
-  echo: --^>Cannot reuse existing environment--
-  echo: --^>Delete or empty that folder. Press any button afterwards to continue.
+  CALL :print_red --Cannot reuse existing environment--
+  CALL :print_red --Delete or empty that folder. Press any button afterwards to continue.
 :wait_for_existing_env_reuse
   pause > nul
   IF EXIST "%env_path%" (
     CALL :existing_env_is_empty
     IF ERRORLEVEL 1 (
       echo:
-      echo: --^>Folder is still not empty. Delete or empty it, then press any button to check again.
+      CALL :print_red --Folder is still not empty. Delete or empty it, then press any button to check again.
       GOTO wait_for_existing_env_reuse
     )
   )
@@ -659,7 +632,7 @@ exit /b 0
     call set "%yn_name%=N"
     exit /b 0
   )
-  echo: [Error] %yn_name% must be Y or N.
+  CALL :print_red [Error] %yn_name% must be Y or N.
   exit /b 1
 
 :resolve_python_version
@@ -671,7 +644,7 @@ exit /b 0
     IF NOT "%%C"=="" set "exact_version_requested=Y"
   )
   IF /I "%exact_version_requested%"=="Y" (
-    echo: --Using exact Python release "%version_request%"--
+    echo:!GREEN!--Using exact Python release "%version_request%"--!RESET!
     set "version=%version_request%"
     for /f "tokens=1,2 delims=." %%A in ("%version%") do set "launcher_version=%%A.%%B"
     echo:
@@ -684,8 +657,6 @@ exit /b 0
     IF NOT ERRORLEVEL 1 (
       set "version=!existing_env_python_version_for_request!"
       for /f "tokens=1,2 delims=." %%A in ("!version!") do set "launcher_version=%%A.%%B"
-      echo: --Using existing environment Python !version! for "%version_request%"--
-      echo:
       exit /b 0
     )
     IF "!existing_env_python_version_for_request!"=="" (
@@ -694,20 +665,18 @@ exit /b 0
       IF NOT ERRORLEVEL 1 (
         set "version=!existing_env_python_version_for_request!"
         for /f "tokens=1,2 delims=." %%A in ("!version!") do set "launcher_version=%%A.%%B"
-        echo: --Using existing environment Python !version! for "%version_request%"--
-        echo:
         exit /b 0
       )
     )
   )
   for /f "delims=" %%V in ('powershell -NoProfile -Command "$prefix='%version_request%'.Trim(); if ($prefix -notmatch '^\d+(\.\d+){0,2}$') { exit 0 }; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $releaseRoot='https://www.python.org/ftp/python/'; try { $links=(Invoke-WebRequest -UseBasicParsing $releaseRoot -TimeoutSec 15).Links; $versions=$links | ForEach-Object href | Where-Object { $_ -match '^\d+\.\d+\.\d+/$' } | ForEach-Object { $_.TrimEnd('/') } | Where-Object { $_ -eq $prefix -or $_.StartsWith($prefix + '.') } | ForEach-Object { [version]$_ } | Sort-Object -Descending; foreach ($v in $versions) { $s=$v.ToString(); $url=$releaseRoot + $s + '/python-' + $s + '-amd64.exe'; try { Invoke-WebRequest -UseBasicParsing -Method Head $url -TimeoutSec 8 | Out-Null; Write-Output $s; exit 0 } catch {} } } catch {}; exit 0"') do set "newest_available_python_version=%%V"
   IF NOT "%newest_available_python_version%"=="" (
-    echo: Newest available compatible Python release for "%version_request%": %newest_available_python_version%
+    echo:!GREEN!Newest available compatible Python release for "%version_request%": %newest_available_python_version%!RESET!
     echo:
   )
   for /f "delims=" %%V in ('powershell -NoProfile -Command "$prefix='%version_request%'.Trim(); if ($prefix -notmatch '^\d+(\.\d+){0,2}$') { exit 2 }; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $releaseRoot='https://www.python.org/ftp/python/'; $links=(Invoke-WebRequest -UseBasicParsing $releaseRoot).Links; $versions=$links | ForEach-Object href | Where-Object { $_ -match '^\d+\.\d+\.\d+/$' } | ForEach-Object { $_.TrimEnd('/') } | Where-Object { $_ -eq $prefix -or $_.StartsWith($prefix + '.') } | ForEach-Object { [version]$_ } | Sort-Object -Descending; foreach ($v in $versions) { $s=$v.ToString(); $url=$releaseRoot + $s + '/python-' + $s + '-amd64.exe'; try { Invoke-WebRequest -UseBasicParsing -Method Head $url -TimeoutSec 8 | Out-Null; Write-Output $s; exit 0 } catch {} }; exit 3"') do set "resolved_version=%%V"
   IF "%resolved_version%"=="" (
-    echo: [Error] Could not resolve newest Python release for "%version_request%" from python.org.
+    CALL :print_red [Error] Could not resolve newest Python release for "%version_request%" from python.org.
     exit /b 1
   )
   set "version=%resolved_version%"
@@ -725,34 +694,34 @@ exit /b 0
       CALL :read_python_version "%installed_python_exe%" installed_python_version
       IF NOT "!installed_python_version!"=="%version%" IF NOT "!installed_python_version!"=="" (
         echo:
-        echo: [Error] Python %launcher_version% is already installed, but it is !installed_python_version!, not %version%.
-        echo:   Existing Python: "%installed_python_exe%"
+        CALL :print_red [Error] Python %launcher_version% is already installed, but it is !installed_python_version!, not %version%.
+        CALL :print_red   Existing Python: "%installed_python_exe%"
         echo:
-        echo: The python.org installer uses the same Python folder for patch releases of one minor version.
-        echo: Uninstall Python !installed_python_version! first if you need exact Python %version%.
+        CALL :print_red The python.org installer uses the same Python folder for patch releases of one minor version.
+        CALL :print_red Uninstall Python !installed_python_version! first if you need exact Python %version%.
         exit /b 1
       )
     )
-    echo: --Installing Python %version%--
+    echo:!GREEN!--Installing Python %version%--!RESET!
     echo:
     set "python_installer=%TEMP%\python-%version%-amd64.exe"
     set "python_install_log=%TEMP%\python-%version%-install.log"
     set "python_download_url=https://www.python.org/ftp/python/%version%/python-%version%-amd64.exe"
-    echo: Downloading Python installer:
-    echo:   !python_download_url!
-    echo:   "!python_installer!"
+    echo:!GREEN!Downloading Python installer:!RESET!
+    echo:!GREEN!  !python_download_url!!RESET!
+    echo:!GREEN!  "!python_installer!"!RESET!
     powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing '!python_download_url!' -OutFile '!python_installer!'" || exit /b 1
     echo:
-    echo: Running Python installer silently...
-    echo:   Log: "!python_install_log!"
+    echo:!GREEN!Running Python installer silently...!RESET!
+    echo:!GREEN!  Log: "!python_install_log!"!RESET!
     powershell -NoProfile -Command "$args=@('/quiet','InstallAllUsers=0','InstallLauncherAllUsers=0','Include_pip=1','Include_launcher=1','PrependPath=0','SimpleInstall=1','Include_test=0','/log','!python_install_log!'); $p=Start-Process -FilePath '!python_installer!' -ArgumentList $args -Wait -PassThru; exit $p.ExitCode"
     IF ERRORLEVEL 1 (
-      echo: [Error] Python %version% installer failed.
-      echo:   Installer log: "!python_install_log!"
+      CALL :print_red [Error] Python %version% installer failed.
+      CALL :print_red   Installer log: "!python_install_log!"
       del "!python_installer!" >nul 2>&1
       exit /b 1
     )
-    echo: Checking installed Python %version%...
+    echo:!GREEN!Checking installed Python %version%...!RESET!
     del "!python_installer!" >nul 2>&1
     CALL :find_existing_python
     IF NOT DEFINED python_exe (
@@ -761,39 +730,42 @@ exit /b 0
       IF "!available_python_version!"=="" CALL :read_launcher_python_version available_python_version
       IF "!available_python_version!"=="" set "available_python_version=unknown"
       echo:
-      echo: [Error] Could not install or find Python %version%.
-      echo:   Requested version: %version%
-      echo:   Available version: !available_python_version!
+      CALL :print_red [Error] Could not install or find Python %version%.
+      CALL :print_red   Requested version: %version%
+      CALL :print_red   Available version: !available_python_version!
       echo:
-      echo: The exact python.org installer ran, but Python %version% was not found afterward.
-      echo: If another Python %launcher_version% patch release is installed, uninstall it first and re-run this script.
+      CALL :print_red The exact python.org installer ran, but Python %version% was not found afterward.
+      CALL :print_red If another Python %launcher_version% patch release is installed, uninstall it first and re-run this script.
       exit /b 1
     )
     echo:
-    echo: --Finished installing Python %version% on computer--
+    echo:!GREEN!--Finished installing Python %version% on computer--!RESET!
   ) ELSE (
     IF /I "%exact_version_requested%"=="Y" (
-      echo: --Exact Python %version% already installed on computer--
+      echo:!GREEN!--Exact Python %version% already installed on computer--!RESET!
     ) ELSE (
-      echo: --Compatible Python %version% already installed on computer--
+      echo:!GREEN!--Compatible Python %version% already installed on computer--!RESET!
     )
   )
+  echo:!GREEN!Python used to create environment: %version%!RESET!
+  echo:!GREEN!  "!python_exe!"!RESET!
   echo:
   exit /b 0
 
 :create_venv
   del "%env_path%\_python_env_setup_problem.txt" >nul 2>&1
   IF NOT DEFINED python_exe (
-    echo: [Error] No verified Python %version% executable path is available for creating the environment.
+    CALL :print_red [Error] No verified Python %version% executable path is available for creating the environment.
     exit /b 1
   )
   "%python_exe%" -m venv "%env_path%" || exit /b 1
   exit /b 0
 
 :ensure_uv
-  echo: --Installing/updating uv--
+  echo:!GREEN!--Installing/updating uv--!RESET!
+  echo:
   python -m pip install --upgrade uv
-  if errorlevel 1 echo: [Warning] Failed to install uv. Package installs will use pip.
+  if errorlevel 1 CALL :print_red [Warning] Failed to install uv. Package installs will use pip.
   echo:
   exit /b 0
 
@@ -801,24 +773,24 @@ exit /b 0
   set "failed_packages="
   set "installed_packages="
   IF "%~1"=="" (
-    echo: No packages requested.
+    echo:!GREEN!No packages requested.!RESET!
     exit /b 0
   )
+  CALL :print_separator
   for %%P in (%~1) do (
-    CALL :print_separator
-    echo: Installing %%P ...
+    echo:!GREEN!Installing %%P ...!RESET!
     where uv >nul 2>&1
     if errorlevel 1 (
       python -m pip install "%%P"
     ) else (
       uv pip install "%%P"
       if errorlevel 1 (
-        echo: [Warning] uv failed to install %%P. Trying pip fallback...
+        CALL :print_red [Warning] uv failed to install %%P. Trying pip fallback...
         python -m pip install "%%P"
       )
     )
     if errorlevel 1 (
-      echo: [Warning] Failed to install %%P
+      CALL :print_red [Warning] Failed to install %%P
       set "failed_packages=!failed_packages! %%P"
     ) else (
       set "installed_packages=!installed_packages! %%P"
@@ -826,16 +798,16 @@ exit /b 0
     CALL :print_separator
   )
   echo:
-  IF NOT "!installed_packages!"=="" echo: Installed packages:!installed_packages!
+  IF NOT "!installed_packages!"=="" echo:!GREEN!Installed packages:!installed_packages!!RESET!
   IF NOT "!failed_packages!"=="" (
-    echo: Failed packages:!failed_packages!
-    echo: [Warning] One or more packages failed to install. Continuing with remaining setup steps.
+    CALL :print_red Failed packages:!failed_packages!
+    CALL :print_red [Warning] One or more packages failed to install. Continuing with remaining setup steps.
   )
   exit /b 0
 
 :install_jupyter_support
   set "jupyter_support_failed="
-  echo: --Installing Jupyter notebook support (ipykernel ipympl)--
+  echo:!GREEN!--Installing Jupyter notebook support (ipykernel ipympl)--!RESET!
   echo:
   where uv >nul 2>&1
   if errorlevel 1 (
@@ -844,18 +816,18 @@ exit /b 0
   ) else (
     uv pip install "ipykernel" "ipympl"
     if errorlevel 1 (
-      echo: [Warning] uv failed to install Jupyter notebook support. Trying pip fallback...
+      CALL :print_red [Warning] uv failed to install Jupyter notebook support. Trying pip fallback...
       python -m pip install "ipykernel" "ipympl"
       IF ERRORLEVEL 1 set "jupyter_support_failed=Y"
     )
   )
   IF "%jupyter_support_failed%"=="Y" (
     echo:
-    echo: [Warning] Failed to install Jupyter notebook support. Continuing with remaining setup steps.
+    CALL :print_red [Warning] Failed to install Jupyter notebook support. Continuing with remaining setup steps.
     exit /b 0
   )
   echo:
-  echo: --Finished installing Jupyter notebook support--
+  echo:!GREEN!--Finished installing Jupyter notebook support--!RESET!
   echo:
   exit /b 0
 
@@ -866,23 +838,23 @@ exit /b 0
   python -m ipykernel install --user --name "%env_name%" --display-name "%env_name%" >NUL
   IF ERRORLEVEL 1 (
     set "jupyter_kernel_failed=Y"
-    echo: [Warning] Failed to register kernel with ipykernel.
+    CALL :print_red [Warning] Failed to register kernel with ipykernel.
   ) ELSE (
-    echo: --Registered kernel with ipykernel--
+    echo:!GREEN!--Registered kernel with ipykernel--!RESET!
   )
   echo:
 
   IF /I "%validate_jupyter_kernel%"=="Y" (
-    echo: --Testing Jupyter kernel handshake--
+    echo:!GREEN!--Testing Jupyter kernel handshake--!RESET!
     set "PY_ENV_HELPER_ACTION=validate_jupyter_kernel"
     "%env_path%\Scripts\python.exe" -x "%~f0"
     set "jupyter_kernel_test_exit_code=!ERRORLEVEL!"
     set "PY_ENV_HELPER_ACTION="
     IF NOT "!jupyter_kernel_test_exit_code!"=="0" (
       set "jupyter_kernel_test_failed=Y"
-      echo: [Warning] The installed Jupyter kernel did not complete its startup handshake.
+      CALL :print_red [Warning] The installed Jupyter kernel did not complete its startup handshake.
     ) ELSE (
-      echo: --Jupyter kernel handshake succeeded--
+      echo:!GREEN!--Jupyter kernel handshake succeeded--!RESET!
     )
     echo:
   )
@@ -902,19 +874,19 @@ exit /b 0
   IF EXIST "%python_env_lnk%" (
     set "python_env_shortcut_created=1"
   ) ELSE (
-    echo: [Warning] Failed to create environment shortcut "%python_env_lnk%".
+    CALL :print_red [Warning] Failed to create environment shortcut "%python_env_lnk%".
   )
   IF /I "%create_desktop_shortcuts%"=="Y" IF EXIST "%python_env_lnk%" (
     set "desktop_path="
     for /f "delims=" %%D in ('powershell -NoProfile -Command "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)"') do set "desktop_path=%%D"
     IF "!desktop_path!"=="" (
-      echo: [Warning] Could not determine Desktop folder. Python shortcut was not copied.
+      CALL :print_red [Warning] Could not determine Desktop folder. Python shortcut was not copied.
     ) ELSE (
       copy /Y "%python_env_lnk%" "!desktop_path!\%shortcut_name%.lnk" >nul
       IF EXIST "!desktop_path!\%shortcut_name%.lnk" (
         set "python_desktop_shortcut_created=1"
       ) ELSE (
-        echo: [Warning] Failed to copy Python shortcut to Desktop.
+        CALL :print_red [Warning] Failed to copy Python shortcut to Desktop.
       )
     )
   )
@@ -933,7 +905,7 @@ exit /b 0
   IF EXIST "%env_lnk%" (
     set "install_env_shortcut_created=1"
   ) ELSE (
-    echo: [Warning] Failed to create environment shortcut "%env_lnk%".
+    CALL :print_red [Warning] Failed to create environment shortcut "%env_lnk%".
   )
   IF /I "%create_desktop_shortcuts%"=="Y" (
     CALL :create_desktop_shortcut "%shortcut_name%" "%shortcut_target%" "%shortcut_workdir%" 1 "cmd" || exit /b 0
@@ -949,7 +921,7 @@ exit /b 0
   set "shortcut_type=%~5"
   for /f "delims=" %%D in ('powershell -NoProfile -Command "[Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)"') do set "desktop_path=%%D"
   IF "%desktop_path%"=="" (
-    echo: [Warning] Could not determine Desktop folder. Shortcut was not created.
+    CALL :print_red [Warning] Could not determine Desktop folder. Shortcut was not created.
     exit /b 1
   )
   mkdir "%desktop_path%" 2> NUL
@@ -960,7 +932,7 @@ exit /b 0
     powershell -NoProfile -Command "$s=New-Object -ComObject WScript.Shell;$l=$s.CreateShortcut('%desktop_lnk%');$l.TargetPath='%shortcut_target%';$l.WorkingDirectory='%shortcut_workdir%';$l.WindowStyle=%shortcut_window_style%;$l.Save()"
   )
   IF NOT EXIST "%desktop_lnk%" (
-    echo: [Warning] Failed to create Desktop shortcut "%desktop_lnk%".
+    CALL :print_red [Warning] Failed to create Desktop shortcut "%desktop_lnk%".
     exit /b 1
   )
   exit /b 0
@@ -975,14 +947,18 @@ exit /b 0
   powershell -NoProfile -Command "$first=$env:PY_ENV_HELPER_PATH_FIRST; $second=$env:PY_ENV_HELPER_PATH_SECOND; $current=[Environment]::GetEnvironmentVariable('Path','User'); $entries=@(); if ($current) { $entries=$current -split ';' | Where-Object { $entry=$_.Trim(); $entry -and -not [string]::Equals($entry,$first,[StringComparison]::OrdinalIgnoreCase) -and -not [string]::Equals($entry,$second,[StringComparison]::OrdinalIgnoreCase) } }; $newPath=(@($first,$second)+$entries) -join ';'; [Environment]::SetEnvironmentVariable('Path',$newPath,'User')" || exit /b 1
   set "PY_ENV_HELPER_PATH_FIRST="
   set "PY_ENV_HELPER_PATH_SECOND="
-  echo: --Placed environment at the start of user PATH--
-  echo:   1. %env_scripts_path%
-  echo:   2. %env_path%
-  echo: New terminals will use this environment's Python before older PATH entries.
+  echo:!GREEN!--Placed environment at the start of user PATH--!RESET!
+  echo:!GREEN!  1. %env_scripts_path%!RESET!
+  echo:!GREEN!  2. %env_path%!RESET!
+  echo:!GREEN!New terminals will use this environment's Python before older PATH entries.!RESET!
   echo:
   exit /b 0
 :print_separator
-  echo: ============================================================
+  echo:!GREEN!============================================================!RESET!
+  exit /b 0
+
+:print_red
+  echo:!RED!%*!RESET!
   exit /b 0
 
 :make_absolute_path
@@ -999,6 +975,10 @@ exit /b 0
 
 replace_existing = True
 import json, os, re, sys
+
+RED = "\033[91m"
+GREEN = "\033[92m"
+RESET = "\033[0m"
 
 action = os.environ.get("PY_ENV_HELPER_ACTION", "update_vscode_settings")
 
@@ -1116,7 +1096,7 @@ def validate_jupyter_kernel():
         client = manager.client()
         client.start_channels()
         client.wait_for_ready(timeout=20)
-        print(" --Kernel started and completed the Jupyter handshake--")
+        print(f"{GREEN} --Kernel started and completed the Jupyter handshake--{RESET}")
     finally:
         if client is not None:
             client.stop_channels()
@@ -1127,12 +1107,16 @@ if action == "validate_jupyter_kernel":
     try:
         validate_jupyter_kernel()
     except Exception as exc:
-        print(" [Error] Jupyter kernel handshake failed: {0}: {1}".format(type(exc).__name__, exc))
+        print(
+            RED
+            + " [Error] Jupyter kernel handshake failed: {0}: {1}".format(type(exc).__name__, exc)
+            + RESET
+        )
         sys.exit(1)
     sys.exit(0)
 
 if action != "update_vscode_settings":
-    print(" [Error] Unknown embedded Python action: " + action)
+    print(RED + " [Error] Unknown embedded Python action: " + action + RESET)
     sys.exit(2)
 
 txt = read_text(path)
@@ -1140,5 +1124,5 @@ txt = migrate_array_setting(txt, "python.venvFolders", "python-envs.globalSearch
 for setting_key, value in settings.items():
     txt = set_key_value(txt, setting_key, json.dumps(value), replace_existing)
 write_text(path, txt)
-print(" --Updated VS Code settings--")
+print(GREEN + " --Updated VS Code settings--" + RESET)
 sys.exit(0)
