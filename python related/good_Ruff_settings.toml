@@ -5,11 +5,7 @@
 # files to check/correct
 include = ["*.py", "*.pyi", "*.pyw", "*.ipynb"]
 # files to exclude from check/correct
-extend-exclude = [
-  "__pycache__",
-  "**/*.build",
-  "**/*.dist",
-]
+extend-exclude = ["__pycache__", "**/*.build", "**/*.dist"]
 
 # max line length before wrapping
 line-length = 120
@@ -20,6 +16,7 @@ line-length = 120
   "F403", # allow * import in notebooks
   "F405", # allow * import in notebooks
   "E703", # allow for useless semicolons
+  "I001", # allow for unsorted imports in notebooks
 ]
 
 [lint]
