@@ -7,6 +7,7 @@
   "security.workspace.trust.untrustedFiles": "open",
   "workbench.list.mouseWheelScrollSensitivity": 2,
   "workbench.browser.showInTitleBar": false,
+  "update.showReleaseNotes": false,
   // =====================================
   // terminal
   "terminal.integrated.inheritEnv": true,
