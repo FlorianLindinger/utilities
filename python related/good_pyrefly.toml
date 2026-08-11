@@ -1,0 +1,68 @@
+# ===================
+# import resolution
+# ===================
+
+# Additional root where Pyrefly resolves imports; equivalent to Pylance's extraPaths. Default: import root.
+search-path = ["../python_code_repository"]
+
+# ============================
+# Promoted ignores to warnings
+# ============================
+
+# Warn when a `# pyrefly: ignore` directive no longer suppresses an error. Default: ignore.
+unused-ignore = "warn"
+# Warn when an overridden method lacks `@typing.override`. Default: ignore.
+missing-override-decorator = "warn"
+# Warn when a class with abstract members is not explicitly declared abstract. Default: ignore.
+implicit-abstract-class = "warn"
+# Warn when a function parameter has no type annotation. Default: ignore.
+unannotated-parameter = "warn"
+# Warn when a function has no return-type annotation. Default: ignore.
+unannotated-return = "warn"
+# Warn when an attribute has no explicit type annotation. Default: ignore.
+unannotated-attribute = "warn"
+# Warn when an attribute is introduced outside a recognized initialization method. Default: ignore.
+implicitly-defined-attribute = "warn"
+# Warn when accessing a potentially absent TypedDict key without checking it first. Default: ignore.
+not-required-key-access = "warn"
+# Warn when a typed function body is only `...`. Default: ignore.
+empty-body = "warn"
+# Warn when `typing.Any` is written explicitly in an annotation. Default: ignore.
+explicit-any = "warn"
+# Warn when a non-boolean value is used directly as a condition. Default: ignore.
+implicit-bool = "warn"
+# Warn when importing a name that is not explicitly re-exported. Default: ignore.
+implicit-reexport = "warn"
+# Warn when equality compares built-in types that cannot be equal. Default: ignore.
+incompatible-comparison = "warn"
+# Warn when a constructor-like override does not call `super()`. Default: ignore.
+missing-super-call = "warn"
+# Warn when a string is passed where an iterable of strings is expected. Default: ignore.
+string-as-iterable = "warn"
+
+# ============================
+# Keep ignored unless the project specifically needs these stricter checks.
+# ============================
+
+# Often reflects an incomplete environment rather than a code defect. Default: ignore.
+missing-source = "ignore"
+# Can create widespread dependency-driven noise in partially typed code. Default: ignore.
+no-any-return = "ignore"
+# Relevant only to projects that use PyTorch and want performance guidance. Default: ignore.
+pytorch-efficiency-lints = "ignore"
+# Unknown types are useful later, but initially tend to produce a large volume of noise. Default: ignore.
+unknown-argument-type = "ignore"
+# Unknown types are useful later, but initially tend to produce a large volume of noise. Default: ignore.
+unknown-attribute-type = "ignore"
+# Unknown types are useful later, but initially tend to produce a large volume of noise. Default: ignore.
+unknown-variable-type = "ignore"
+# Framework decorators are often untyped, so this can be noisy. Default: ignore.
+untyped-class-decorator = "ignore"
+# Framework decorators are often untyped, so this can be noisy. Default: ignore.
+untyped-function-decorator = "ignore"
+# Deliberately discarded return values are common in side-effecting APIs. Default: ignore.
+unused-call-result = "ignore"
+# Keep ignored when `# type: ignore` comments may serve another type checker. Default: ignore.
+unused-type-ignore = "ignore"
+
+# ============================
