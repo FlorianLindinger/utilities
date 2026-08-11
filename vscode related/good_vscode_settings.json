@@ -228,14 +228,6 @@
   "commands.commands": {
     "Pyrefly type checking": {
       "nestedItems": {
-        "Auto": {
-          "command": "commands.toggleSetting",
-          "args": {
-            "setting": "python.pyrefly.typeCheckingMode",
-            "value": "auto",
-            "target": "workspace"
-          }
-        },
         "Off": {
           "command": "commands.toggleSetting",
           "args": {
@@ -249,14 +241,6 @@
           "args": {
             "setting": "python.pyrefly.typeCheckingMode",
             "value": "basic",
-            "target": "workspace"
-          }
-        },
-        "Legacy": {
-          "command": "commands.toggleSetting",
-          "args": {
-            "setting": "python.pyrefly.typeCheckingMode",
-            "value": "legacy",
             "target": "workspace"
           }
         },
