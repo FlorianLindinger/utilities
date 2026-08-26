@@ -171,6 +171,7 @@ SET "install_cmd_path=%env_path%\%install_shortcut_name%.cmd"
   echo echo: Install packages into python environment "%env_name%".
   echo echo: Accepted input examples:
   echo echo:   numpy pandas
+  echo echo:   install numpy pandas
   echo echo:   pip install numpy pandas
   echo echo:   python -m pip install numpy pandas
   echo echo:   py -m pip install numpy pandas
@@ -183,10 +184,14 @@ SET "install_cmd_path=%env_path%\%install_shortcut_name%.cmd"
   echo if not defined install_input goto again
   echo if /I "%%install_input%%"=="exit" exit /b 0
   echo if /I "%%install_input%%"=="quit" exit /b 0
+  echo if /I "%%install_input%%"=="install" echo: Add one or more package names. ^& goto again
   echo if /I "%%install_input%%"=="pip install" echo: Add one or more package names. ^& goto again
   echo if /I "%%install_input%%"=="python -m pip install" echo: Add one or more package names. ^& goto again
   echo if /I "%%install_input%%"=="py -m pip install" echo: Add one or more package names. ^& goto again
   echo if /I "%%install_input%%"=="uv pip install" echo: Add one or more package names. ^& goto again
+  echo REM Allow the short, natural-language form: "install numpy pandas".
+  echo REM Remove only the leading "install" before sending the package list to uv/pip.
+  echo for /f "tokens=1,*" %%%%A in ("%%install_input%%"^) do if /I "%%%%A"=="install" set "install_input=%%%%B"
   echo echo %%install_input%% ^| findstr /I /B /C:"pip install " /C:"python -m pip install " /C:"py -m pip install " /C:"uv pip install " ^>nul
   echo if not errorlevel 1 ^(
   echo   %%install_input%%
