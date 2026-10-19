@@ -205,7 +205,7 @@ SET "install_cmd_path=%env_path%\%install_shortcut_name%.cmd"
   echo if /I "%%install_input:~0,22%%"=="python -m pip install " set "install_input=%%install_input:~22%%"
   echo if /I "%%install_input:~0,18%%"=="py -m pip install " set "install_input=%%install_input:~18%%"
   echo if /I "%%install_input:~0,15%%"=="uv pip install " set "install_input=%%install_input:~15%%"
-  echo "%%env_python%%" -m uv pip install --link-mode=copy --python "%%env_python%%" %%install_input%% ^|^| "%%env_python%%" -m pip install %%install_input%%
+  echo "%%env_python%%" -m uv pip install --python "%%env_python%%" %%install_input%% ^|^| "%%env_python%%" -m pip install %%install_input%%
   echo echo.
   echo goto again
 )
@@ -792,7 +792,6 @@ exit /b 0
   echo:
   exit /b 0
 
-:: Copy cached wheels because the cache and environment may be on different drives.
 :install_packages
   set "failed_packages="
   set "installed_packages="
@@ -807,7 +806,7 @@ exit /b 0
     if errorlevel 1 (
       "%env_python%" -m pip install "%%P"
     ) else (
-      "%env_python%" -m uv pip install --link-mode=copy --python "%env_python%" "%%P"
+      "%env_python%" -m uv pip install --python "%env_python%" "%%P"
       if errorlevel 1 (
         CALL :print_red [Warning] uv failed to install %%P. Trying pip fallback...
         "%env_python%" -m pip install "%%P"
@@ -838,7 +837,7 @@ exit /b 0
     "%env_python%" -m pip install "ipykernel" "ipympl"
     IF ERRORLEVEL 1 set "jupyter_support_failed=Y"
   ) else (
-    "%env_python%" -m uv pip install --link-mode=copy --python "%env_python%" "ipykernel" "ipympl"
+    "%env_python%" -m uv pip install --python "%env_python%" "ipykernel" "ipympl"
     if errorlevel 1 (
       CALL :print_red [Warning] uv failed to install Jupyter notebook support. Trying pip fallback...
       "%env_python%" -m pip install "ipykernel" "ipympl"
