@@ -154,7 +154,13 @@ IF EXIST "%env_path%" (
   CALL :create_venv || goto :fail
   echo:!GREEN!--Created python environment--!RESET!
 )
+:: A reused environment may have activation scripts left over from another path.
+:: Verify and invoke its interpreter directly; never fall back to PATH's Python.
+SET "env_python=%env_path%\Scripts\python.exe"
+CALL :validate_env_python || goto :fail
 call "%env_path%\Scripts\activate.bat" || goto :fail
+SET "VIRTUAL_ENV=%env_path%"
+SET "PATH=%env_path%\Scripts;%PATH%"
 
 mkdir "%USERPROFILE%\Documents\Repositories" 2> NUL
 
@@ -166,7 +172,9 @@ SET "install_shortcut_name=Install package (%env_name%)"
 SET "install_cmd_path=%env_path%\%install_shortcut_name%.cmd"
 > "!install_cmd_path!" (
   echo @echo off
-  echo call "%%~dp0Scripts\activate.bat"
+  echo setlocal
+  echo set "env_python=%%~dp0Scripts\python.exe"
+  echo if not exist "%%env_python%%" exit /b 1
   echo echo.
   echo echo: Install packages into python environment "%env_name%".
   echo echo: Accepted input examples:
@@ -184,20 +192,20 @@ SET "install_cmd_path=%env_path%\%install_shortcut_name%.cmd"
   echo if not defined install_input goto again
   echo if /I "%%install_input%%"=="exit" exit /b 0
   echo if /I "%%install_input%%"=="quit" exit /b 0
-  echo if /I "%%install_input%%"=="install" echo: Add one or more package names. ^& goto again
-  echo if /I "%%install_input%%"=="pip install" echo: Add one or more package names. ^& goto again
-  echo if /I "%%install_input%%"=="python -m pip install" echo: Add one or more package names. ^& goto again
-  echo if /I "%%install_input%%"=="py -m pip install" echo: Add one or more package names. ^& goto again
-  echo if /I "%%install_input%%"=="uv pip install" echo: Add one or more package names. ^& goto again
+  echo if /I "%%install_input%%"=="install" ^(echo: Add one or more package names. ^& goto again^)
+  echo if /I "%%install_input%%"=="pip install" ^(echo: Add one or more package names. ^& goto again^)
+  echo if /I "%%install_input%%"=="python -m pip install" ^(echo: Add one or more package names. ^& goto again^)
+  echo if /I "%%install_input%%"=="py -m pip install" ^(echo: Add one or more package names. ^& goto again^)
+  echo if /I "%%install_input%%"=="uv pip install" ^(echo: Add one or more package names. ^& goto again^)
   echo REM Allow the short, natural-language form: "install numpy pandas".
   echo REM Remove only the leading "install" before sending the package list to uv/pip.
   echo for /f "tokens=1,*" %%%%A in ("%%install_input%%"^) do if /I "%%%%A"=="install" set "install_input=%%%%B"
-  echo echo %%install_input%% ^| findstr /I /B /C:"pip install " /C:"python -m pip install " /C:"py -m pip install " /C:"uv pip install " ^>nul
-  echo if not errorlevel 1 ^(
-  echo   %%install_input%%
-  echo ^) else ^(
-  echo   uv pip install %%install_input%% ^|^| python -m pip install %%install_input%%
-  echo ^)
+  echo REM Normalize accepted command prefixes, then always use this environment.
+  echo if /I "%%install_input:~0,12%%"=="pip install " set "install_input=%%install_input:~12%%"
+  echo if /I "%%install_input:~0,22%%"=="python -m pip install " set "install_input=%%install_input:~22%%"
+  echo if /I "%%install_input:~0,18%%"=="py -m pip install " set "install_input=%%install_input:~18%%"
+  echo if /I "%%install_input:~0,15%%"=="uv pip install " set "install_input=%%install_input:~15%%"
+  echo "%%env_python%%" -m uv pip install --link-mode=copy --python "%%env_python%%" %%install_input%% ^|^| "%%env_python%%" -m pip install %%install_input%%
   echo echo.
   echo goto again
 )
@@ -230,7 +238,7 @@ IF /I "%needs_package_install%"=="Y" (
   echo:
   echo:!GREEN!--Updating pip--!RESET!
   echo:
-  python -m pip install --upgrade pip
+  "%env_python%" -m pip install --upgrade pip
   IF ERRORLEVEL 1 (
     set "pip_upgrade_failed=Y"
     CALL :print_red [Warning] Failed to upgrade pip. Continuing with package installation.
@@ -766,14 +774,25 @@ exit /b 0
   "%python_exe%" -m venv "%env_path%" || exit /b 1
   exit /b 0
 
+:validate_env_python
+  "%env_python%" -c "import os, sys; norm = lambda p: os.path.normcase(os.path.realpath(p)); expected = norm(os.environ['env_path']); valid = sys.prefix != sys.base_prefix and norm(sys.prefix) == expected and norm(sys.executable) == norm(os.environ['env_python']); sys.exit(0 if valid else 1)"
+  IF ERRORLEVEL 1 (
+    CALL :print_red [Error] The selected environment interpreter is unavailable or does not belong to this environment.
+    CALL :print_red   Interpreter: "%env_python%"
+    CALL :print_red   Recreate the environment at its current path before retrying setup.
+    exit /b 1
+  )
+  exit /b 0
+
 :ensure_uv
   echo:!GREEN!--Installing/updating uv--!RESET!
   echo:
-  python -m pip install --upgrade uv
+  "%env_python%" -m pip install --upgrade uv
   if errorlevel 1 CALL :print_red [Warning] Failed to install uv. Package installs will use pip.
   echo:
   exit /b 0
 
+:: Copy cached wheels because the cache and environment may be on different drives.
 :install_packages
   set "failed_packages="
   set "installed_packages="
@@ -784,14 +803,14 @@ exit /b 0
   CALL :print_separator
   for %%P in (%~1) do (
     echo:!GREEN!Installing %%P ...!RESET!
-    where uv >nul 2>&1
+    "%env_python%" -m uv --version >nul 2>&1
     if errorlevel 1 (
-      python -m pip install "%%P"
+      "%env_python%" -m pip install "%%P"
     ) else (
-      uv pip install "%%P"
+      "%env_python%" -m uv pip install --link-mode=copy --python "%env_python%" "%%P"
       if errorlevel 1 (
         CALL :print_red [Warning] uv failed to install %%P. Trying pip fallback...
-        python -m pip install "%%P"
+        "%env_python%" -m pip install "%%P"
       )
     )
     if errorlevel 1 (
@@ -814,15 +833,15 @@ exit /b 0
   set "jupyter_support_failed="
   echo:!GREEN!--Installing Jupyter notebook support (ipykernel ipympl)--!RESET!
   echo:
-  where uv >nul 2>&1
+  "%env_python%" -m uv --version >nul 2>&1
   if errorlevel 1 (
-    python -m pip install "ipykernel" "ipympl"
+    "%env_python%" -m pip install "ipykernel" "ipympl"
     IF ERRORLEVEL 1 set "jupyter_support_failed=Y"
   ) else (
-    uv pip install "ipykernel" "ipympl"
+    "%env_python%" -m uv pip install --link-mode=copy --python "%env_python%" "ipykernel" "ipympl"
     if errorlevel 1 (
       CALL :print_red [Warning] uv failed to install Jupyter notebook support. Trying pip fallback...
-      python -m pip install "ipykernel" "ipympl"
+      "%env_python%" -m pip install "ipykernel" "ipympl"
       IF ERRORLEVEL 1 set "jupyter_support_failed=Y"
     )
   )
@@ -840,7 +859,7 @@ exit /b 0
   CALL :install_jupyter_support
   IF "%jupyter_support_failed%"=="Y" exit /b 0
 
-  python -m ipykernel install --user --name "%env_name%" --display-name "%env_name%" >NUL
+  "%env_python%" -m ipykernel install --user --name "%env_name%" --display-name "%env_name%" >NUL
   IF ERRORLEVEL 1 (
     set "jupyter_kernel_failed=Y"
     CALL :print_red [Warning] Failed to register kernel with ipykernel.
