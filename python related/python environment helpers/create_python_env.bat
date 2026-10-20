@@ -161,6 +161,9 @@ CALL :validate_env_python || goto :fail
 call "%env_path%\Scripts\activate.bat" || goto :fail
 SET "VIRTUAL_ENV=%env_path%"
 SET "PATH=%env_path%\Scripts;%PATH%"
+:: Keep the default cache on the environment drive so uv can hardlink wheels.
+:: An explicitly configured cache directory takes precedence.
+IF NOT DEFINED UV_CACHE_DIR SET "UV_CACHE_DIR=%env_parent_path%\.uv-cache"
 
 mkdir "%USERPROFILE%\Documents\Repositories" 2> NUL
 
@@ -175,6 +178,7 @@ SET "install_cmd_path=%env_path%\%install_shortcut_name%.cmd"
   echo setlocal
   echo set "env_python=%%~dp0Scripts\python.exe"
   echo if not exist "%%env_python%%" exit /b 1
+  echo if not defined UV_CACHE_DIR set "UV_CACHE_DIR=%%~dp0..\.uv-cache"
   echo echo.
   echo echo: Install packages into python environment "%env_name%".
   echo echo: Accepted input examples:
@@ -785,6 +789,7 @@ exit /b 0
   exit /b 0
 
 :ensure_uv
+  echo:!GREEN!uv cache directory: %UV_CACHE_DIR%!RESET!
   echo:!GREEN!--Installing/updating uv--!RESET!
   echo:
   "%env_python%" -m pip install --upgrade uv

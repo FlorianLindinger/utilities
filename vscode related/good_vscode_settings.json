@@ -1,12 +1,14 @@
 {
   // =====================================
   // general 
-  "breadcrumbs.enabled": true,
-  "files.autoSave": "afterDelay",
-  "window.newWindowProfile": "Default",
-  "security.workspace.trust.untrustedFiles": "open",
   "workbench.list.mouseWheelScrollSensitivity": 2,
   "workbench.browser.showInTitleBar": false,
+  "workbench.secondarySideBar.showLabels": false,
+  "window.newWindowProfile": "Default",
+  "window.density.layout": "compact",
+  "breadcrumbs.enabled": true,
+  "files.autoSave": "afterDelay",
+  "security.workspace.trust.untrustedFiles": "open",
   "update.showReleaseNotes": false,
   // =====================================
   // terminal
@@ -45,7 +47,9 @@
     "**/*.ome.tif": true,
     "**/*.tiff": true,
     "**/bin": true, // Hide compiled output folders
-    "**/obj": true // Hide temporary build folders
+    "**/obj": true, // Hide temporary build folders
+    "**/.agents": true, // Hide chat agents folder
+    "**/.vscode": true, // Hide VS Code settings folder
   },
   "search.exclude": {
     "**/bin": true, // Do not search C# build output
@@ -82,7 +86,7 @@
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
   "githubPullRequests.pushBranch": "always",
-  "diffEditor.hideUnchangedRegions.enabled": true,
+  "diffEditor.hideUnchangedRegions.enabled": false,
   // =====================================
   // editor  
   "editor.codeLens": false,
@@ -308,8 +312,6 @@
         "tooltip": "Run the newest compiled EXE for the active C# project",
         "activeEditorLanguage": "xml"
       }
-    }
-  }
-  // =====================================
-  // <-- new setting
+    } // =====================================
+  } // new settings below
 }
