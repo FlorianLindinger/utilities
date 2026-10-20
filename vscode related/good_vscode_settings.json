@@ -158,6 +158,7 @@
   },
   // =====================================
   // Python
+  "python.useEnvironmentsExtension": false, // could be faster startup
   "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
   "python-envs.globalSearchPaths": [
     "${env:USERPROFILE}\\Documents\\python_envs"
