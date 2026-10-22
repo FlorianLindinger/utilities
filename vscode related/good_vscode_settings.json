@@ -86,7 +86,7 @@
   "diffEditor.ignoreTrimWhitespace": true,
   "diffEditor.maxComputationTime": 0,
   "githubPullRequests.pushBranch": "always",
-  "diffEditor.hideUnchangedRegions.enabled": false,
+  "diffEditor.hideUnchangedRegions.enabled": true, // = codefolding
   // =====================================
   // editor  
   "editor.codeLens": false,
@@ -144,6 +144,7 @@
     "scminput": false,
     "python": true
   },
+  "chat.disableAIFeatures": true, // = disable copilot (->faster start)
   "chat.titleBar.openInAgentsWindow.enabled": false,
   "chat.tools.terminal.autoApprove": {
     "/^python -m py_compile live_plot\\.py$/": {
@@ -159,11 +160,11 @@
   // =====================================
   // Python
   "python.useEnvironmentsExtension": false, // could be faster startup
-  "python.defaultInterpreterPath": "${env:USERPROFILE}\\Documents\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.testing.pytestEnabled": false, // false = faster start
+  "python.defaultInterpreterPath": "..\\..\\python_envs\\default_env\\Scripts\\python.exe",
   "python-envs.globalSearchPaths": [
-    "${env:USERPROFILE}\\Documents\\python_envs"
+    "..\\..\\Documents\\python_envs"
   ],
-  "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "python.experiments.optOutFrom": [
     "All"
@@ -314,5 +315,5 @@
         "activeEditorLanguage": "xml"
       }
     } // =====================================
-  } // new settings below
+  } // <- new settings below
 }
