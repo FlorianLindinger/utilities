@@ -79,7 +79,7 @@
   // git & diff & github
   "git.enableSmartCommit": true,
   "git.autofetch": true,
-  "git.autofetchPeriod": 180, //seconds
+  "git.autofetchPeriod": 180, // seconds
   "git.confirmSync": false,
   "git.openRepositoryInParentFolders": "always",
   "git.postCommitCommand": "push",
