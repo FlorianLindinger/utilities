@@ -3,7 +3,7 @@
   // general 
   "workbench.list.mouseWheelScrollSensitivity": 2,
   "workbench.browser.showInTitleBar": false,
-  "workbench.secondarySideBar.showLabels": false,
+  "workbench.secondarySideBar.showLabels": true,
   "window.newWindowProfile": "Default",
   "window.density.layout": "compact",
   "breadcrumbs.enabled": true,
@@ -210,8 +210,7 @@
   "autoDocstring.customTemplatePath": "utilities\\python related\\python_autodocstring_extension_template.mustache",
   // =====================================
   // Ruff formatter/linter settings (python)
-  "ruff.nativeServer": "on",
-  "ruff.configuration": "~\\Documents\\Repositories\\utilities\\python related\\good_Ruff_settings.toml",
+  "ruff.configuration": "..\\utilities\\python related\\good_Ruff_settings.toml",
   "ruff.configurationPreference": "filesystemFirst", //"filesystemFirst" "editorFirst"
   "ruff.lint.enable": true,
   "ruff.lint.preview": false,
