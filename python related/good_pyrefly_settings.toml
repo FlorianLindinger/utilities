@@ -1,13 +1,22 @@
+# Custom profile for the Pyrefly type-checking button in VS Code.
+# Use "Edit Custom settings" in the button menu to open this file.
+# Change rule values below to "error", "warn", or "ignore".
+# Save, then select "Custom" again to apply your changes.
+# The other button options use Pyrefly presets without these overrides.
+# CLI equivalent: pyrefly check --config good_pyrefly_settings.toml
+
 # ===================
 # import resolution
 # ===================
 
 # Additional root where Pyrefly resolves imports; equivalent to Pylance's extraPaths. Default: import root.
-search-path = ["../python_code_repository"]
+search-path = ["."]
 
 # ============================
 # Promoted ignores to warnings
 # ============================
+
+[errors]
 
 # Warn when a `# pyrefly: ignore` directive no longer suppresses an error. Default: ignore.
 unused-ignore = "warn"

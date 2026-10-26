@@ -33,16 +33,23 @@ select = [
   "DTZ",   # timezone-naive datetime usage
   "E",     # major style issues and syntax correctness
   "EM",    # uninformative/inconsistent error messages
+  "ERA",   # Detect commented-out code
   "EXE",   # executable permissions & shebangs
   "F",     # syntactically valid but logically wrong or unused
   "FBT",   # Boolean design issues
+  "FLY",   # Replace string operations with f-strings
+  "FURB",  # Modernize code
   "G",     # Logging misuse
   "I",     # import sorting
   "ICN",   # enfores alias conventions for imports
   "N",     # naming conventions
+  "NPY",   # NumPy-specific correctness and deprecated APIs
   "PERF",  # performance issues
+  "PGH",   # noqa comments and type-ignore directives
   "PIE",   # small correctness & simplification checks
   "PL",    # pylint logic/safety rules
+  "PT",    # good patterns in Pytest tests
+  "PTH",   # Prefer pathlib over os.path operations
   "Q",     # Enforce single/double quote style 
   "RET",   # Ensures consistent return patterns in functions
   "RSE",   # correct raise syntax
@@ -59,28 +66,41 @@ select = [
   "W",     # minor style issues
   "YTT",   # Catch obsolete sys.version comparisons & old idioms
 
-  # Temporarily disable the following rule families:
-  # "PT",      # good patterns in Pytest tests
+  # ===============================================
+  # Temporarily disable the following rule families
+  # ===============================================
+  
+  
 ]
 
 # general rule ignores:
 ignore = [
 
   # ==========================
+  # Not Ignoreed Rules
+  # ==========================
+  # "D101", # allow missing docstring in public class
+  # "D103", # allow missing docstring in public function
+  # "D417", # allow missing arguments in docstring
+  # "PLR1730", # allow for comparison where max/min would have worked
+  # "PLW0120", # allow for redundant else after for loop
+  # "SIM102",  # allow for if "a: if b" instead of "if a and b"
+  # "SIM103",  # allow for explicit "return True/False"
+  # "TRY002",  # allow for "Exception("text")"
+  # "C408",    # allow dict creation with "dict" instead of "{}"
+
+  # ==========================
   # Temporarily Disabled Rules
   # ==========================
-  "D101", # allow missing docstring in public class
-  "D103", # allow missing docstring in public function
-  "D417", # allow missing arguments in docstring
-  # ==========================
+
+
 
   # ==========================
   # Permanently Disabled Rules
   # ==========================
   "B905",    # allow for zip without explicit strict setting
-  "BLE001",  # don't replace "try ... except: pass" #3
+  "BLE001",  # allow for general "except Exception:"
   "COM812",  # require trailing comma (formatter handles)
-  "C408",    # allow dict creation with "dict" instead of "{}"
   "D100",    # allow missing docstring in public module
   "D102",    # allow missing docstring in public method
   "D105",    # allow missing docstring in magic method
@@ -123,7 +143,7 @@ ignore = [
   "N802",    # allow for lowercase functions
   "N803",    # allow for lowercase parameters
   "N806",    # allow for capitalization inside function variable
-  "N812",    # allow any capitalization when renaming import #2
+  "N812",    # allow any capitalization when renaming import
   "N813",    # allow any naming convention for import rename
   "N815",    # allow mixed capitalization in class
   "N816",    # allow mixed capitalization in global variable label
@@ -135,14 +155,13 @@ ignore = [
   "PLR0913", # too many function parameters
   "PLR0915", # too many statements in function/method
   "PLR0917", # allow mor ethan 5 positional arguments
-  "PLR1730", # allow for comparison where max/min would have worked
   "PLR2004", # allow for numbers in comparison
   "PLR5501", # allow for "else: if" instead of "elif"
-  "PLW0120", # allow for redundant else after for
   "PLW0603", # allow for use of globals
   "PLW1510", # allow to not define "check" arg for "subprocess" function
   "PLW2901", # allow for redefinition of iterated elem in for loops
   "PLW3301", # allow for nested min/max
+  "PT028",   # allow for default arguments in functions who's name starts with "test"
   "RET504",  # allow for unnecessary new variable before return
   "RET505",  # allow for unnecessary else before return
   "RET506",  # allow for unnecessary else after raise
@@ -150,17 +169,14 @@ ignore = [
   "RET508",  # allow for unnecessary else after break
   "RUF005",  # allow for list addition
   "S101",    # allow for "assert"
-  "S110",    # don't replace "try ... except: pass" #2
+  "S110",    # allow for general "except Exception: pass"
   "S112",    # allow try-except-continue block
   "S607",    # allow relative paths for starting a process
-  "SIM102",  # allow for if "a: if b" instead of "if a and b"
-  "SIM103",  # allow for explicit "return True/False"
-  "SIM105",  # don't replace "try ... except: pass"
+  "SIM105",  # allow "try ... except: pass" instead of contextlib.suppress
   "SIM108",  # allow if else in >1 line if one-liner possible
   "SIM110",  # allow "for+if" instead of "any+for"
   "SIM117",  # allow nested with-blocks
   "T201",    # allow print
-  "TRY002",  # allow for "Exception"
   "TRY003",  # allow for long error message
   "TRY300",  # allow unnecessary many line-including try-excepts
   "TRY301",  # allow for not encapsulated raise in try-except

@@ -7,9 +7,11 @@
   "workbench.secondarySideBar.showLabels": true,
   "window.newWindowProfile": "Default",
   "window.density.layout": "compact",
-  "breadcrumbs.enabled": true,
-  "files.autoSave": "afterDelay",
+  "breadcrumbs.enabled": true, // shows the current class/function below the editor tabs
+  "breadcrumbs.symbolPath": "on",
   "security.workspace.trust.untrustedFiles": "open",
+  "security.promptForLocalFileProtocolHandling": true,
+  "files.autoSave": "afterDelay",
   "update.showReleaseNotes": false,
   // =====================================
   // terminal
@@ -89,11 +91,12 @@
   "editor.wordWrap": "on",
   "editor.hover.delay": 800,
   "editor.mouseWheelScrollSensitivity": 3,
+  "editor.stickyScroll.enabled": true, //pins enclosing function/class headers at the top while scrolling.
   // =====================================
   // notebooks
   "notebook.compactView": true,
   "notebook.lineNumbers": "on",
-  "notebook.stickyScroll.enabled": true,
+  "notebook.stickyScroll.enabled": true, //pins enclosing function/class headers at the top while scrolling.
   "notebook.cellExecutionTimeVerbosity": "verbose",
   "notebook.cellFocusIndicator": "border",
   "notebook.dragAndDropEnabled": true,
@@ -162,9 +165,6 @@
   "python.experiments.optOutFrom": [
     "All"
   ],
-  "python.analysis.inlayHints.variableTypes": false,
-  "python.analysis.inlayHints.functionReturnTypes": false,
-  "python.analysis.autoImportCompletions": false,
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
@@ -215,7 +215,12 @@
   },
   // =====================================
   // pyrefly - type checker and LSP (alternative to pylance)
-  "python.languageServer": "None", //"None" == pyrefly ; "Default"=Pylance
+  "python.analysis.inlayHints.variableTypes": false,
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.autoImportCompletions": false,
+  // "python.analysis.diagnosticsSource": "Pylance + Pyrefly",
+  // "python.analysis.pyreflyVersion": "",
+  "python.languageServer": "None", // "Default"=Pylance "None"=Pyrefly
   "python.pyrefly.typeCheckingMode": "default", //"off"/"basic"/"auto"/"default"/"strict"
   "python.pyrefly.disableTypeErrors": false,
   // =====================================
@@ -250,6 +255,55 @@
             "false": "off"
           }
         }
+      }
+    },
+    "Toggle Ruff rules": {
+      "sequence": [
+        {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "ruff.configurationPreference",
+            "value": [
+              "editorOnly"
+            ],
+            "target": "workspace"
+          }
+        },
+        {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "ruff.configuration",
+            "value": [
+              {},
+              "D:\\Users\\IRScope\\Documents\\Repositories\\utilities\\python related\\good_Ruff_settings.toml"
+            ],
+            "target": "workspace"
+          }
+        },
+        "ruff.restart"
+      ],
+      "statusBar": {
+        "alignment": "right",
+        "name": "Ruff rules",
+        "text": "$(checklist) Ruff: ${config:ruff.configuration}",
+        "tooltip": "Click to toggle Ruff built-in defaults and your good_Ruff_settings.toml. Applies to this workspace and restarts Ruff.",
+        "activeEditorLanguage": "python",
+        "replaceVariableValue": {
+          "config:ruff.configuration": {
+            "{}": "Default",
+            "\"D:\\\\Users\\\\IRScope\\\\Documents\\\\Repositories\\\\utilities\\\\python related\\\\good_Ruff_settings.toml\"": "Custom",
+            "\"..\\\\utilities\\\\python related\\\\good_Ruff_settings.toml\"": "Custom"
+          }
+        },
+        "updateEvents": [
+          {
+            "kind": "onDidConfigurationChange",
+            "settings": [
+              "ruff.configuration",
+              "ruff.configurationPreference"
+            ]
+          }
+        ]
       }
     },
     "Pyrefly type checking": {
@@ -415,8 +469,8 @@
           ]
         },
         "Edit Custom settings": {
-          "command": "vscode.open",
-          "args": "file:///${workspaceFolder}/pyrefly.custom.toml"
+          "command": "commands.openFolder",
+          "args": "../utilities/python related/good_pyrefly_settings.toml"
         }
       },
       "statusBar": {
@@ -518,5 +572,5 @@
       }
     }
   }, // =====================================
-  "NEW_SETTINGS_ARE_BELOW": "", // NEW SETTINGS ARE BELOW
+  "NEW_SETTINGS_ARE_BELOW": "", // <-- NEW SETTING
 }
