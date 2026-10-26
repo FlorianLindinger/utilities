@@ -495,7 +495,7 @@
       ],
       "statusBar": {
         "alignment": "right",
-        "priority": 200,
+        "priority": 100.09,
         "name": "Copilot autocomplete",
         "text": "$(copilot)=${config:github.copilot.nextEditSuggestions.enabled}",
         "tooltip": "Toggle Python autocomplete and Next Edit Suggestions.",
