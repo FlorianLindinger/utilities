@@ -12,8 +12,7 @@
   "update.showReleaseNotes": false,
   // =====================================
   // terminal
-  "terminal.integrated.inheritEnv": true,
-  "terminal.integrated.enableMultiLinePasteWarning": "never",
+  "terminal.integrated.enableMultiLinePasteWarning": "auto",
   "terminal.integrated.defaultProfile.windows": "Command Prompt UTF-8",
   "terminal.integrated.profiles.windows": {
     "Command Prompt UTF-8": {
@@ -22,41 +21,32 @@
         "/K",
         "chcp 65001 > nul"
       ]
-    },
-    "terminal.integrated.automationProfile.windows": {
-      "path": "${env:windir}\\System32\\cmd.exe",
-      "args": [
-        "/K",
-        "chcp 65001 > nul"
-      ]
     }
   },
   // =====================================
-  // explorer and search
+  // file explorer and search
   "explorer.excludeGitIgnore": true,
-  "explorer.confirmDelete": false,
+  "explorer.confirmDelete": true,
   "files.exclude": { // not visible in explorer:
     "**/__pycache__": true,
     "**/node_modules": true,
     "**/.venv": true,
     "**/.gitattributes": true,
-    "**/LICENSE": true,
     "**/*.lnk": true,
     "**/*.lprof": true,
     "**/*.pid": true,
     "**/*.ome.tif": true,
     "**/*.tiff": true,
-    "**/bin": true, // Hide compiled output folders
-    "**/obj": true, // Hide temporary build folders
-    "**/.agents": true, // Hide chat agents folder
-    "**/.vscode": true, // Hide VS Code settings folder
+    "**/bin": true, // compiled output folders
+    "**/obj": true, // temporary build folders
+    "**/.agents": true,
+    "**/.vscode": true,
+    "**/.ruff_cache": true,
+    "**/.codex": true,
+    "**/.pytest_cache": true,
+    "**/*.pyc": true,
   },
-  "search.exclude": {
-    "**/bin": true, // Do not search C# build output
-    "**/obj": true, // Do not search C# intermediate files
-    "**/__pycache__": true, // Do not search Python bytecode caches
-    "**/.pytest_cache": true, // Do not search pytest caches
-    "**/.ruff_cache": true // Do not search Ruff caches
+  "search.exclude": { // inherits all from "files.exclude"
   },
   // =====================================
   // default formatters
@@ -79,14 +69,14 @@
   // git & diff & github
   "git.enableSmartCommit": true,
   "git.autofetch": true,
-  "git.autofetchPeriod": 180, // seconds
+  "git.autofetchPeriod": 600, // seconds
   "git.confirmSync": false,
   "git.openRepositoryInParentFolders": "always",
   "git.postCommitCommand": "push",
-  "diffEditor.ignoreTrimWhitespace": true,
-  "diffEditor.maxComputationTime": 0,
   "githubPullRequests.pushBranch": "always",
-  "diffEditor.hideUnchangedRegions.enabled": true, // = codefolding
+  "diffEditor.ignoreTrimWhitespace": false,
+  "diffEditor.maxComputationTime": 0,
+  "diffEditor.hideUnchangedRegions.enabled": true,
   // =====================================
   // editor  
   "editor.codeLens": false,
@@ -136,15 +126,17 @@
   "settingsSync.ignoredExtensions": [],
   "settingsSync.ignoredSettings": [],
   // =====================================
+  // codex
+  "codexUsage.showRemaining": true,
+  "codexUsage.compactStatusBar": false,
+  // =====================================
   // copilot/chat/AI
+  "github.copilot.nextEditSuggestions.enabled": true, // Suggest related code changes after editing
   "github.copilot.enable": {
-    "*": true,
-    "plaintext": false,
-    "markdown": false,
-    "scminput": false,
+    "*": false, //includes txt,md,git commit message panel
     "python": true
   },
-  "chat.disableAIFeatures": true, // = disable copilot (->faster start)
+  "chat.disableAIFeatures": false, // true = disable copilot (->faster start)
   "chat.titleBar.openInAgentsWindow.enabled": false,
   "chat.tools.terminal.autoApprove": {
     "/^python -m py_compile live_plot\\.py$/": {
@@ -154,8 +146,8 @@
   },
   "editor.quickSuggestions": {
     "other": true,
-    "comments": true,
-    "strings": true
+    "comments": false,
+    "strings": false
   },
   // =====================================
   // Python
@@ -163,7 +155,7 @@
   "python.testing.pytestEnabled": false, // false = faster start
   "python.defaultInterpreterPath": "..\\..\\python_envs\\default_env\\Scripts\\python.exe",
   "python-envs.globalSearchPaths": [
-    "..\\..\\Documents\\python_envs"
+    "..\\..\\python_envs"
   ],
   "python.testing.unittestEnabled": false,
   "python.experiments.optOutFrom": [
@@ -176,7 +168,6 @@
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
       "source.organizeImports.ruff": "explicit",
-      "source.organizeImports": "explicit",
       "source.addMissingImports": "never"
     }
   },
@@ -193,21 +184,21 @@
   ],
   // =====================================
   // C#
+  "csharp.debug.console": "integratedTerminal",
+  "dotnet.server.useOmnisharp": false, // Use the modern Roslyn language server
   "[csharp]": {
     "editor.defaultFormatter": "ms-dotnettools.csharp", // Use Microsoft's C# formatter
     "editor.formatOnSave": true, // Format C# files when saving
-    "editor.inlayHints.enabled": "on", // Hide parameter and type hints inside the code
+    "editor.inlayHints.enabled": "on", // "off"=Hide parameter and type hints inside the code
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "always" // Do not automatically change using directives
-    }
+      "source.organizeImports": "always" // "always"= automatically sort and remove unused "using"-directives on save
+    },
+    "editor.acceptSuggestionOnCommitCharacter": false, // Do not accept suggestions when typing punctuation
   },
-  "csharp.debug.console": "integratedTerminal",
-  "dotnet.server.useOmnisharp": false, // Use the modern Roslyn language server
-  "editor.acceptSuggestionOnCommitCharacter": false, // Do not accept suggestions when typing punctuation
   // =====================================
   // autodocstring
   "autoDocstring.docstringFormat": "numpy",
-  "autoDocstring.customTemplatePath": "utilities\\python related\\python_autodocstring_extension_template.mustache",
+  "autoDocstring.customTemplatePath": "..\\utilities\\python related\\python_autodocstring_extension_template.mustache",
   // =====================================
   // Ruff formatter/linter settings (python)
   "ruff.configuration": "..\\utilities\\python related\\good_Ruff_settings.toml",
@@ -229,58 +220,232 @@
   // =====================================
   // buttons in GUI using "commands"-extension
   "commands.commands": {
+    "Toggle unchanged diff regions": {
+      "command": "commands.toggleSetting",
+      "args": {
+        "setting": "diffEditor.hideUnchangedRegions.enabled",
+        "value": [
+          true,
+          false
+        ],
+        "target": "workspace"
+      },
+      "statusBar": {
+        "alignment": "right",
+        "name": "Unchanged diff regions",
+        "text": "$(map)=${config:diffEditor.hideUnchangedRegions.enabled}",
+        "tooltip": "Toggle hiding unchanged regions in diff editors for this workspace.",
+        "updateEvents": [
+          {
+            "kind": "onDidConfigurationChange",
+            "settings": [
+              "diffEditor.hideUnchangedRegions.enabled"
+            ]
+          }
+        ],
+        "replaceVariableValue": {
+          "config:diffEditor.hideUnchangedRegions.enabled": {
+            "true": "on",
+            "false": "off"
+          }
+        }
+      }
+    },
     "Pyrefly type checking": {
       "nestedItems": {
         "Off": {
-          "command": "commands.toggleSetting",
-          "args": {
-            "setting": "python.pyrefly.typeCheckingMode",
-            "value": "off",
-            "target": "workspace"
-          }
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": "",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": "off",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  true,
+                  true
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient"
+          ]
         },
         "Basic": {
-          "command": "commands.toggleSetting",
-          "args": {
-            "setting": "python.pyrefly.typeCheckingMode",
-            "value": "basic",
-            "target": "workspace"
-          }
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": "",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": "basic",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  false,
+                  false
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient"
+          ]
         },
         "Default": {
-          "command": "commands.toggleSetting",
-          "args": {
-            "setting": "python.pyrefly.typeCheckingMode",
-            "value": "default",
-            "target": "workspace"
-          }
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": "",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": "default",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  false,
+                  false
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient"
+          ]
         },
         "Strict": {
-          "command": "commands.toggleSetting",
-          "args": {
-            "setting": "python.pyrefly.typeCheckingMode",
-            "value": "strict",
-            "target": "workspace"
-          }
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": "",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": "strict",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  false,
+                  false
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient"
+          ]
+        },
+        "Custom": {
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": "${workspaceFolder}/pyrefly.custom.toml",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": "auto",
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  false,
+                  false
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient"
+          ]
+        },
+        "Edit Custom settings": {
+          "command": "vscode.open",
+          "args": "file:///${workspaceFolder}/pyrefly.custom.toml"
         }
       },
       "statusBar": {
         "alignment": "right",
         "name": "Pyrefly type checking",
         "text": "Pyrefly: ${config:python.pyrefly.typeCheckingMode} $(chevron-down)",
-        "tooltip": "Select Pyrefly type-checking mode",
+        "tooltip": "Choose Off, Basic, Default, Strict, or Custom. Edit Custom settings opens pyrefly.custom.toml.",
         "activeEditorLanguage": "python",
+        "replaceVariableValue": {
+          "config:python.pyrefly.typeCheckingMode": {
+            "\"off\"": "Off",
+            "\"basic\"": "Basic",
+            "\"default\"": "Default",
+            "\"strict\"": "Strict",
+            "\"auto\"": "Custom"
+          }
+        },
         "updateEvents": [
           {
             "kind": "onDidConfigurationChange",
             "settings": [
-              "python.pyrefly.typeCheckingMode"
+              "python.pyrefly.typeCheckingMode",
+              "python.pyrefly.configPath",
+              "python.pyrefly.disableTypeErrors"
             ]
           }
         ]
       }
     },
-    "Run current C# project (.cs)": {
+    "Run current C# project": {
       "command": "commands.runInTerminal",
       "args": {
         "text": "\u0003@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
@@ -288,31 +453,69 @@
         "reuse": "newest",
         "reveal": true
       },
-      "activeEditorLanguage": "csharp",
+      "activeEditorGlob": "**/*.{cs,csproj,xml,config,resx,props,targets,xaml}",
       "statusBar": {
         "text": "$(play) Run EXE",
         "alignment": "right",
         "priority": 100,
         "tooltip": "Run the newest compiled EXE for the active C# project",
-        "activeEditorLanguage": "csharp"
+        "activeEditorGlob": "**/*.{cs,csproj,xml,config,resx,props,targets,xaml}",
       }
     },
-    "Run current C# project (.csproj=xml)": {
-      "command": "commands.runInTerminal",
-      "args": {
-        "text": "\u0003@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
-        "name": "C# EXE",
-        "reuse": "newest",
-        "reveal": true
-      },
-      "activeEditorLanguage": "xml",
+    "Copilot autocomplete": {
+      "sequence": [
+        {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "github.copilot.enable",
+            "value": [
+              {
+                "*": false,
+                "python": true
+              },
+              {
+                "*": false,
+                "python": false
+              }
+            ],
+            "target": "workspace"
+          }
+        },
+        {
+          "command": "commands.toggleSetting",
+          "args": {
+            "setting": "github.copilot.nextEditSuggestions.enabled",
+            "value": [
+              true,
+              false
+            ],
+            "target": "workspace"
+          }
+        }
+      ],
       "statusBar": {
-        "text": "$(play) Run EXE",
         "alignment": "right",
-        "priority": 100,
-        "tooltip": "Run the newest compiled EXE for the active C# project",
-        "activeEditorLanguage": "xml"
+        "priority": 200,
+        "name": "Copilot autocomplete",
+        "text": "$(copilot)=${config:github.copilot.nextEditSuggestions.enabled}",
+        "tooltip": "Toggle Python autocomplete and Next Edit Suggestions.",
+        "replaceVariableValue": {
+          "config:github.copilot.nextEditSuggestions.enabled": {
+            "true": "on",
+            "false": "off"
+          }
+        },
+        "updateEvents": [
+          {
+            "kind": "onDidConfigurationChange",
+            "settings": [
+              "github.copilot.enable",
+              "github.copilot.nextEditSuggestions.enabled"
+            ]
+          }
+        ]
       }
-    } // =====================================
-  } // <- new settings below
+    }
+  }, // =====================================
+  "NEW_SETTINGS_ARE_BELOW": "", // NEW SETTINGS ARE BELOW
 }
