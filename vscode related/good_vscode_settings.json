@@ -13,6 +13,11 @@
   "security.promptForLocalFileProtocolHandling": true,
   "files.autoSave": "afterDelay",
   "update.showReleaseNotes": false,
+  "settingsSync.ignoredExtensions": [],
+  "settingsSync.ignoredSettings": [],
+  "files.associations": {
+    "*.json": "jsonc"
+  },
   // =====================================
   // terminal
   "terminal.integrated.enableMultiLinePasteWarning": "auto",
@@ -126,11 +131,7 @@
     "editor.showFoldingControls": "always"
   },
   // =====================================
-  // vscode
-  "settingsSync.ignoredExtensions": [],
-  "settingsSync.ignoredSettings": [],
-  // =====================================
-  // codex
+  // codex extension
   "codexUsage.showRemaining": true,
   "codexUsage.compactStatusBar": false,
   // =====================================
@@ -176,9 +177,9 @@
   // Python
   "python.useEnvironmentsExtension": false, // could be faster startup
   "python.testing.pytestEnabled": false, // false = faster start
-  "python.defaultInterpreterPath": "..\\..\\python_envs\\default_env\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "${workspaceFolder}/../../python_envs/default_env/Scripts/python.exe",
   "python-envs.globalSearchPaths": [
-    "..\\..\\python_envs"
+    "${workspaceFolder}/../../python_envs"
   ],
   "python.testing.unittestEnabled": false,
   "python.experiments.optOutFrom": [
@@ -198,7 +199,7 @@
   "java.configuration.runtimes": [
     {
       "name": "JavaSE-25",
-      "path": "C:\\Program Files\\Java\\jdk-25.0.2",
+      "path": "D:/Programs/Java",
       "default": true
     }
   ],
@@ -216,12 +217,12 @@
     "editor.acceptSuggestionOnCommitCharacter": false, // Do not accept suggestions when typing punctuation
   },
   // =====================================
-  // autodocstring
+  // autodocstring extension
   "autoDocstring.docstringFormat": "numpy",
-  "autoDocstring.customTemplatePath": "..\\utilities\\python related\\python_autodocstring_extension_template.mustache",
+  "autoDocstring.customTemplatePath": "../utilities/python related/python_autodocstring_extension_template.mustache",
   // =====================================
   // Ruff formatter/linter settings (python)
-  "ruff.configuration": "..\\utilities\\python related\\good_Ruff_settings.toml",
+  "ruff.configuration": "../utilities/python related/good_Ruff_settings.toml",
   "ruff.configurationPreference": "filesystemFirst", //"filesystemFirst" "editorFirst"
   "ruff.lint.enable": true,
   "ruff.lint.preview": false,
@@ -232,16 +233,15 @@
     "**/node_modules/**": true,
     "**/.venv/**": true
   },
-  // =====================================
-  // pyrefly - type checker and LSP (alternative to pylance)
   "python.analysis.inlayHints.variableTypes": false,
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.autoImportCompletions": false,
-  // "python.analysis.diagnosticsSource": "Pylance + Pyrefly",
-  // "python.analysis.pyreflyVersion": "",
+  // =====================================
+  // pyrefly - type checker and LSP (alternative to pylance)
   "python.languageServer": "None", // "Default"=Pylance "None"=Pyrefly
   "python.pyrefly.typeCheckingMode": "default", //"off"/"basic"/"auto"/"default"/"strict"
   "python.pyrefly.disableTypeErrors": false,
+  "pyreflyProfiles.customConfigPath": "../utilities/python related/good_pyrefly_settings.toml",
   // =====================================
   // buttons in GUI using "commands"-extension
   "commands.commands": {
@@ -294,7 +294,7 @@
             "setting": "ruff.configuration",
             "value": [
               {},
-              "D:\\Users\\IRScope\\Documents\\Repositories\\utilities\\python related\\good_Ruff_settings.toml"
+              "../utilities/python related/good_Ruff_settings.toml"
             ],
             "target": "workspace"
           }
@@ -310,8 +310,7 @@
         "replaceVariableValue": {
           "config:ruff.configuration": {
             "{}": "Default",
-            "\"D:\\\\Users\\\\IRScope\\\\Documents\\\\Repositories\\\\utilities\\\\python related\\\\good_Ruff_settings.toml\"": "Custom",
-            "\"..\\\\utilities\\\\python related\\\\good_Ruff_settings.toml\"": "Custom"
+            "\"../utilities/python related/good_Ruff_settings.toml\"": "Custom"
           }
         },
         "updateEvents": [
@@ -328,193 +327,51 @@
     "Pyrefly type checking": {
       "nestedItems": {
         "Off": {
-          "sequence": [
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.configPath",
-                "value": "",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.typeCheckingMode",
-                "value": "off",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.disableTypeErrors",
-                "value": [
-                  true,
-                  true
-                ],
-                "target": "workspace"
-              }
-            },
-            "pyrefly.restartClient"
-          ]
+          "command": "pyreflyProfiles.apply",
+          "args": "off"
         },
         "Basic": {
-          "sequence": [
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.configPath",
-                "value": "",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.typeCheckingMode",
-                "value": "basic",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.disableTypeErrors",
-                "value": [
-                  false,
-                  false
-                ],
-                "target": "workspace"
-              }
-            },
-            "pyrefly.restartClient"
-          ]
+          "command": "pyreflyProfiles.apply",
+          "args": "basic"
         },
         "Default": {
-          "sequence": [
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.configPath",
-                "value": "",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.typeCheckingMode",
-                "value": "default",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.disableTypeErrors",
-                "value": [
-                  false,
-                  false
-                ],
-                "target": "workspace"
-              }
-            },
-            "pyrefly.restartClient"
-          ]
+          "command": "pyreflyProfiles.apply",
+          "args": "default"
         },
         "Strict": {
-          "sequence": [
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.configPath",
-                "value": "",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.typeCheckingMode",
-                "value": "strict",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.disableTypeErrors",
-                "value": [
-                  false,
-                  false
-                ],
-                "target": "workspace"
-              }
-            },
-            "pyrefly.restartClient"
-          ]
+          "command": "pyreflyProfiles.apply",
+          "args": "strict"
+        },
+        "Local": {
+          "command": "pyreflyProfiles.apply",
+          "args": "local"
         },
         "Custom": {
-          "sequence": [
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.configPath",
-                "value": "../utilities/python related/good_pyrefly_settings.toml",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.typeCheckingMode",
-                "value": "auto",
-                "target": "workspace"
-              }
-            },
-            {
-              "command": "commands.toggleSetting",
-              "args": {
-                "setting": "python.pyrefly.disableTypeErrors",
-                "value": [
-                  false,
-                  false
-                ],
-                "target": "workspace"
-              }
-            },
-            "pyrefly.restartClient"
-          ]
+          "command": "pyreflyProfiles.apply",
+          "args": "custom"
         },
         "Edit Custom settings": {
-          "command": "commands.openFolder",
-          "args": "../utilities/python related/good_pyrefly_settings.toml"
+          "command": "pyreflyProfiles.editCustom"
         }
       },
       "statusBar": {
         "alignment": "right",
         "name": "Pyrefly type checking",
-        "text": "Pyrefly: ${config:python.pyrefly.typeCheckingMode} $(chevron-down)",
-        "tooltip": "Choose Off, Basic, Default, Strict, or Custom. Edit Custom settings opens good_pyrefly_settings.toml.",
+        "text": "Pyrefly: ${command:pyreflyProfiles.status} $(chevron-down)",
+        "tooltip": "Local discovers project configs. Basic, Default, Strict, and Custom explicitly select workspace-scoped configs; Off disables diagnostics.",
         "activeEditorLanguage": "python",
-        "replaceVariableValue": {
-          "config:python.pyrefly.typeCheckingMode": {
-            "\"off\"": "Off",
-            "\"basic\"": "Basic",
-            "\"default\"": "Default",
-            "\"strict\"": "Strict",
-            "\"auto\"": "Custom"
-          }
-        },
         "updateEvents": [
           {
             "kind": "onDidConfigurationChange",
             "settings": [
-              "python.pyrefly.typeCheckingMode",
               "python.pyrefly.configPath",
-              "python.pyrefly.disableTypeErrors"
+              "python.pyrefly.typeCheckingMode",
+              "python.pyrefly.disableTypeErrors",
+              "pyreflyProfiles.customConfigPath"
             ]
+          },
+          {
+            "kind": "onDidChangeActiveTextEditor"
           }
         ]
       }
@@ -628,6 +485,7 @@
         ]
       }
     }
-  }, // =====================================
+  },
+  // =====================================
   "NEW_SETTINGS_ARE_BELOW": "", // <-- NEW SETTING
 }
