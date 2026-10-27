@@ -1,0 +1,2 @@
+add batches to register in vscode and genratte shortcuts and install jupters and all options in hindsight. also on to update all i guess. i guess also option to uninstall jupter kenerl and path or sometinmgh. smart detection of cuda version and install right one? and auto not install for no cuda and just warming
+have toggle to save as relative paths in vscode settings
