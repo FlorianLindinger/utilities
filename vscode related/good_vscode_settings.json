@@ -442,7 +442,7 @@
               "command": "commands.toggleSetting",
               "args": {
                 "setting": "python.pyrefly.configPath",
-                "value": "${workspaceFolder}/pyrefly.custom.toml",
+                "value": "../utilities/python related/good_pyrefly_settings.toml",
                 "target": "workspace"
               }
             },
@@ -477,7 +477,7 @@
         "alignment": "right",
         "name": "Pyrefly type checking",
         "text": "Pyrefly: ${config:python.pyrefly.typeCheckingMode} $(chevron-down)",
-        "tooltip": "Choose Off, Basic, Default, Strict, or Custom. Edit Custom settings opens pyrefly.custom.toml.",
+        "tooltip": "Choose Off, Basic, Default, Strict, or Custom. Edit Custom settings opens good_pyrefly_settings.toml.",
         "activeEditorLanguage": "python",
         "replaceVariableValue": {
           "config:python.pyrefly.typeCheckingMode": {
@@ -526,10 +526,16 @@
             "value": [
               {
                 "*": false,
+                "plaintext": false,
+                "markdown": false,
+                "scminput": false,
                 "python": true
               },
               {
                 "*": false,
+                "plaintext": false,
+                "markdown": false,
+                "scminput": false,
                 "python": false
               }
             ],
@@ -552,10 +558,10 @@
         "alignment": "right",
         "priority": 100.09,
         "name": "Copilot autocomplete",
-        "text": "$(copilot)=${config:github.copilot.nextEditSuggestions.enabled}",
-        "tooltip": "Toggle Python autocomplete and Next Edit Suggestions.",
+        "text": "$(copilot)=${config:github.copilot.enable.python}",
+        "tooltip": "Toggle Python autocomplete and Next Edit Suggestions for this workspace.",
         "replaceVariableValue": {
-          "config:github.copilot.nextEditSuggestions.enabled": {
+          "config:github.copilot.enable.python": {
             "true": "on",
             "false": "off"
           }
