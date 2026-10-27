@@ -1,16 +1,14 @@
 # Custom profile for the Pyrefly type-checking button in VS Code.
-# Use "Edit Custom settings" in the button menu to open this file.
 # Change rule values below to "error", "warn", or "ignore".
-# Save, then select "Custom" again to apply your changes.
-# The other button options use Pyrefly presets without these overrides.
-# CLI equivalent: pyrefly check --config good_pyrefly_settings.toml
+
+preset = "default"
 
 # ===================
 # import resolution
 # ===================
 
 # Additional root where Pyrefly resolves imports; equivalent to Pylance's extraPaths. Default: import root.
-search-path = ["."]
+# search-path = ["."]
 
 # ============================
 # Promoted ignores to warnings
@@ -25,11 +23,11 @@ missing-override-decorator = "warn"
 # Warn when a class with abstract members is not explicitly declared abstract. Default: ignore.
 implicit-abstract-class = "warn"
 # Warn when a function parameter has no type annotation. Default: ignore.
-unannotated-parameter = "warn"
+implicit-any-parameter = "warn"
 # Warn when a function has no return-type annotation. Default: ignore.
 unannotated-return = "warn"
 # Warn when an attribute has no explicit type annotation. Default: ignore.
-unannotated-attribute = "warn"
+implicit-any-attribute = "warn"
 # Warn when an attribute is introduced outside a recognized initialization method. Default: ignore.
 implicitly-defined-attribute = "warn"
 # Warn when accessing a potentially absent TypedDict key without checking it first. Default: ignore.
