@@ -36,7 +36,7 @@ implicitly-defined-attribute = "warn"
 not-required-key-access = "warn"
 # Warn when a typed function body is only `...`. Default: ignore.
 empty-body = "warn"
-# Warn when `typing.Any` is written explicitly in an annotation. Default: ignore.
+# `typing.Any` is written explicitly in an annotation. Default: ignore.
 explicit-any = "warn"
 # Warn when a non-boolean value is used directly as a condition. Default: ignore.
 implicit-bool = "warn"
