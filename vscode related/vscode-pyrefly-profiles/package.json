@@ -1,0 +1,29 @@
+{
+  "name": "pyrefly-profile-switcher",
+  "displayName": "Local Pyrefly Profile Switcher",
+  "description": "Switch workspace-scoped Pyrefly configurations and normal local discovery.",
+  "publisher": "local",
+  "version": "0.1.0",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "extensionDependencies": ["meta.pyrefly"],
+  "contributes": {
+    "commands": [
+      { "command": "pyreflyProfiles.apply", "title": "Pyrefly Profiles: Select Mode" },
+      { "command": "pyreflyProfiles.status", "title": "Pyrefly Profiles: Current Mode" },
+      { "command": "pyreflyProfiles.editCustom", "title": "Pyrefly Profiles: Edit Shared Custom Rules" }
+    ],
+    "configuration": {
+      "title": "Pyrefly Profiles",
+      "properties": {
+        "pyreflyProfiles.customConfigPath": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Shared custom Pyrefly TOML rules. Generated configurations limit analysis to the selected workspace folder."
+        }
+      }
+    }
+  }
+}
