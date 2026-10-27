@@ -67,7 +67,7 @@ SET "def_set_vscode_search_path=N"
 SET "def_create_desktop_shortcuts=Y"
 SET "def_add_to_path=N"
 SET "validate_jupyter_kernel=N"
-SET "def_packages=numpy matplotlib scipy pandas pyyaml pillow tqdm pyarrow openpyxl opencv-python ipywidgets pywin32 pyserial numba pyside6 html5lib rich tifffile pyautogui nuitka py7zr pywinauto nptdms scipy-stubs cupy-cuda12x nvmath-python lightwaveexplorer types-pyserial scikit-image types-tqdm"
+SET "def_packages=numpy matplotlib scipy scipy-stubs pandas pyyaml pillow tqdm types-tqdm pyarrow openpyxl opencv-python pywin32 pyserial types-pyserial numba pyside6 html5lib rich scikit-image tifffile pyautogui nuitka pywinauto nptdms py7zr nvmath-python cupy-cuda12x lightwaveexplorer"
 
 :: ---------------------------------------------------------------------------
 :: Resolve configuration
@@ -129,7 +129,7 @@ echo:!GREEN!Set VS Code default interpreter: %set_vscode_default%!RESET!
 IF /I "%set_vscode_default%"=="Y" echo:!GREEN!  Interpreter path: %vscode_interpreter_path%!RESET!
 echo:!GREEN!Add VS Code env search path: %set_vscode_search_path%!RESET!
 IF /I "%set_vscode_search_path%"=="Y" echo:!GREEN!VS Code env search path: %vscode_env_search_path%!RESET!
-echo:!GREEN!Install Jupyter notebook support (ipykernel ipympl): %install_notebook_support%!RESET!
+echo:!GREEN!Install Jupyter notebook support (ipykernel ipympl ipywidgets): %install_notebook_support%!RESET!
 echo:!GREEN!Copy environment shortcuts to Desktop: %create_desktop_shortcuts%!RESET!
 echo:!GREEN!Put environment first in user PATH: %add_to_path%!RESET!
 echo:
@@ -844,17 +844,17 @@ exit /b 0
 
 :install_jupyter_support
   set "jupyter_support_failed="
-  echo:!GREEN!--Installing Jupyter notebook support (ipykernel ipympl)--!RESET!
+  echo:!GREEN!--Installing Jupyter notebook support (ipykernel ipympl ipywidgets)--!RESET!
   echo:
   "%env_python%" -m uv --version >nul 2>&1
   if errorlevel 1 (
-    "%env_python%" -m pip install "ipykernel" "ipympl"
+    "%env_python%" -m pip install "ipykernel" "ipympl" "ipywidgets"
     IF ERRORLEVEL 1 set "jupyter_support_failed=Y"
   ) else (
-    "%env_python%" -m uv pip install --python "%env_python%" "ipykernel" "ipympl"
+    "%env_python%" -m uv pip install --python "%env_python%" "ipykernel" "ipympl" "ipywidgets"
     if errorlevel 1 (
       CALL :print_red [Warning] uv failed to install Jupyter notebook support. Trying pip fallback...
-      "%env_python%" -m pip install "ipykernel" "ipympl"
+      "%env_python%" -m pip install "ipykernel" "ipympl" "ipywidgets"
       IF ERRORLEVEL 1 set "jupyter_support_failed=Y"
     )
   )
@@ -1080,7 +1080,7 @@ $ss.Location=New-Object System.Drawing.Point(35,455);
 $ss.Size=New-Object System.Drawing.Size(580,34);
 $form.Controls.Add($ss);
 $j=New-Object System.Windows.Forms.CheckBox;
-$j.Text='Install Jupyter notebook support (ipykernel ipympl + dependencies)';
+$j.Text='Install Jupyter notebook support (ipykernel ipympl ipywidgets + dependencies)';
 $j.Location=New-Object System.Drawing.Point(15,496);
 $j.Size=New-Object System.Drawing.Size(610,24);
 $j.Checked=($env:install_notebook_support -ieq 'Y' -or $env:install_notebook_support -ieq 'YES');
