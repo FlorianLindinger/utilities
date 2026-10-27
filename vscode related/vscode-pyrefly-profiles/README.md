@@ -3,7 +3,7 @@
 The existing Commands status button calls this helper. It supports Local,
 Basic, Default, Strict, Custom, Off, and editing the shared custom rules.
 
-- Local clears `configPath` and uses `auto`, allowing normal project discovery.
+- Local searches upward from the active Python file or notebook (or the selected workspace folder when neither is active), including parents outside the workspace. It accepts `pyrefly.toml` or a `[tool.pyrefly]` section (including subtables) in `pyproject.toml`. Following Pyrefly project-root discovery, it stops at the nearest `pyproject.toml`, `setup.py`, `mypy.ini`, or `pyrightconfig.json`, or the filesystem root. If no native Pyrefly config governs that location, it warns and keeps the current profile; otherwise it clears `configPath` and uses `auto`. This guard checks the active location at selection time; Pyrefly still discovers configs separately for other source files.
 - Basic, Default, and Strict select explicit generated preset configs. Local
   project configs therefore cannot override the selected preset.
 - Custom generates a config that extends `pyreflyProfiles.customConfigPath`.
@@ -41,3 +41,5 @@ installed extension copies.
 
 The Windows launcher permits this script for its own PowerShell process only;
 it does not change the machine or user execution policy.
+
+The Windows launcher reports success or failure and waits for a keypress before closing, preserving errors for review.

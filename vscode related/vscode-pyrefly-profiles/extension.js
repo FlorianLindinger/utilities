@@ -47,6 +47,55 @@ function createController(vscode, context) {
     }
     const folder = await chooseFolder();
     if (!folder) return;
+    if (mode === "local") {
+      const editor = vscode.window.activeTextEditor?.document.uri;
+      const notebook = vscode.window.activeNotebookEditor?.notebook.uri;
+      const source = [editor, notebook].find((uri) =>
+        uri && uri.scheme !== "vscode-notebook-cell" && /\.(py|pyi|ipynb)$/i.test(uri.fsPath) &&
+        vscode.workspace.getWorkspaceFolder(uri)?.uri.toString() === folder.uri.toString());
+      let directory = source ? vscode.Uri.joinPath(source, "..") : folder.uri;
+      const start = directory.fsPath;
+      async function readLocal(name) {
+        try {
+          const bytes = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(directory, name));
+          return Buffer.from(bytes).toString("utf8");
+        } catch (error) {
+          if (error.code === "FileNotFound") return undefined;
+          throw error;
+        }
+      }
+      let found = false;
+      while (true) {
+        const config = await readLocal("pyrefly.toml");
+        if (config !== undefined) {
+          found = true;
+          break;
+        }
+        const project = await readLocal("pyproject.toml");
+        if (project !== undefined) {
+          found = /^\s*\[tool\.pyrefly(?:\s*\]|\s*\.)/m.test(project);
+          break;
+        }
+        // These files stop Pyrefly's upward project-root search too.
+        let boundary = false;
+        for (const name of ["setup.py", "mypy.ini", "pyrightconfig.json"]) {
+          if (await readLocal(name) !== undefined) {
+            boundary = true;
+            break;
+          }
+        }
+        if (boundary) break;
+        const parent = vscode.Uri.joinPath(directory, "..");
+        if (parent.toString() === directory.toString()) break;
+        directory = parent;
+      }
+      if (!found) {
+        await vscode.window.showWarningMessage(
+          `Pyrefly: No native local config (pyrefly.toml or [tool.pyrefly] in pyproject.toml) found searching upward from "${start}" before a project boundary or filesystem root. Keeping the current profile.`,
+        );
+        return;
+      }
+    }
     let selectedPath = "";
     if (EXPLICIT_MODES.includes(mode)) {
       let shared;

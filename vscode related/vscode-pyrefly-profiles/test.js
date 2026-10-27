@@ -16,6 +16,7 @@ function fixture() {
   const settings = new Map();
   const updates = [];
   const commands = [];
+  const warnings = [];
   const custom = path.join(os.tmpdir(), "shared-rules.toml");
   files.set(custom, Buffer.from('preset = "default"\n'));
   const vscode = {
@@ -33,6 +34,10 @@ function fixture() {
         },
       }),
       fs: {
+        readFile: async (file) => {
+          if (files.has(file.fsPath)) return files.get(file.fsPath);
+          throw Object.assign(new Error("File not found"), { code: "FileNotFound" });
+        },
         stat: async (file) => { if (!files.has(file.fsPath)) throw new Error("Missing custom rules"); },
         createDirectory: async () => {},
         writeFile: async (file, content) => { files.set(file.fsPath, content); },
@@ -43,12 +48,13 @@ function fixture() {
       activeTextEditor: { document: { uri: uri(path.join(first.uri.fsPath, "file.py")) } },
       showWorkspaceFolderPick: async () => second,
       showTextDocument: async () => {},
+      showWarningMessage: async (message) => { warnings.push(message); },
     },
     extensions: { getExtension: () => ({ isActive: true }) },
     commands: { executeCommand: async (command) => { commands.push(command); } },
   };
   const context = { globalStorageUri: uri(path.join(os.tmpdir(), "profile-storage")) };
-  return { first, second, vscode, context, files, settings, updates, commands, custom, controller: createController(vscode, context) };
+  return { first, second, vscode, context, files, settings, updates, commands, warnings, custom, controller: createController(vscode, context) };
 }
 
 test("Windows includes cover both drive cases and only the selected folder", () => {
@@ -91,6 +97,7 @@ test("Selecting every explicit mode writes scoped storage configs and updates on
 test("Local clears the explicit config; Off additionally disables diagnostics", async () => {
   const f = fixture();
   await f.controller.apply("strict");
+  f.files.set(path.join(f.first.uri.fsPath, 'pyrefly.toml'), Buffer.from(''));
   await f.controller.apply("local");
   assert.equal(f.controller.status(), "Local");
   assert.equal(f.settings.get(f.first.uri.toString() + ":configPath"), "");
@@ -121,4 +128,97 @@ test("The status preserves an explicit preset across VS Code profile switches", 
     globalStorageUri: f.vscode.Uri.file(path.join(os.tmpdir(), "other-user-profile", "profile-storage")),
   };
   assert.equal(createController(f.vscode, otherContext).status(), "Strict");
+});
+
+test("Missing local config warns and preserves the current profile without restarting", async () => {
+  const f = fixture();
+  await f.controller.apply("strict");
+  const updates = f.updates.length;
+  const restarts = f.commands.length;
+  f.files.set(path.join(f.first.uri.fsPath, "pyproject.toml"), Buffer.from("[tool.ruff]\n"));
+  await f.controller.apply("local");
+  assert.equal(f.controller.status(), "Strict");
+  assert.equal(f.updates.length, updates);
+  assert.equal(f.commands.length, restarts);
+  assert.equal(f.warnings.length, 1);
+  assert.match(f.warnings[0], /Keeping the current profile/);
+});
+
+test("A local pyproject Pyrefly section allows switching", async () => {
+  const f = fixture();
+  f.files.set(path.join(f.first.uri.fsPath, "pyproject.toml"),
+    Buffer.from("[tool.pyrefly] # project rules\npreset = \"strict\"\n"));
+  assert.equal(await f.controller.apply("local"), "Local");
+  assert.equal(f.warnings.length, 0);
+  assert.equal(f.controller.status(), "Local");
+});
+
+test("Unreadable local configuration is reported instead of treated as missing", async () => {
+  const f = fixture();
+  f.vscode.workspace.fs.readFile = async () => {
+    throw Object.assign(new Error("Access denied"), { code: "NoPermissions" });
+  };
+  await assert.rejects(f.controller.apply("local"), /Access denied/);
+  assert.equal(f.updates.length, 0);
+  assert.equal(f.warnings.length, 0);
+});
+test("Local finds a nested config governing the active source", async () => {
+  const f = fixture();
+  const nested = path.join(f.first.uri.fsPath, "nested");
+  f.vscode.window.activeTextEditor.document.uri = f.vscode.Uri.file(path.join(nested, "src", "file.py"));
+  f.files.set(path.join(nested, "pyrefly.toml"), Buffer.from(""));
+  assert.equal(await f.controller.apply("local"), "Local");
+  assert.equal(f.warnings.length, 0);
+});
+
+test("Local discovers parent configs outside the workspace", async () => {
+  const f = fixture();
+  f.files.set(path.join(f.first.uri.fsPath, "..", "pyproject.toml"),
+    Buffer.from("[tool.pyrefly.errors]\nbad-return = false\n"));
+  assert.equal(await f.controller.apply("local"), "Local");
+});
+
+test("A nearer project boundary prevents using an unrelated parent config", async () => {
+  for (const marker of ["pyproject.toml", "setup.py", "mypy.ini", "pyrightconfig.json"]) {
+    const f = fixture();
+    f.files.set(path.join(f.first.uri.fsPath, marker), Buffer.from(""));
+    f.files.set(path.join(f.first.uri.fsPath, "..", "pyrefly.toml"), Buffer.from(""));
+    await f.controller.apply("local");
+    assert.equal(f.warnings.length, 1, marker);
+    assert.equal(f.updates.length, 0, marker);
+  }
+});
+
+test("A config in an unrelated nested folder does not satisfy the guard", async () => {
+  const f = fixture();
+  f.files.set(path.join(f.first.uri.fsPath, "other", "pyrefly.toml"), Buffer.from(""));
+  await f.controller.apply("local");
+  assert.equal(f.warnings.length, 1);
+  assert.equal(f.updates.length, 0);
+});
+
+test("Notebook discovery starts at its directory, even with a cell editor", async () => {
+  const f = fixture();
+  const nested = path.join(f.first.uri.fsPath, "notebooks");
+  f.vscode.window.activeTextEditor.document.uri = f.vscode.Uri.file(path.join(nested, "cell"));
+  f.vscode.window.activeNotebookEditor = {
+    notebook: { uri: f.vscode.Uri.file(path.join(nested, "example.ipynb")) },
+  };
+  f.files.set(path.join(nested, "pyrefly.toml"), Buffer.from(""));
+  assert.equal(await f.controller.apply("local"), "Local");
+});
+
+test("Without a Python editor, discovery starts at the selected workspace folder", async () => {
+  const f = fixture();
+  f.vscode.window.activeTextEditor = undefined;
+  f.files.set(path.join(f.second.uri.fsPath, "pyrefly.toml"), Buffer.from(""));
+  assert.equal(await f.controller.apply("local"), "Local");
+  assert(f.updates.every(([folder]) => folder === f.second.uri.toString()));
+});
+
+test("pyrefly.toml takes precedence over a pyproject without Pyrefly settings", async () => {
+  const f = fixture();
+  f.files.set(path.join(f.first.uri.fsPath, "pyrefly.toml"), Buffer.from(""));
+  f.files.set(path.join(f.first.uri.fsPath, "pyproject.toml"), Buffer.from("[tool.ruff]\n"));
+  assert.equal(await f.controller.apply("local"), "Local");
 });
