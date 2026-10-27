@@ -67,7 +67,7 @@ SET "def_set_vscode_search_path=N"
 SET "def_create_desktop_shortcuts=Y"
 SET "def_add_to_path=N"
 SET "validate_jupyter_kernel=N"
-SET "def_packages=numpy matplotlib scipy scipy-stubs pandas pyyaml types-PyYAML pillow tqdm types-tqdm pyarrow openpyxl opencv-python pywin32 types-pywin32 pyserial types-pyserial numba pyside6 html5lib rich scikit-image tifffile pyautogui types-PyAutoGUI nuitka pywinauto nptdms platformdirs types-python-dateutil py7zr nvmath-python cupy-cuda12x lightwaveexplorer"
+SET "def_packages=numpy matplotlib scipy scipy-stubs pandas pyyaml types-PyYAML pillow tqdm types-tqdm pyarrow openpyxl opencv-python pywin32 types-pywin32 pyserial types-pyserial numba pyside6 html5lib rich scikit-image tifffile pyautogui types-PyAutoGUI nuitka pywinauto nptdms platformdirs types-python-dateutil py7zr nvmath-python cupy-cuda12x jax lightwaveexplorer"
 
 :: ---------------------------------------------------------------------------
 :: Resolve configuration
