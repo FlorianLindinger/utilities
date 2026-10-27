@@ -137,8 +137,27 @@
   // copilot/chat/AI
   "github.copilot.nextEditSuggestions.enabled": true, // Suggest related code changes after editing
   "github.copilot.enable": {
-    "*": false, //includes txt,md,git commit message panel
-    "python": true
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "log": false,
+    "git-commit": false,
+    "git-rebase": false,
+    "restructuredtext": false,
+    "asciidoc": false,
+    "json": false,
+    "jsonc": false,
+    "latex": false,
+    "tex": false,
+    "typst": false,
+    "yaml": false,
+    "toml": false,
+    "ini": false,
+    "properties": false,
+    "csv": false,
+    "tsv": false,
+    "diff": false
   },
   "chat.disableAIFeatures": false, // true = disable copilot (->faster start)
   "chat.titleBar.openInAgentsWindow.enabled": false,
@@ -525,18 +544,50 @@
             "setting": "github.copilot.enable",
             "value": [
               {
-                "*": false,
+                "*": true,
                 "plaintext": false,
                 "markdown": false,
                 "scminput": false,
-                "python": true
+                "log": false,
+                "git-commit": false,
+                "git-rebase": false,
+                "restructuredtext": false,
+                "asciidoc": false,
+                "json": false,
+                "jsonc": false,
+                "latex": false,
+                "tex": false,
+                "typst": false,
+                "yaml": false,
+                "toml": false,
+                "ini": false,
+                "properties": false,
+                "csv": false,
+                "tsv": false,
+                "diff": false
               },
               {
                 "*": false,
                 "plaintext": false,
                 "markdown": false,
                 "scminput": false,
-                "python": false
+                "log": false,
+                "git-commit": false,
+                "git-rebase": false,
+                "restructuredtext": false,
+                "asciidoc": false,
+                "json": false,
+                "jsonc": false,
+                "latex": false,
+                "tex": false,
+                "typst": false,
+                "yaml": false,
+                "toml": false,
+                "ini": false,
+                "properties": false,
+                "csv": false,
+                "tsv": false,
+                "diff": false
               }
             ],
             "target": "workspace"
@@ -558,10 +609,10 @@
         "alignment": "right",
         "priority": 100.09,
         "name": "Copilot autocomplete",
-        "text": "$(copilot)=${config:github.copilot.enable.python}",
-        "tooltip": "Toggle Python autocomplete and Next Edit Suggestions for this workspace.",
+        "text": "$(copilot)=${config:github.copilot.enable.*}",
+        "tooltip": "Toggle Copilot autocomplete for code and Next Edit Suggestions in this workspace. Prose, log files, and commit messages stay disabled for autocomplete.",
         "replaceVariableValue": {
-          "config:github.copilot.enable.python": {
+          "config:github.copilot.enable.*": {
             "true": "on",
             "false": "off"
           }
