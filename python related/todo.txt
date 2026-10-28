@@ -27,3 +27,5 @@ can i with an extension auto start kernel or genrally
 i guss if i own buttons i can also make menu appear next to them
 
 make codefolderin update ionsteaf of on off as solution?
+
+why is there no compile batch in extension? maybe have options which parts to enable and disable as settings in vscode?
