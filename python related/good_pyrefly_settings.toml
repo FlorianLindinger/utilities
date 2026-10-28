@@ -22,10 +22,6 @@ unused-ignore = "warn"
 missing-override-decorator = "warn"
 # Warn when a class with abstract members is not explicitly declared abstract. Default: ignore.
 implicit-abstract-class = "warn"
-# Warn when a function parameter has no type annotation. Default: ignore.
-implicit-any-parameter = "warn"
-# Warn when a function has no return-type annotation. Default: ignore.
-unannotated-return = "warn"
 # Warn when an attribute has no explicit type annotation. Default: ignore.
 implicit-any-attribute = "warn"
 # Warn when an attribute is introduced outside a recognized initialization method. Default: ignore.
@@ -49,6 +45,10 @@ string-as-iterable = "warn"
 # Keep ignored unless the project specifically needs these stricter checks.
 # ============================
 
+# Warn when a function has no return-type annotation. Default: ignore.
+unannotated-return = "ignore"
+# Warn when a function parameter has no type annotation. Default: ignore.
+implicit-any-parameter = "ignore"
 # `typing.Any` is written explicitly in an annotation. Default: ignore.
 explicit-any = "ignore"
 # Often reflects an incomplete environment rather than a code defect. Default: ignore.
