@@ -7,12 +7,14 @@
   "engines": { "vscode": "^1.90.0" },
   "categories": ["Other"],
   "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
   "extensionDependencies": ["meta.pyrefly"],
   "contributes": {
     "commands": [
       { "command": "pyreflyProfiles.apply", "title": "Pyrefly Profiles: Select Mode" },
       { "command": "pyreflyProfiles.status", "title": "Pyrefly Profiles: Current Mode" },
-      { "command": "pyreflyProfiles.editCustom", "title": "Pyrefly Profiles: Edit Shared Custom Rules" }
+      { "command": "pyreflyProfiles.editLocal", "title": "Pyrefly Profiles: Edit Local Settings" },
+      { "command": "pyreflyProfiles.editCustom", "title": "Pyrefly Profiles: Edit Global Custom Settings" }
     ],
     "configuration": {
       "title": "Pyrefly Profiles",

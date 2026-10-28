@@ -1,2 +1,29 @@
 add batches to register in vscode and genratte shortcuts and install jupters and all options in hindsight. also on to update all i guess. i guess also option to uninstall jupter kenerl and path or sometinmgh. smart detection of cuda version and install right one? and auto not install for no cuda and just warming
 have toggle to save as relative paths in vscode settings
+
+what if i just set abs paths everywhere and not sync that setting be default and not care about changes in git good settings? kind of better option
+
+======================
+
+should work rel or abs
+custom_patches.utilities_path
+custom_patches can might aswell do pyrefly and ruff paths to good settongs. it should on vscode start check if good_vscdoe seetins are same as user
+
+venv path can be made abs on venv installer
+
+hm maybe i want all buttons eventually in my extensen where i can control that they appear only if any tab is python and so on and not just active one.
+maybe move also my codex color patches into that as a fork of that and also my buttons for c# and so on
+
+i guess i dont want settings files insdie that extension
+
+add local and global custom pyrefly and ruff settings and auto warn if not there and file generation and opening if offer to generat file as copy of andy preset or my custom. hm maybe overkill. maybe it should just have local option and warn if nothing found. not sure how to handly ruff. maybe also just dropdwon bc raley change.
+
+make it preserrve comments in vscode file if it changes them. For the vscode settings add a toggle to do relative paths or abs ones and for relative to workspace then it should assume by defualt that it is workspace\..\..\python_envs\env-name
+
+indicate if pyrefly still running and ask to test if performance problem
+
+can i with an extension auto start kernel or genrally
+
+i guss if i own buttons i can also make menu appear next to them
+
+make codefolderin update ionsteaf of on off as solution?

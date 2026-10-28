@@ -7,8 +7,8 @@ const LABELS = Object.freeze({
   basic: "Basic",
   default: "Default",
   strict: "Strict",
-  local: "Local",
-  custom: "Custom",
+  local: "Local Custom",
+  custom: "Global Custom",
 });
 const EXPLICIT_MODES = ["basic", "default", "strict", "custom"];
 
@@ -39,7 +39,7 @@ function buildConfig(mode, folderPath, customPath) {
   } else {
     lines.push(`preset = ${JSON.stringify(mode)}`);
   }
-  lines.push(`import-root = ${quote(folderPath)}`, "project-includes = [");
+  lines.push(`search-path = [${quote(folderPath)}]`, "project-includes = [");
   for (const pattern of sourcePatterns(folderPath)) lines.push(`    ${JSON.stringify(pattern)},`);
   lines.push("]", "");
   return lines.join("\n");

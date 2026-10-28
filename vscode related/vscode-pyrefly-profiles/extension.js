@@ -36,66 +36,76 @@ function createController(vscode, context) {
     return vscode.Uri.joinPath(context.globalStorageUri, "configs", folderId(folder.uri.toString()), `${mode}.toml`);
   }
 
+  async function findLocal(folder) {
+    const editor = vscode.window.activeTextEditor?.document.uri;
+    const notebook = vscode.window.activeNotebookEditor?.notebook.uri;
+    const source = [editor, notebook].find((uri) =>
+      uri && uri.scheme !== "vscode-notebook-cell" && /\.(py|pyi|ipynb)$/i.test(uri.fsPath) &&
+      vscode.workspace.getWorkspaceFolder(uri)?.uri.toString() === folder.uri.toString());
+    let directory = source ? vscode.Uri.joinPath(source, "..") : folder.uri;
+    const start = directory.fsPath;
+    async function readLocal(name) {
+      try {
+        const bytes = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(directory, name));
+        return Buffer.from(bytes).toString("utf8");
+      } catch (error) {
+        if (error.code === "FileNotFound") return undefined;
+        throw error;
+      }
+    }
+    while (true) {
+      if (await readLocal("pyrefly.toml") !== undefined) {
+        return { file: vscode.Uri.joinPath(directory, "pyrefly.toml"), start };
+      }
+      const project = await readLocal("pyproject.toml");
+      if (project !== undefined) {
+        const file = /^\s*\[tool\.pyrefly(?:\s*\]|\s*\.)/m.test(project)
+          ? vscode.Uri.joinPath(directory, "pyproject.toml") : undefined;
+        return { file, start };
+      }
+      for (const name of ["setup.py", "mypy.ini", "pyrightconfig.json"]) {
+        if (await readLocal(name) !== undefined) return { start };
+      }
+      const parent = vscode.Uri.joinPath(directory, "..");
+      if (parent.toString() === directory.toString()) return { start };
+      directory = parent;
+    }
+  }
+
+  async function requireLocal(folder) {
+    const { file, start } = await findLocal(folder);
+    if (!file) {
+      await vscode.window.showWarningMessage(
+        `Pyrefly: No local Pyrefly config (pyrefly.toml or [tool.pyrefly] in pyproject.toml) found searching upward from "${start}" before a project boundary or filesystem root. Keeping the current profile.`,
+      );
+    }
+    return file;
+  }
+
+  async function openConfig(file) {
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(file));
+  }
+
+  async function editLocal() {
+    const folder = await chooseFolder();
+    if (!folder) return;
+    const file = await requireLocal(folder);
+    if (file) await openConfig(file);
+  }
+
   async function apply(mode) {
     if (!Object.hasOwn(LABELS, mode)) {
       const selection = await vscode.window.showQuickPick(
         Object.entries(LABELS).map(([value, label]) => ({ label, value })),
-        { placeHolder: "Select Local discovery, an explicit preset, Custom rules, or Off" },
+        { placeHolder: "Select Local Custom, an explicit preset, Global Custom, or Off" },
       );
       if (!selection) return;
       mode = selection.value;
     }
     const folder = await chooseFolder();
     if (!folder) return;
-    if (mode === "local") {
-      const editor = vscode.window.activeTextEditor?.document.uri;
-      const notebook = vscode.window.activeNotebookEditor?.notebook.uri;
-      const source = [editor, notebook].find((uri) =>
-        uri && uri.scheme !== "vscode-notebook-cell" && /\.(py|pyi|ipynb)$/i.test(uri.fsPath) &&
-        vscode.workspace.getWorkspaceFolder(uri)?.uri.toString() === folder.uri.toString());
-      let directory = source ? vscode.Uri.joinPath(source, "..") : folder.uri;
-      const start = directory.fsPath;
-      async function readLocal(name) {
-        try {
-          const bytes = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(directory, name));
-          return Buffer.from(bytes).toString("utf8");
-        } catch (error) {
-          if (error.code === "FileNotFound") return undefined;
-          throw error;
-        }
-      }
-      let found = false;
-      while (true) {
-        const config = await readLocal("pyrefly.toml");
-        if (config !== undefined) {
-          found = true;
-          break;
-        }
-        const project = await readLocal("pyproject.toml");
-        if (project !== undefined) {
-          found = /^\s*\[tool\.pyrefly(?:\s*\]|\s*\.)/m.test(project);
-          break;
-        }
-        // These files stop Pyrefly's upward project-root search too.
-        let boundary = false;
-        for (const name of ["setup.py", "mypy.ini", "pyrightconfig.json"]) {
-          if (await readLocal(name) !== undefined) {
-            boundary = true;
-            break;
-          }
-        }
-        if (boundary) break;
-        const parent = vscode.Uri.joinPath(directory, "..");
-        if (parent.toString() === directory.toString()) break;
-        directory = parent;
-      }
-      if (!found) {
-        await vscode.window.showWarningMessage(
-          `Pyrefly: No native local config (pyrefly.toml or [tool.pyrefly] in pyproject.toml) found searching upward from "${start}" before a project boundary or filesystem root. Keeping the current profile.`,
-        );
-        return;
-      }
-    }
+    const localFile = mode === "local" ? await requireLocal(folder) : undefined;
+    if (mode === "local" && !localFile) return;
     let selectedPath = "";
     if (EXPLICIT_MODES.includes(mode)) {
       let shared;
@@ -118,6 +128,12 @@ function createController(vscode, context) {
     const pyrefly = vscode.extensions.getExtension("meta.pyrefly");
     if (pyrefly && !pyrefly.isActive) await pyrefly.activate();
     if (pyrefly) await vscode.commands.executeCommand("pyrefly.restartClient");
+    if (localFile) {
+      const action = await vscode.window.showInformationMessage(
+        `Pyrefly Local Custom: Found "${localFile.fsPath}".`, "Edit Local settings",
+      );
+      if (action === "Edit Local settings") await openConfig(localFile);
+    }
     return LABELS[mode];
   }
 
@@ -140,10 +156,10 @@ function createController(vscode, context) {
         const mode = filename.replace(/\.toml$/, "");
         if (EXPLICIT_MODES.includes(mode)) return LABELS[mode];
       }
-      return "Custom";
+      return LABELS.custom;
     }
     const mode = settings.get("typeCheckingMode", "auto");
-    return mode === "auto" ? "Local" : mode === "off" ? "Off" : `Local (${LABELS[mode] || mode} fallback)`;
+    return mode === "auto" ? LABELS.local : mode === "off" ? "Off" : `${LABELS.local} (${LABELS[mode] || mode} fallback)`;
   }
 
   async function editCustom() {
@@ -151,16 +167,52 @@ function createController(vscode, context) {
     await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(file));
   }
 
-  return { apply, status, editCustom };
+  return { apply, status, editCustom, editLocal };
+}
+
+function registerStatusBar(vscode, context, controller) {
+  const button = vscode.window.createStatusBarItem(
+    "pyreflyProfiles.mode", vscode.StatusBarAlignment.Right,
+  );
+  button.name = "Pyrefly type checking";
+  button.command = "pyreflyProfiles.apply";
+  button.tooltip = "Select Pyrefly mode for the active workspace folder";
+
+  function update() {
+    const hasPythonTab = vscode.window.tabGroups.all.some((group) =>
+      group.tabs.some(({ input }) =>
+        (input instanceof vscode.TabInputText || input instanceof vscode.TabInputNotebook) &&
+        /\.(py|ipynb)$/i.test(input.uri.path)),
+    );
+    if (!hasPythonTab) {
+      button.hide();
+      return;
+    }
+    button.text = `Pyrefly: ${controller.status()} $(chevron-down)`;
+    button.show();
+  }
+
+  context.subscriptions.push(
+    button,
+    vscode.window.tabGroups.onDidChangeTabs(update),
+    vscode.window.tabGroups.onDidChangeTabGroups(update),
+    vscode.window.onDidChangeActiveTextEditor(update),
+    vscode.window.onDidChangeActiveNotebookEditor(update),
+    vscode.workspace.onDidChangeConfiguration(update),
+    vscode.workspace.onDidChangeWorkspaceFolders(update),
+  );
+  update();
 }
 
 function activate(context) {
   const vscode = require("vscode");
   const controller = createController(vscode, context);
+  registerStatusBar(vscode, context, controller);
   for (const [command, callback] of [
     ["pyreflyProfiles.apply", controller.apply],
     ["pyreflyProfiles.status", controller.status],
     ["pyreflyProfiles.editCustom", controller.editCustom],
+    ["pyreflyProfiles.editLocal", controller.editLocal],
   ]) {
     context.subscriptions.push(vscode.commands.registerCommand(command, async (...args) => {
       try {
@@ -172,4 +224,4 @@ function activate(context) {
   }
 }
 
-module.exports = { activate, createController };
+module.exports = { activate, createController, registerStatusBar };
