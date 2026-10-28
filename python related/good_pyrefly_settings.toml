@@ -34,8 +34,6 @@ implicitly-defined-attribute = "warn"
 not-required-key-access = "warn"
 # Warn when a typed function body is only `...`. Default: ignore.
 empty-body = "warn"
-# `typing.Any` is written explicitly in an annotation. Default: ignore.
-explicit-any = "warn"
 # Warn when a non-boolean value is used directly as a condition. Default: ignore.
 implicit-bool = "warn"
 # Warn when importing a name that is not explicitly re-exported. Default: ignore.
@@ -51,6 +49,8 @@ string-as-iterable = "warn"
 # Keep ignored unless the project specifically needs these stricter checks.
 # ============================
 
+# `typing.Any` is written explicitly in an annotation. Default: ignore.
+explicit-any = "ignore"
 # Often reflects an incomplete environment rather than a code defect. Default: ignore.
 missing-source = "ignore"
 # Can create widespread dependency-driven noise in partially typed code. Default: ignore.
