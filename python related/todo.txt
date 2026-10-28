@@ -30,3 +30,5 @@ make codefolderin update ionsteaf of on off as solution?
 
 why is there no compile batch in extension? maybe have options which parts to enable and disable as settings in vscode?
 is there a better way than repalcing workspace vscode settiungs? problaly want option to on/off/defult for folding and copilot ... But still togglaable. amybe rick click to do that` somehow?
+
+also fix envs fodler rel path via extension?
