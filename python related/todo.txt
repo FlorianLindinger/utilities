@@ -32,3 +32,6 @@ why is there no compile batch in extension? maybe have options which parts to en
 is there a better way than repalcing workspace vscode settiungs? problaly want option to on/off/defult for folding and copilot ... But still togglaable. amybe rick click to do that` somehow?
 
 also fix envs fodler rel path via extension?
+
+fix that it doesnt use worksapce root to find stuff for pyrefly. 
+doe it update the files paths when necessray?
