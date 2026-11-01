@@ -1,3 +1,7 @@
+make it fallback to pip if uv fails in desktop terminal windwos. eg. for "cupy-cuda13x"
+
+does it allow for uninstall? pip and uv in that terminal
+
 copy all utilites from PyApp template and fix if not ready. Add descriptions
 
 
