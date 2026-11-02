@@ -1,5 +1,8 @@
-copy all utilites from PyApp template and fix if not ready. Add descriptions
+copy all utilites from PyApp template and fix if not ready. Add descriptions. stuff like the install terminal
 
+does it warn if minor version cant be installed becasue major matching already installed? it should show which global ones are alredy there
+
+how low does it go?
 
 add single function to add args together starting from i
 
