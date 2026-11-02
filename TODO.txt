@@ -1,5 +1,12 @@
 copy all utilites from PyApp template and fix if not ready. Add descriptions. stuff like the install terminal
 
+
+make it fallback to pip if uv fails in desktop terminal windwos. eg. for "cupy-cuda13x"
+
+does it allow for uninstall? pip and uv in that terminal
+
+copy all utilites from PyApp template and fix if not ready. Add descriptions
+
 does it warn if minor version cant be installed becasue major matching already installed? it should show which global ones are alredy there
 
 how low does it go?

@@ -342,38 +342,20 @@
           "command": "pyreflyProfiles.apply",
           "args": "strict"
         },
-        "Local": {
+        "Local Custom": {
           "command": "pyreflyProfiles.apply",
           "args": "local"
         },
-        "Custom": {
+        "Global Custom": {
           "command": "pyreflyProfiles.apply",
           "args": "custom"
         },
-        "Edit Custom settings": {
+        "Edit Local settings": {
+          "command": "pyreflyProfiles.editLocal"
+        },
+        "Edit Global Custom settings": {
           "command": "pyreflyProfiles.editCustom"
         }
-      },
-      "statusBar": {
-        "alignment": "right",
-        "name": "Pyrefly type checking",
-        "text": "Pyrefly: ${command:pyreflyProfiles.status} $(chevron-down)",
-        "tooltip": "Local discovers project configs. Basic, Default, Strict, and Custom explicitly select workspace-scoped configs; Off disables diagnostics.",
-        "activeEditorLanguage": "python",
-        "updateEvents": [
-          {
-            "kind": "onDidConfigurationChange",
-            "settings": [
-              "python.pyrefly.configPath",
-              "python.pyrefly.typeCheckingMode",
-              "python.pyrefly.disableTypeErrors",
-              "pyreflyProfiles.customConfigPath"
-            ]
-          },
-          {
-            "kind": "onDidChangeActiveTextEditor"
-          }
-        ]
       }
     },
     "Run current C# project": {
