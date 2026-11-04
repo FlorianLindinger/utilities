@@ -13,3 +13,5 @@ exe_build
 *.bmp
 *.ico
 **\__pycache__
+# crash logs:
+\batch related/CrashReports
