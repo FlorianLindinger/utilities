@@ -51,6 +51,11 @@ set "DUMP_DIR=AUTO"
 
 rem Seconds to allow Windows to record a fault after abnormal exit.
 set "EVENT_WAIT_SECONDS=3"
+
+rem Native Windows app-starting cursor (1=yes, 0=no).
+rem Windows controls its duration and restores it automatically.
+set "SHOW_STARTUP_CURSOR=1"
+
 rem ==============================================================
 rem END SETTINGS. No need to edit below this line.
 rem ==============================================================
@@ -70,7 +75,7 @@ exit /b
 :MONITOR
 set "CRASHWATCH_BAT=%~f0"
 set "CRASHWATCH_BAT_DIR=%~dp0"
-powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop';try{$raw=[IO.File]::ReadAllText($env:CRASHWATCH_BAT);$marker='# POWERSHELL PAYLOAD';$pos=$raw.LastIndexOf($marker);if($pos -lt 0){throw 'Missing embedded PowerShell payload'};& ([scriptblock]::Create($raw.Substring($pos+$marker.Length)))}catch{$detail=($_ | Out-String);$message='CrashWatch launcher failed.';try{$log=Join-Path ([IO.Path]::GetTempPath()) ('CrashWatch_launcher_error_'+[guid]::NewGuid().ToString('N')+'.txt');[IO.File]::WriteAllText($log,((Get-Date).ToString('o')+[Environment]::NewLine+$detail));$message+=[Environment]::NewLine+'Details: '+$log}catch{$message+=[Environment]::NewLine+'Could not save error log.'};$message+=[Environment]::NewLine+$detail;try{$shell=New-Object -ComObject WScript.Shell;$null=$shell.Popup($message,0,'CrashWatch launcher error',16)}catch{[Console]::Error.WriteLine($message)};exit 1}"
+powershell.exe -STA -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop';try{$raw=[IO.File]::ReadAllText($env:CRASHWATCH_BAT);$marker='# POWERSHELL PAYLOAD';$pos=$raw.LastIndexOf($marker);if($pos -lt 0){throw 'Missing embedded PowerShell payload'};& ([scriptblock]::Create($raw.Substring($pos+$marker.Length)))}catch{$detail=($_ | Out-String);$message='CrashWatch launcher failed.';try{$log=Join-Path ([IO.Path]::GetTempPath()) ('CrashWatch_launcher_error_'+[guid]::NewGuid().ToString('N')+'.txt');[IO.File]::WriteAllText($log,((Get-Date).ToString('o')+[Environment]::NewLine+$detail));$message+=[Environment]::NewLine+'Details: '+$log}catch{$message+=[Environment]::NewLine+'Could not save error log.'};$message+=[Environment]::NewLine+$detail;try{$shell=New-Object -ComObject WScript.Shell;$null=$shell.Popup($message,0,'CrashWatch launcher error',16)}catch{[Console]::Error.WriteLine($message)};exit 1}"
 exit /b
 
 # POWERSHELL PAYLOAD
@@ -116,19 +121,58 @@ try {
     if (-not (Test-Path -LiteralPath $workingDirectory -PathType Container)) {
         throw "Working directory not found: $workingDirectory"
     }
-    $startOptions = @{
-        FilePath         = $exe
-        WorkingDirectory = $workingDirectory
-        PassThru         = $true
-        Wait             = $true
-        ErrorAction      = 'Stop'
+    # Request native startup feedback without changing the system cursor scheme.
+    Add-Type -TypeDefinition @"
+using System;
+using System.Text;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+public static class CrashWatchNativeLaunch {
+    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
+    struct SI {
+        public int cb;
+        public string reserved, desktop, title;
+        public int x,y,cx,cy,charsX,charsY,fill,flags;
+        public short show, reservedSize;
+        public IntPtr reservedPtr, input, output, error;
     }
-    if (-not [string]::IsNullOrWhiteSpace($env:APP_ARGS)) {
-        $startOptions['ArgumentList'] = $env:APP_ARGS
+    [StructLayout(LayoutKind.Sequential)]
+    struct PI { public IntPtr process, thread; public uint pid, tid; }
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+    static extern bool CreateProcessW(string app, StringBuilder cmd, IntPtr pa,
+        IntPtr ta, bool inherit, uint flags, IntPtr env, string dir, ref SI si, out PI pi);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    static extern uint WaitForSingleObject(IntPtr h, uint ms);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    static extern bool GetExitCodeProcess(IntPtr h, out uint code);
+    [DllImport("kernel32.dll")]
+    static extern bool CloseHandle(IntPtr h);
+    public static int Run(string exe, string args, string dir, bool feedback, out uint pid) {
+        var si = new SI();
+        si.cb = Marshal.SizeOf(typeof(SI));
+        si.flags = feedback ? 0x40 : 0; // STARTF_FORCEONFEEDBACK
+        var cmd = new StringBuilder("\"" + exe + "\"");
+        if (!String.IsNullOrWhiteSpace(args)) cmd.Append(" " + args);
+        PI pi;
+        if (!CreateProcessW(exe,cmd,IntPtr.Zero,IntPtr.Zero,false,0,IntPtr.Zero,dir,ref si,out pi))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        pid = pi.pid;
+        CloseHandle(pi.thread);
+        try {
+            if (WaitForSingleObject(pi.process,0xffffffff) != 0)
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            uint code;
+            if (!GetExitCodeProcess(pi.process,out code))
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            return unchecked((int)code);
+        } finally { CloseHandle(pi.process); }
     }
-    $appProcess = Start-Process @startOptions
-    $processId = $appProcess.Id
-    $exitCode = $appProcess.ExitCode
+}
+"@
+    $nativePid = [uint32]0
+    $exitCode = [CrashWatchNativeLaunch]::Run($exe, $env:APP_ARGS,
+        $workingDirectory, (Is-Enabled $env:SHOW_STARTUP_CURSOR), [ref]$nativePid)
+    $processId = $nativePid
 } catch {
     $launchError = $_.ToString()
     # Launch/configuration failures always warn, even when OPEN_REPORT=0.
