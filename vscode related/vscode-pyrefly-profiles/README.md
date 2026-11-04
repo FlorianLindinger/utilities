@@ -10,6 +10,13 @@ Basic, Default, Strict, Global Custom, Off, and editing the shared custom rules.
 - Off clears the explicit config and disables type diagnostics.
 
 Generated configs live in VS Code extension storage, not in project folders.
+On startup and when workspace folders or Pyrefly settings change, the extension
+refreshes its generated config for each enabled folder using its current path.
+This repairs moved or renamed folders, missing caches, and VS Code profile
+storage changes while preserving the selected mode. Pyrefly restarts only when
+a generated config or its selected path changes. Local Custom, Off, external
+configs, and files without the generation header are left alone. Missing shared
+custom rules produce an error and preserve that folder's settings.
 They set `search-path` and explicit include patterns for only the selected
 workspace folder. Both Windows drive-letter cases are included because Pyrefly
 glob matching can distinguish them. Shared rules should contain rule settings

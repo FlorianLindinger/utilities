@@ -1,3 +1,5 @@
+somehow off option for ruff button. Maybe custom with right clickabiltioy
+
 copy all utilites from PyApp template and fix if not ready. Add descriptions. stuff like the install terminal
 
 
@@ -32,3 +34,4 @@ make antigravity extensions file and generator
 add docstring to generate_vscode_extensions_file
 
 update README
+

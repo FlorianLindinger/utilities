@@ -6,7 +6,7 @@ const path = require("node:path");
 const os = require("node:os");
 const { pathToFileURL } = require("node:url");
 const { LABELS, buildConfig, sourcePatterns } = require("./profiles");
-const { createController, registerStatusBar } = require("./extension");
+const { createController, registerStatusBar, registerAutoRepair } = require("./extension");
 
 function fixture() {
   const uri = (value) => ({ fsPath: value, toString: () => pathToFileURL(value).toString() });
@@ -314,6 +314,131 @@ function statusBarFixture(groups = []) {
   registerStatusBar(vscode, context, { status: () => mode });
   return { vscode, tabGroups, button, context, listeners, setMode: value => { mode = value; } };
 }
+
+test("Repair migrates renamed folders for every preset and is idempotent", async () => {
+  for (const mode of ["basic", "default", "strict", "custom"]) {
+    const f = fixture();
+    await f.controller.apply(mode);
+    const oldKey = f.first.uri.toString();
+    const previousPath = f.settings.get(oldKey + ":configPath");
+    const previousSettings = new Map(f.settings);
+    const renamedUri = f.vscode.Uri.file(path.join(os.tmpdir(), "renamed-workspace"));
+    f.first.uri = renamedUri;
+    for (const [key, value] of previousSettings) f.settings.set(key.replace(oldKey, renamedUri.toString()), value);
+    assert.equal(f.controller.status(), "Choose folder");
+    f.vscode.window.activeTextEditor.document.uri = f.vscode.Uri.file(path.join(renamedUri.fsPath, "file.py"));
+    assert.equal(f.controller.status(), LABELS[mode]);
+    const beforeRestarts = f.commands.length;
+    assert.equal(await f.controller.repair(), true);
+    const selected = f.settings.get(renamedUri.toString() + ":configPath");
+    assert.notEqual(selected, previousPath);
+    const content = f.files.get(selected).toString();
+    assert(content.includes("renamed-workspace"));
+    assert(!content.includes("workspace-a"));
+    assert.equal(f.settings.get(renamedUri.toString() + ":typeCheckingMode"), mode === "custom" ? "auto" : mode);
+    assert.equal(f.settings.get(renamedUri.toString() + ":disableTypeErrors"), false);
+    assert.equal(f.commands.length, beforeRestarts + 1);
+    const beforeUpdates = f.updates.length;
+    assert.equal(await f.controller.repair(), false);
+    assert.equal(f.updates.length, beforeUpdates);
+    assert.equal(f.commands.length, beforeRestarts + 1);
+  }
+});
+
+test("Repair recreates deleted cache files and corrects stale content at the same path", async () => {
+  for (const deleted of [false, true]) {
+    const f = fixture();
+    await f.controller.apply("strict");
+    const selected = f.settings.get(f.first.uri.toString() + ":configPath");
+    if (deleted) f.files.delete(selected);
+    else f.files.set(selected, Buffer.from(buildConfig("strict", "/old/folder")));
+    assert.equal(await f.controller.repair(), true);
+    assert.equal(f.files.get(selected).toString(), buildConfig("strict", f.first.uri.fsPath));
+  }
+});
+
+test("Repair follows VS Code profile storage changes without modifying the old cache", async () => {
+  const f = fixture();
+  await f.controller.apply("default");
+  const selected = f.settings.get(f.first.uri.toString() + ":configPath");
+  const previous = f.files.get(selected);
+  const context = { globalStorageUri: f.vscode.Uri.file(path.join(os.tmpdir(), "other-profile", "profile-storage")) };
+  assert.equal(await createController(f.vscode, context).repair(), true);
+  assert.equal(f.files.get(selected), previous);
+  assert(f.settings.get(f.first.uri.toString() + ":configPath").startsWith(context.globalStorageUri.fsPath));
+});
+
+test("Repair leaves Off, Local, external configs, and user-owned content untouched", async () => {
+  for (const kind of ["off", "local", "external", "user-content"]) {
+    const f = fixture();
+    await f.controller.apply("strict");
+    const key = f.first.uri.toString();
+    if (kind === "off") f.settings.set(key + ":disableTypeErrors", true);
+    if (kind === "local") f.settings.set(key + ":configPath", "");
+    if (kind === "external") f.settings.set(key + ":configPath", path.join(f.first.uri.fsPath, "pyrefly.toml"));
+    if (kind === "user-content") f.files.set(f.settings.get(key + ":configPath"), Buffer.from('preset = "basic"\n'));
+    const before = [...f.files.entries()];
+    const updates = f.updates.length;
+    const restarts = f.commands.length;
+    assert.equal(await f.controller.repair(), false);
+    assert.deepEqual([...f.files.entries()], before);
+    assert.equal(f.updates.length, updates);
+    assert.equal(f.commands.length, restarts);
+  }
+});
+
+test("A missing custom rules file preserves settings while other folders still repair", async () => {
+  const f = fixture();
+  await f.controller.apply("custom");
+  f.vscode.window.activeTextEditor.document.uri = f.vscode.Uri.file(path.join(f.second.uri.fsPath, "file.py"));
+  await f.controller.apply("strict");
+  const firstConfig = f.settings.get(f.first.uri.toString() + ":configPath");
+  const secondConfig = f.settings.get(f.second.uri.toString() + ":configPath");
+  f.files.delete(f.custom);
+  f.files.delete(secondConfig);
+  const beforeUpdates = f.updates.length;
+  await assert.rejects(f.controller.repair(), /first: Missing custom rules/);
+  assert.equal(f.settings.get(f.first.uri.toString() + ":configPath"), firstConfig);
+  assert.equal(f.updates.length, beforeUpdates);
+  assert(f.files.has(secondConfig));
+});
+
+test("Automatic repair runs on startup and relevant events and disposes listeners", async () => {
+  const listeners = new Map();
+  let calls = 0;
+  const errors = [];
+  const event = name => callback => {
+    listeners.set(name, callback);
+    return { dispose: () => listeners.delete(name) };
+  };
+  const vscode = { workspace: {
+    onDidChangeWorkspaceFolders: event("folders"),
+    onDidChangeConfiguration: event("config"),
+  }, window: { showErrorMessage: message => errors.push(message) } };
+  const context = { subscriptions: [] };
+  await registerAutoRepair(vscode, context, { repair: async () => { calls++; } });
+  assert.equal(calls, 1);
+  await listeners.get("folders")();
+  listeners.get("config")({ affectsConfiguration: name => name === "editor" });
+  assert.equal(calls, 2);
+  listeners.get("config")({ affectsConfiguration: name => name === "python.pyrefly" });
+  listeners.get("config")({ affectsConfiguration: name => name === "pyreflyProfiles" });
+  assert.equal(calls, 4);
+  context.subscriptions.forEach(item => item.dispose());
+  assert.equal(listeners.size, 0);
+  await registerAutoRepair(vscode, context, { repair: async () => { throw new Error("Unreadable cache"); } });
+  assert.match(errors[0], /Unreadable cache/);
+});
+
+test("Queued repair and manual mode changes converge without repeated restarts", async () => {
+  const f = fixture();
+  await f.controller.apply("strict");
+  const selected = f.settings.get(f.first.uri.toString() + ":configPath");
+  f.files.delete(selected);
+  await Promise.all([f.controller.repair(), f.controller.apply("basic"), f.controller.repair()]);
+  assert.equal(f.controller.status(), "Basic");
+  assert.equal(await f.controller.repair(), false);
+});
 
 test("Status button follows Python tabs across groups and hides after the last closes", () => {
   const f = statusBarFixture();
