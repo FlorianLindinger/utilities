@@ -55,6 +55,19 @@ set "EVENT_WAIT_SECONDS=3"
 rem Native Windows app-starting cursor (1=yes, 0=no).
 rem Windows controls its duration and restores it automatically.
 set "SHOW_STARTUP_CURSOR=1"
+rem Create/update an EXE-named Debug shortcut beside this BAT (1=yes, 0=no).
+rem Uses cmd.exe, this BAT, the working directory above, and the EXE icon.
+rem Setting 0 leaves any previously created shortcut in place.
+set "CREATE_DEBUG_SHORTCUT=1"
+
+rem Group the Debug shortcut and launched windows on the taskbar (1=yes, 0=no).
+rem AUTO reads explicit IDs from running windows or EXE shortcuts beside this BAT
+rem and in the user's pinned taskbar folder; otherwise uses a stable path-based ID.
+rem An explicit ID on a newly launched window is also detected automatically.
+rem Set APP_USER_MODEL_ID to an explicit ID to override automatic detection.
+rem Fallback grouping applies to instances launched through this watcher only.
+set "GROUP_DEBUG_TASKBAR=1"
+set "APP_USER_MODEL_ID=AUTO"
 
 rem ==============================================================
 rem END SETTINGS. No need to edit below this line.
@@ -121,12 +134,134 @@ try {
     if (-not (Test-Path -LiteralPath $workingDirectory -PathType Container)) {
         throw "Working directory not found: $workingDirectory"
     }
-    # Request native startup feedback without changing the system cursor scheme.
-    Add-Type -TypeDefinition @"
+    Add-Type -TypeDefinition @'
 using System;
+using System.IO;
 using System.Text;
+using System.Diagnostics;
 using System.ComponentModel;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+
+public static class CrashWatchTaskbar {
+    [StructLayout(LayoutKind.Sequential)]
+    struct Key { public Guid format; public uint id; }
+    [StructLayout(LayoutKind.Explicit, Size=24)]
+    struct Value {
+        [FieldOffset(0)] public ushort type;
+        [FieldOffset(8)] public IntPtr text;
+    }
+    [ComImport, Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface Store {
+        void GetCount(out uint count);
+        void GetAt(uint index, out Key key);
+        void GetValue(ref Key key, out Value value);
+        void SetValue(ref Key key, ref Value value);
+        void Commit();
+    }
+    static Key appIdKey = new Key { format = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"), id = 5 };
+    static Guid storeId = typeof(Store).GUID;
+    [DllImport("shell32.dll", PreserveSig=false)]
+    static extern void SHGetPropertyStoreForWindow(IntPtr window, ref Guid iid, out Store store);
+    [DllImport("ole32.dll")] static extern int PropVariantClear(ref Value value);
+    delegate bool WindowCallback(IntPtr window, IntPtr data);
+    [DllImport("user32.dll")] static extern bool EnumWindows(WindowCallback callback, IntPtr data);
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window, out uint pid);
+    [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr window);
+    public static string Warning;
+    public static string SelectedId;
+
+    static string Read(Store store) {
+        Value value;
+        store.GetValue(ref appIdKey, out value);
+        try { return value.type == 31 ? Marshal.PtrToStringUni(value.text) : null; }
+        finally { PropVariantClear(ref value); }
+    }
+    static void Write(Store store, string id) {
+        Value value = new Value();
+        if (id != null) { value.type = 31; value.text = Marshal.StringToCoTaskMemUni(id); }
+        try { store.SetValue(ref appIdKey, ref value); }
+        finally { PropVariantClear(ref value); }
+    }
+    public static string ReadLink(string path) {
+        object link = Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("00021401-0000-0000-C000-000000000046")));
+        try {
+            ((System.Runtime.InteropServices.ComTypes.IPersistFile)link).Load(path, 0);
+            return Read((Store)link);
+        } finally { Marshal.ReleaseComObject(link); }
+    }
+    public static void WriteLink(string path, string id) {
+        object link = Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("00021401-0000-0000-C000-000000000046")));
+        try {
+            var file = (System.Runtime.InteropServices.ComTypes.IPersistFile)link;
+            file.Load(path, 2);
+            Write((Store)link, id);
+            file.Save(path, true);
+        } finally { Marshal.ReleaseComObject(link); }
+    }
+    public static string ReadWindow(IntPtr window) {
+        Store store;
+        SHGetPropertyStoreForWindow(window, ref storeId, out store);
+        try { return Read(store); } finally { Marshal.ReleaseComObject(store); }
+    }
+    public static void WriteWindow(IntPtr window, string id) {
+        Store store;
+        SHGetPropertyStoreForWindow(window, ref storeId, out store);
+        try { Write(store, id); } finally { Marshal.ReleaseComObject(store); }
+    }
+    public static IntPtr[] Windows(uint pid) {
+        var windows = new List<IntPtr>();
+        EnumWindows(delegate(IntPtr window, IntPtr data) {
+            uint owner; GetWindowThreadProcessId(window, out owner);
+            if (owner == pid && IsWindowVisible(window)) windows.Add(window);
+            return true;
+        }, IntPtr.Zero);
+        return windows.ToArray();
+    }
+    public static string FindExistingId(string exe) {
+        foreach (var process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(exe))) {
+            using (process) {
+                try {
+                    if (!String.Equals(process.MainModule.FileName, exe, StringComparison.OrdinalIgnoreCase)) continue;
+                    foreach (var window in Windows((uint)process.Id)) {
+                        string id = ReadWindow(window);
+                        if (!String.IsNullOrWhiteSpace(id)) return id;
+                    }
+                } catch { } // Exited/inaccessible processes cannot supply an ID.
+            }
+        }
+        return null;
+    }
+    public static string FallbackId(string exe) {
+        using (var hash = System.Security.Cryptography.SHA256.Create()) {
+            byte[] bytes = hash.ComputeHash(Encoding.UTF8.GetBytes(Path.GetFullPath(exe).ToUpperInvariant()));
+            return "CrashWatch.App." + BitConverter.ToString(bytes, 0, 16).Replace("-", "");
+        }
+    }
+    public static void Update(uint pid, ref string id, ref bool detect, string link) {
+        var windows = Windows(pid);
+        // Inspect all windows before writing: an application may set an explicit ID
+        // during startup or on a later window. Adopt the first such ID once.
+        if (detect) {
+            foreach (var window in windows) {
+                try {
+                    string found = ReadWindow(window);
+                    if (!String.IsNullOrWhiteSpace(found) && found != id) {
+                        id = found; detect = false;
+                        if (!String.IsNullOrEmpty(link)) WriteLink(link, id);
+                        break;
+                    }
+                } catch (Exception error) { Warning = error.Message; }
+            }
+        }
+        SelectedId = id;
+        foreach (var window in windows) {
+            try { if (ReadWindow(window) != id) WriteWindow(window, id); }
+            catch (Exception error) { Warning = error.Message; }
+        }
+    }
+}
+
 public static class CrashWatchNativeLaunch {
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
     struct SI {
@@ -147,7 +282,7 @@ public static class CrashWatchNativeLaunch {
     static extern bool GetExitCodeProcess(IntPtr h, out uint code);
     [DllImport("kernel32.dll")]
     static extern bool CloseHandle(IntPtr h);
-    public static int Run(string exe, string args, string dir, bool feedback, out uint pid) {
+    public static int Run(string exe, string args, string dir, bool feedback, string appId, bool detectId, string shortcut, out uint pid) {
         var si = new SI();
         si.cb = Marshal.SizeOf(typeof(SI));
         si.flags = feedback ? 0x40 : 0; // STARTF_FORCEONFEEDBACK
@@ -159,8 +294,14 @@ public static class CrashWatchNativeLaunch {
         pid = pi.pid;
         CloseHandle(pi.thread);
         try {
-            if (WaitForSingleObject(pi.process,0xffffffff) != 0)
-                throw new Win32Exception(Marshal.GetLastWin32Error());
+            uint wait;
+            while ((wait = WaitForSingleObject(pi.process,250)) == 258) {
+                if (!String.IsNullOrEmpty(appId)) {
+                    try { CrashWatchTaskbar.Update(pi.pid, ref appId, ref detectId, shortcut); }
+                    catch (Exception error) { CrashWatchTaskbar.Warning = error.Message; }
+                }
+            }
+            if (wait != 0) throw new Win32Exception(Marshal.GetLastWin32Error());
             uint code;
             if (!GetExitCodeProcess(pi.process,out code))
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -168,11 +309,78 @@ public static class CrashWatchNativeLaunch {
         } finally { CloseHandle(pi.process); }
     }
 }
-"@
+'@
+    # Taskbar IDs are independent of the executable icon and shortcut target.
+    $taskbarId = $null
+    $detectWindowId = $false
+    $taskbarShortcut = $null
+    if (Is-Enabled $env:GROUP_DEBUG_TASKBAR) {
+        if ($env:APP_USER_MODEL_ID -and $env:APP_USER_MODEL_ID -ine 'AUTO') {
+            $taskbarId = $env:APP_USER_MODEL_ID.Trim()
+            if ([string]::IsNullOrWhiteSpace($taskbarId) -or $taskbarId.Length -gt 128 -or $taskbarId -match '\s') {
+                throw 'APP_USER_MODEL_ID must contain 1-128 characters without whitespace.'
+            }
+        } else {
+            $taskbarId = [CrashWatchTaskbar]::FindExistingId($exe)
+            if (-not $taskbarId) {
+                $linkShell = New-Object -ComObject WScript.Shell
+                $linkFolders = @($scriptFolder, (Join-Path $env:APPDATA 'Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar'))
+                $foundIds = @(
+                    foreach ($folder in $linkFolders) {
+                        foreach ($file in (Get-ChildItem -LiteralPath $folder -Filter '*.lnk' -File -ErrorAction SilentlyContinue)) {
+                            try {
+                                $candidate = $linkShell.CreateShortcut($file.FullName)
+                                if ($candidate.TargetPath -ieq $exe) {
+                                    $id = [CrashWatchTaskbar]::ReadLink($file.FullName)
+                                    if ($id) { $id }
+                                }
+                            } catch { } # Unreadable unrelated shortcuts are optional hints.
+                        }
+                    }
+                ) | Sort-Object -Unique
+                if (@($foundIds).Count -eq 1) { $taskbarId = @($foundIds)[0] }
+            }
+            if (-not $taskbarId) {
+                $taskbarId = [CrashWatchTaskbar]::FallbackId($exe)
+                $detectWindowId = $true
+            }
+        }
+    }
+    if (Is-Enabled $env:CREATE_DEBUG_SHORTCUT) {
+        try {
+            $shortcutPath = Join-Path $scriptFolder ([IO.Path]::GetFileNameWithoutExtension($exe) + ' Debug.lnk')
+            $shortcutShell = New-Object -ComObject WScript.Shell
+            $shortcut = $shortcutShell.CreateShortcut($shortcutPath)
+            $shortcut.TargetPath = Join-Path ([Environment]::SystemDirectory) 'cmd.exe'
+            $shortcut.Arguments = '/d /c ""' + $env:CRASHWATCH_BAT + '""'
+            $shortcut.WorkingDirectory = $workingDirectory
+            $shortcut.IconLocation = $exe + ',0'
+            $shortcut.Description = 'Launch ' + [IO.Path]::GetFileNameWithoutExtension($exe) + ' with crash logging'
+            $shortcut.Save()
+            # Clear an old explicit ID when grouping is disabled.
+            [CrashWatchTaskbar]::WriteLink($shortcutPath, $taskbarId)
+            $taskbarShortcut = $shortcutPath
+        } catch {
+            # A shortcut failure must not prevent the application from starting.
+            $shortcutWarning = "Could not create the Debug shortcut. The application will still start.$([Environment]::NewLine)$($_.Exception.Message)"
+            try {
+                $warningShell = New-Object -ComObject WScript.Shell
+                $null = $warningShell.Popup($shortcutWarning, 0, 'CrashWatch - shortcut warning', 48)
+            } catch { Write-Warning $shortcutWarning }
+        }
+    }
+    # Request native startup feedback without changing the system cursor scheme.
     $nativePid = [uint32]0
     $exitCode = [CrashWatchNativeLaunch]::Run($exe, $env:APP_ARGS,
-        $workingDirectory, (Is-Enabled $env:SHOW_STARTUP_CURSOR), [ref]$nativePid)
+        $workingDirectory, (Is-Enabled $env:SHOW_STARTUP_CURSOR),
+        $taskbarId, $detectWindowId, $taskbarShortcut, [ref]$nativePid)
     $processId = $nativePid
+    if ([CrashWatchTaskbar]::Warning) {
+        try {
+            $warningShell = New-Object -ComObject WScript.Shell
+            $null = $warningShell.Popup(('Taskbar grouping could not be fully applied: ' + [CrashWatchTaskbar]::Warning), 0, 'CrashWatch - taskbar warning', 48)
+        } catch { Write-Warning ('Taskbar grouping: ' + [CrashWatchTaskbar]::Warning) }
+    }
 } catch {
     $launchError = $_.ToString()
     # Launch/configuration failures always warn, even when OPEN_REPORT=0.
