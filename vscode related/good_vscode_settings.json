@@ -1,58 +1,87 @@
 {
   // =====================================
   // general 
+  "settingsSync.ignoredSettings": [ // Exclude from sync; -setting re-enables a default exclusion.
+    "diffEditor.hideUnchangedRegions.enabled",
+  ],
+  "settingsSync.ignoredExtensions": [],
+  "workbench.startupEditor": "welcomePage", // Show Welcome when no editor is restored.
   "workbench.editor.useModal": "off", // off = open stuff in tab instead of popup
-  "workbench.list.mouseWheelScrollSensitivity": 2,
-  "workbench.browser.showInTitleBar": false,
+  "workbench.list.mouseWheelScrollSensitivity": 2, // List/tree scroll speed multiplier.
+  "workbench.browser.showInTitleBar": false, // Hide the Integrated Browser title-bar button.
   "workbench.secondarySideBar.showLabels": true,
   "window.newWindowProfile": "Default",
-  "window.density.layout": "compact",
+  "window.density.layout": "compact", // Reduce workbench spacing.
   "breadcrumbs.enabled": true, // shows the current class/function below the editor tabs
-  "breadcrumbs.symbolPath": "on",
-  "security.workspace.trust.untrustedFiles": "open",
-  "security.promptForLocalFileProtocolHandling": true,
-  "files.autoSave": "afterDelay",
+  "breadcrumbs.symbolPath": "on", // Include classes/functions in breadcrumbs.
+  "security.workspace.trust.untrustedFiles": "open", // Open untrusted files here without prompting.
+  "security.promptForLocalFileProtocolHandling": true, // Ask before opening file:// links.
+  "files.autoSave": "afterDelay", // Save after files.autoSaveDelay.
   "update.showReleaseNotes": false,
-  "settingsSync.ignoredExtensions": [],
-  "settingsSync.ignoredSettings": [],
-  "files.associations": {
-    "*.json": "jsonc"
+  "files.associations": { // Override file-language detection.
+    "*.json": "jsonc" // Allow comments and trailing commas in JSON editing.
   },
   // =====================================
+  // recommended extensions
+  "recommendations": [ // Belongs in .vscode/extensions.json, not user settings.
+    "anthropic.claude-code",
+    "charliermarsh.ruff",
+    "donjayamanne.python-extension-pack",
+    "kevinrose.vsc-python-indent",
+    "mcu-debug.debug-tracker-vscode",
+    "mechatroner.rainbow-csv",
+    "meta.pyrefly",
+    "mhelbich.claude-code-usage-status",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-toolsai.jupyter",
+    "ms-toolsai.jupyter-keymap",
+    "ms-toolsai.jupyter-renderers",
+    "ms-toolsai.vscode-jupyter-cell-tags",
+    "ms-toolsai.vscode-jupyter-powertoys",
+    "nilssoderman.batch-runner",
+    "njqdev.vscode-python-typehint",
+    "oderwat.indent-rainbow",
+    "openai.chatgpt",
+    "saysaeqo.python-cprofile",
+    "usernamehw.commands"
+  ],
+  // =====================================
   // terminal
-  "terminal.integrated.enableMultiLinePasteWarning": "auto",
+  "terminal.integrated.enableMultiLinePasteWarning": "auto", // Warn about potentially unsafe multiline pastes.
   "terminal.integrated.defaultProfile.windows": "Command Prompt UTF-8",
-  "terminal.integrated.profiles.windows": {
+  "terminal.integrated.profiles.windows": { // Custom Windows shell profiles.
     "Command Prompt UTF-8": {
-      "path": "${env:windir}\\System32\\cmd.exe",
+      "path": "${env:windir}\\System32\\cmd.exe", // Windows Command Prompt path.
       "args": [
-        "/K",
-        "chcp 65001 > nul"
+        "/K", // Run startup command; keep cmd.exe open.
+        "chcp 65001 > nul" // Use UTF-8; hide confirmation.
       ]
     }
   },
   // =====================================
   // file explorer and search
-  "explorer.excludeGitIgnore": true,
+  "explorer.sortOrder": "type", // "type" = file type; "default"=folder first + alphabetically
+  "explorer.excludeGitIgnore": true, // Hide .gitignore matches in Explorer.
   "explorer.confirmDelete": true,
   "files.exclude": { // not visible in explorer:
-    "**/__pycache__": true,
-    "**/node_modules": true,
-    "**/.venv": true,
-    "**/.gitattributes": true,
-    "**/*.lnk": true,
-    "**/*.lprof": true,
-    "**/*.pid": true,
-    "**/*.ome.tif": true,
-    "**/*.tiff": true,
+    "**/__pycache__": true, // Python bytecode caches.
+    "**/node_modules": true, // JavaScript dependencies.
+    "**/.venv": true, // Local Python environments.
+    "**/.gitattributes": true, // Git file and line-ending rules.
+    "**/*.lnk": true, // Windows shortcuts.
+    "**/*.lprof": true, // Line-profiler output.
+    "**/*.pid": true, // Process ID files.
+    "**/*.ome.tif": true, // OME-TIFF microscopy images.
+    "**/*.tiff": true, // TIFF images; excludes plain .tif.
     "**/bin": true, // compiled output folders
     "**/obj": true, // temporary build folders
-    "**/.agents": true,
-    "**/.vscode": true,
+    "**/.agents": true, // Agent instructions and support files.
+    "**/.vscode": true, // Workspace settings, tasks, and launch configs.
     "**/.ruff_cache": true,
-    "**/.codex": true,
-    "**/.pytest_cache": true,
-    "**/*.pyc": true,
+    "**/.codex": true, // Codex config and support files.
+    "**/.pytest_cache": true, // Pytest cache, including previous failures.
+    "**/*.pyc": true, // Compiled Python bytecode.
   },
   "search.exclude": { // inherits all from "files.exclude"
   },
@@ -60,85 +89,78 @@
   // default formatters
   "editor.formatOnSave": true,
   "notebook.formatOnSave.enabled": true,
-  "[cpp]": {
-    "editor.defaultFormatter": "ms-vscode.cpptools"
-  }, // if "C/C++" extension installed
-  "[c]": {
-    "editor.defaultFormatter": "ms-vscode.cpptools"
-  }, // if "C/C++" extension installed
-  "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
+  "[json]": { // JSON-only overrides.
+    "editor.defaultFormatter": "vscode.json-language-features" // Built-in JSON formatter.
   },
-  "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
+  "[jsonc]": { // JSON-with-comments overrides.
+    "editor.defaultFormatter": "vscode.json-language-features" // Built-in JSON formatter.
   },
-  "notebook.defaultFormatter": "charliermarsh.ruff",
+  "notebook.defaultFormatter": "charliermarsh.ruff", // Ruff notebook formatting.
   // =====================================
-  // git & diff & github
-  "git.enableSmartCommit": true,
-  "git.autofetch": true,
-  "git.autofetchPeriod": 600, // seconds
-  "git.confirmSync": false,
-  "git.openRepositoryInParentFolders": "always",
-  "git.postCommitCommand": "push",
-  "githubPullRequests.pushBranch": "always",
-  "diffEditor.ignoreTrimWhitespace": false,
-  "diffEditor.maxComputationTime": 0,
-  "diffEditor.hideUnchangedRegions.enabled": true,
+  // type checker settings
+  "files.watcherExclude": { // Skip file watching; does not hide files.
+    "**/node_modules/**": true,
+    "**/.venv/**": true
+  },
   // =====================================
-  // editor  
-  "editor.codeLens": false,
-  "editor.showFoldingControls": "always",
-  "editor.foldingStrategy": "auto",
-  "editor.suggest.showStatusBar": true,
-  "editor.mouseWheelZoom": true,
-  "editor.insertSpaces": true,
-  "editor.wordWrap": "on",
-  "editor.hover.delay": 800,
-  "editor.mouseWheelScrollSensitivity": 3,
+  // editor
+  "editor.accessibilitySupport": "off", // Disable screen-reader optimizations.
+  "editor.codeLens": false, // Hide inline actions/reference counts.
+  "editor.showFoldingControls": "always", // Always show folding arrows.
+  "editor.foldingStrategy": "auto", // Language-aware folding; indentation fallback.
+  "editor.suggest.showStatusBar": true, // Show completion-popup status bar.
+  "editor.mouseWheelZoom": true, // Ctrl+wheel changes font size.
+  "editor.insertSpaces": true, // Tab inserts spaces; auto-detection may override.
+  "editor.wordWrap": "on", // Wrap at editor width; no added newlines.
+  "editor.hover.delay": 800, // Hover delay in milliseconds.
+  "editor.mouseWheelScrollSensitivity": 3, // Editor scroll speed multiplier.
   "editor.stickyScroll.enabled": true, //pins enclosing function/class headers at the top while scrolling.
   // =====================================
+  // diffs
+  "diffEditor.ignoreTrimWhitespace": false, // Include edge-whitespace changes in diffs.
+  "diffEditor.maxComputationTime": 0, // Diff timeout in ms; 0 = unlimited.
+  "diffEditor.hideUnchangedRegions.enabled": true, // not synced; Collapse unchanged diff sections.
+  // =====================================
   // notebooks
-  "notebook.compactView": true,
+  "notebook.compactView": true, // Reduce cell spacing.
   "notebook.lineNumbers": "on",
   "notebook.stickyScroll.enabled": true, //pins enclosing function/class headers at the top while scrolling.
   "notebook.cellExecutionTimeVerbosity": "verbose",
-  "notebook.cellFocusIndicator": "border",
+  "notebook.cellFocusIndicator": "border", // Border around the focused cell.
   "notebook.dragAndDropEnabled": true,
-  "notebook.diff.overviewRuler": true,
-  "notebook.globalToolbarShowLabel": "dynamic",
+  "notebook.diff.overviewRuler": true, // Show notebook diff navigation ruler.
+  "notebook.globalToolbarShowLabel": "dynamic", // Adapt toolbar labels to available space.
   "notebook.insertToolbarLocation": "hidden", // insert cell button
-  "notebook.output.scrolling": true,
+  "notebook.output.scrolling": true, // Scroll long outputs.
   "notebook.output.wordWrap": true,
   "notebook.showCellStatusBar": "visible",
-  "notebook.variablesView": true,
-  "jupyter.widgetScriptSources": [
+  "notebook.variablesView": true, // Show variables if the kernel supports it.
+  "notebook.cellToolbarLocation": { // Cell toolbar position by notebook type.
+    "default": "hidden" // Hide cell toolbars by default.
+  },
+  "notebook.editorOptionsCustomizations": { // Editor overrides for notebook cells.
+    "editor.tabSize": 4, // Display a tab as 4 spaces.
+    "editor.indentSize": 4, // Spaces per indentation level.
+    "editor.insertSpaces": true, // Tab inserts spaces; auto-detection may override.
+    "editor.folding": true,
+    "editor.showFoldingControls": "always" // Always show folding arrows.
+  },
+  // =====================================
+  // jupyter (notebooks)
+  "jupyter.disableJupyterAutoStart": false, // Allow automatic Jupyter startup.
+  "jupyter.widgetScriptSources": [ // Allowed widget JavaScript CDNs.
     "jsdelivr.com",
     "unpkg.com"
   ], //needed for interactive
-  "jupyter.askForKernelRestart": false,
-  "[jupyter]": {
-    "editor.mouseWheelScrollSensitivity": 3.5
+  "jupyter.askForKernelRestart": false, // Restart kernels without confirmation.
+  "[jupyter]": { // jupyter-language overrides; not all notebook cells.
+    "editor.mouseWheelScrollSensitivity": 3.5 // Editor scroll speed multiplier.
   },
-  "notebook.cellToolbarLocation": {
-    "default": "hidden"
-  },
-  "notebook.editorOptionsCustomizations": {
-    "editor.tabSize": 4,
-    "editor.indentSize": 4,
-    "editor.insertSpaces": true,
-    "editor.folding": true,
-    "editor.showFoldingControls": "always"
-  },
-  // =====================================
-  // codex extension
-  "codexUsage.showRemaining": true,
-  "codexUsage.compactStatusBar": false,
   // =====================================
   // copilot/chat/AI
   "github.copilot.nextEditSuggestions.enabled": true, // Suggest related code changes after editing
-  "github.copilot.enable": {
-    "*": true,
+  "github.copilot.enable": { // Completions by language; entries override *.
+    "*": true, // Default on; language overrides below.
     "plaintext": false,
     "markdown": false,
     "scminput": false,
@@ -161,229 +183,83 @@
     "diff": false
   },
   "chat.disableAIFeatures": false, // true = disable copilot (->faster start)
-  "chat.titleBar.openInAgentsWindow.enabled": false,
-  "chat.tools.terminal.autoApprove": {
-    "/^python -m py_compile live_plot\\.py$/": {
-      "approve": true,
-      "matchCommandLine": true
+  "chat.titleBar.openInAgentsWindow.enabled": false, // Hide the Open in Agents Window option.
+  "chat.tools.terminal.autoApprove": { // Auto-approve matching chat terminal commands.
+    "/^python -m py_compile live_plot\\.py$/": { // Match this exact syntax-check command.
+      "approve": true, // Allow matching commands.
+      "matchCommandLine": true // Match the full command line.
     }
   },
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": false,
-    "strings": false
+  "editor.quickSuggestions": { // Automatic completion popups by context.
+    "other": true, // Suggest in code.
+    "comments": false, // No automatic suggestions in comments.
+    "strings": false // No automatic suggestions in strings.
   },
   // =====================================
   // Python
-  "python.useEnvironmentsExtension": false, // could be faster startup
+  "python.venvPath": "D:/Users/IRScope/Documents/python_envs", // not synced; Virtual-environment search folder.
+  "python.defaultInterpreterPath": "D:/Users/IRScope/Documents/python_envs/default_env/Scripts/python.exe", // not synced; Initial default; does not override workspace selection.
+  "python.analysis.inlayHints.variableTypes": false, // Hide inferred variable-type hints.
+  "python.analysis.inlayHints.functionReturnTypes": true, // Show inferred return-type hints.
+  "python.analysis.autoImportCompletions": false,
+  "python.useEnvironmentsExtension": false, // not synced; Use Python extension environment handling. May reduce startup time.
   "python.testing.pytestEnabled": false, // false = faster start
-  "python.defaultInterpreterPath": "${workspaceFolder}/../../python_envs/default_env/Scripts/python.exe",
-  "python-envs.globalSearchPaths": [
-    "${workspaceFolder}/../../python_envs"
-  ],
-  "python.testing.unittestEnabled": false,
-  "python.experiments.optOutFrom": [
+  "python.testing.unittestEnabled": false, // Disable unittest discovery/integration.
+  "python.experiments.optOutFrom": [ // All opts out of every Python experiment.
     "All"
   ],
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.codeActionsOnSave": {
-      "source.organizeImports.ruff": "explicit",
-      "source.addMissingImports": "never"
+  "[python]": { // Python-only overrides.
+    "editor.defaultFormatter": "charliermarsh.ruff", // Ruff formatter.
+    "editor.codeActionsOnSave": { // Code actions to run on save.
+      "source.organizeImports.ruff": "explicit", // Sort imports on explicit saves only.
+      "source.addMissingImports": "never" // Do not add imports on save.
     }
   },
   // =====================================
-  // java
-  "js/ts.tsserver.watchOptions": "vscode",
-  "jdk.telemetry.enabled": false,
-  "java.configuration.runtimes": [
-    {
-      "name": "JavaSE-25",
-      "path": "D:/Programs/Java",
-      "default": true
-    }
-  ],
-  // =====================================
-  // C#
-  "csharp.debug.console": "integratedTerminal",
-  "dotnet.server.useOmnisharp": false, // Use the modern Roslyn language server
-  "[csharp]": {
-    "editor.defaultFormatter": "ms-dotnettools.csharp", // Use Microsoft's C# formatter
-    "editor.formatOnSave": true, // Format C# files when saving
-    "editor.inlayHints.enabled": "on", // "off"=Hide parameter and type hints inside the code
-    "editor.codeActionsOnSave": {
-      "source.organizeImports": "always" // "always"= automatically sort and remove unused "using"-directives on save
-    },
-    "editor.acceptSuggestionOnCommitCharacter": false, // Do not accept suggestions when typing punctuation
-  },
-  // =====================================
-  // autodocstring extension
-  "autoDocstring.docstringFormat": "numpy",
-  "autoDocstring.customTemplatePath": "../utilities/python related/python_autodocstring_extension_template.mustache",
-  // =====================================
-  // Ruff formatter/linter settings (python)
-  "ruff.configuration": "../utilities/python related/good_Ruff_settings.toml",
-  "ruff.configurationPreference": "filesystemFirst", //"filesystemFirst" "editorFirst"
-  "ruff.lint.enable": true,
+  // Ruff extension - formatter/linter settings (python)
+  "ruff.configuration": "D:/Users/IRScope/Documents/Repositories/utilities/python related/good_Ruff_settings.toml", // Shared Ruff config; precedence set below.
+  "ruff.configurationPreference": "filesystemFirst", // Local TOML wins; editorFirst reverses, editorOnly skips TOML.
+  "ruff.lint.enable": true, // Enable linting independently of formatting.
   "ruff.lint.preview": false,
-  "ruff.logLevel": "info",
+  "ruff.logLevel": "info", // Log info, warnings, and errors.
   // =====================================
-  // type checker settings (general)
-  "files.watcherExclude": {
-    "**/node_modules/**": true,
-    "**/.venv/**": true
-  },
-  "python.analysis.inlayHints.variableTypes": false,
-  "python.analysis.inlayHints.functionReturnTypes": true,
-  "python.analysis.autoImportCompletions": false,
-  // =====================================
-  // pyrefly - type checker and LSP (alternative to pylance)
+  // pyrefly extension - type checker and LSP (alternative to pylance)
   "python.languageServer": "None", // "Default"=Pylance "None"=Pyrefly
-  "python.pyrefly.typeCheckingMode": "default", //"off"/"basic"/"auto"/"default"/"strict"
-  "python.pyrefly.disableTypeErrors": false,
-  "pyreflyProfiles.customConfigPath": "../utilities/python related/good_pyrefly_settings.toml",
+  "python.pyrefly.typeCheckingMode": "default", // Preset only when no pyrefly.toml applies.
+  "python.pyrefly.disableTypeErrors": false, // Show type errors.
   // =====================================
-  // buttons in GUI using "commands"-extension
-  "commands.commands": {
-    "Toggle unchanged diff regions": {
-      "command": "commands.toggleSetting",
-      "args": {
-        "setting": "diffEditor.hideUnchangedRegions.enabled",
-        "value": [
-          true,
-          false
-        ],
-        "target": "workspace"
-      },
-      "statusBar": {
-        "alignment": "right",
-        "name": "Unchanged diff regions",
-        "text": "$(map)=${config:diffEditor.hideUnchangedRegions.enabled}",
-        "tooltip": "Toggle hiding unchanged regions in diff editors for this workspace.",
-        "updateEvents": [
-          {
-            "kind": "onDidConfigurationChange",
-            "settings": [
-              "diffEditor.hideUnchangedRegions.enabled"
-            ]
-          }
-        ],
-        "replaceVariableValue": {
-          "config:diffEditor.hideUnchangedRegions.enabled": {
-            "true": "on",
-            "false": "off"
-          }
-        }
-      }
-    },
-    "Toggle Ruff rules": {
-      "sequence": [
-        {
-          "command": "commands.toggleSetting",
-          "args": {
-            "setting": "ruff.configurationPreference",
-            "value": [
-              "editorOnly"
-            ],
-            "target": "workspace"
-          }
-        },
-        {
-          "command": "commands.toggleSetting",
-          "args": {
-            "setting": "ruff.configuration",
-            "value": [
-              {},
-              "../utilities/python related/good_Ruff_settings.toml"
-            ],
-            "target": "workspace"
-          }
-        },
-        "ruff.restart"
-      ],
-      "statusBar": {
-        "alignment": "right",
-        "name": "Ruff rules",
-        "text": "$(checklist) Ruff: ${config:ruff.configuration}",
-        "tooltip": "Click to toggle Ruff built-in defaults and your good_Ruff_settings.toml. Applies to this workspace and restarts Ruff.",
-        "activeEditorLanguage": "python",
-        "replaceVariableValue": {
-          "config:ruff.configuration": {
-            "{}": "Default",
-            "\"../utilities/python related/good_Ruff_settings.toml\"": "Custom"
-          }
-        },
-        "updateEvents": [
-          {
-            "kind": "onDidConfigurationChange",
-            "settings": [
-              "ruff.configuration",
-              "ruff.configurationPreference"
-            ]
-          }
-        ]
-      }
-    },
-    "Pyrefly type checking": {
-      "nestedItems": {
-        "Off": {
-          "command": "pyreflyProfiles.apply",
-          "args": "off"
-        },
-        "Basic": {
-          "command": "pyreflyProfiles.apply",
-          "args": "basic"
-        },
-        "Default": {
-          "command": "pyreflyProfiles.apply",
-          "args": "default"
-        },
-        "Strict": {
-          "command": "pyreflyProfiles.apply",
-          "args": "strict"
-        },
-        "Local Custom": {
-          "command": "pyreflyProfiles.apply",
-          "args": "local"
-        },
-        "Global Custom": {
-          "command": "pyreflyProfiles.apply",
-          "args": "custom"
-        },
-        "Edit Local settings": {
-          "command": "pyreflyProfiles.editLocal"
-        },
-        "Edit Global Custom settings": {
-          "command": "pyreflyProfiles.editCustom"
-        }
-      }
-    },
-    "Run current C# project": {
-      "command": "commands.runInTerminal",
-      "args": {
-        "text": "\u0003@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
-        "name": "C# EXE",
-        "reuse": "newest",
-        "reveal": true
-      },
-      "activeEditorGlob": "**/*.{cs,csproj,xml,config,resx,props,targets,xaml}",
-      "statusBar": {
-        "text": "$(play) Run EXE",
-        "alignment": "right",
-        "priority": 100,
-        "tooltip": "Run the newest compiled EXE for the active C# project",
-        "activeEditorGlob": "**/*.{cs,csproj,xml,config,resx,props,targets,xaml}",
-      }
-    },
+  // git extension
+  "git.autoRepositoryDetection": true,
+  "git.enableSmartCommit": true, // Allow committing all changes if none are staged.
+  "git.autofetch": true, // Fetch periodically; does not merge.
+  "git.autofetchPeriod": 600, // Fetch every 600 seconds (10 min).
+  "git.confirmSync": false, // Skip Git Sync confirmation (pull/push).
+  "git.openRepositoryInParentFolders": "always", // Open Git repositories above the workspace.
+  "git.postCommitCommand": "push", // Push after commits made through VS Code.
+  // =====================================
+  // github extension
+  "githubPullRequests.pushBranch": "always", // Push missing remote source branches when creating PRs.
+  // =====================================
+  // codex/chatgpt extensions
+  "codexUsage.showRemaining": true, // Show quota remaining, not used.
+  "codexUsage.compactStatusBar": false, // Show full usage details.
+  "chatgpt.openOnStartup": false, // Keep the Codex/ChatGPT view closed at startup.
+  // =====================================
+  // claude extension
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.hideOnboarding": true,
+  // =====================================
+  // buttons in GUI using "Commands"-extension
+  "commands.commands": { // Custom Commands actions, menus, and buttons.
     "Copilot autocomplete": {
-      "sequence": [
+      "sequence": [ // Run actions in order.
         {
           "command": "commands.toggleSetting",
           "args": {
             "setting": "github.copilot.enable",
-            "value": [
+            "value": [ // Cycle values; one value always applies it.
               {
-                "*": true,
+                "*": true, // Default on; language overrides below.
                 "plaintext": false,
                 "markdown": false,
                 "scminput": false,
@@ -406,7 +282,7 @@
                 "diff": false
               },
               {
-                "*": false,
+                "*": false, // Default off.
                 "plaintext": false,
                 "markdown": false,
                 "scminput": false,
@@ -429,14 +305,14 @@
                 "diff": false
               }
             ],
-            "target": "workspace"
+            "target": "workspace" // Apply to this workspace.
           }
         },
         {
           "command": "commands.toggleSetting",
           "args": {
             "setting": "github.copilot.nextEditSuggestions.enabled",
-            "value": [
+            "value": [ // Cycle values; one value always applies it.
               true,
               false
             ],
@@ -444,30 +320,421 @@
           }
         }
       ],
-      "statusBar": {
+      "statusBar": { // Clickable status-bar button.
         "alignment": "right",
-        "priority": 100.09,
+        "priority": 100.09, // Higher = farther left within the group.
         "name": "Copilot autocomplete",
         "text": "$(copilot)=${config:github.copilot.enable.*}",
         "tooltip": "Toggle Copilot autocomplete for code and Next Edit Suggestions in this workspace. Prose, log files, and commit messages stay disabled for autocomplete.",
-        "replaceVariableValue": {
+        "replaceVariableValue": { // Short labels for expanded config values.
           "config:github.copilot.enable.*": {
             "true": "on",
             "false": "off"
           }
         },
-        "updateEvents": [
+        "updateEvents": [ // Events that refresh the button.
           {
-            "kind": "onDidConfigurationChange",
-            "settings": [
+            "kind": "onDidConfigurationChange", // Refresh on configuration changes.
+            "settings": [ // Settings that trigger a refresh.
               "github.copilot.enable",
               "github.copilot.nextEditSuggestions.enabled"
             ]
           }
         ]
       }
-    }
+    },
+    // =====================================
+    // Ruff restarts by itself when these settings change.
+    // ruff.configuration must stay {} here: with filesystemFirst, a path in it is merged under the local file.
+    // Status bar shows lint enablement separately from configuration priority.
+    "Ruff rules": {
+      "nestedItems": { // Menu choices.
+        "Off (formatter stays on)": {
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.lint.enable",
+                "value": [ // Cycle values; one value always applies it.
+                  false
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.configurationPreference",
+                "value": [ // Cycle values; one value always applies it.
+                  "editorFirst"
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.configuration",
+                "value": [ // Cycle values; one value always applies it.
+                  {}
+                ],
+                "target": "workspace"
+              }
+            }
+          ]
+        },
+        "Default (ignores local file)": {
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.lint.enable",
+                "value": [ // Cycle values; one value always applies it.
+                  true
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.configurationPreference",
+                "value": [ // Cycle values; one value always applies it.
+                  "editorOnly"
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.configuration",
+                "value": [ // Cycle values; one value always applies it.
+                  {}
+                ],
+                "target": "workspace"
+              }
+            }
+          ]
+        },
+        "Local file (defaults if none)": {
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.lint.enable",
+                "value": [ // Cycle values; one value always applies it.
+                  true
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.configurationPreference",
+                "value": [ // Cycle values; one value always applies it.
+                  "filesystemFirst"
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "ruff.configuration",
+                "value": [ // Cycle values; one value always applies it.
+                  {}
+                ],
+                "target": "workspace"
+              }
+            }
+          ]
+        }
+      },
+      "statusBar": {
+        "alignment": "right",
+        "name": "Ruff rules",
+        "text": "$(checklist) Ruff: ${config:ruff.lint.enable} (${config:ruff.configurationPreference})",
+        "tooltip": "Configured Ruff lint state and configuration priority. Choose a preset; formatting stays enabled.",
+        "replaceVariableValue": { // Short labels for expanded config values.
+          "config:ruff.lint.enable": {
+            "true": "On",
+            "false": "Off"
+          },
+          "config:ruff.configurationPreference": {
+            "\"editorFirst\"": "Editor first",
+            "\"editorOnly\"": "Editor only",
+            "\"filesystemFirst\"": "Local first"
+          }
+        },
+        "updateEvents": [ // Events that refresh the button.
+          {
+            "kind": "onDidConfigurationChange", // Refresh on configuration changes.
+            "settings": [ // Settings that trigger a refresh.
+              "ruff.lint.enable",
+              "ruff.configurationPreference"
+            ]
+          }
+        ]
+      }
+    },
+    // =====================================
+    // Presets apply when no project pyrefly.toml covers the file.
+    // Pyrefly ignores typeCheckingMode for files covered by a pyrefly.toml, even an empty one.
+    // Off needs disableTypeErrors because typeCheckingMode "off" is ignored there too.
+    "Pyrefly type checking": {
+      "nestedItems": {
+        "Off": {
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  true
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": [
+                  ""
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": [
+                  "off"
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient"
+          ]
+        },
+        "Basic fallback": {
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  false
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": [
+                  ""
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": [
+                  "basic"
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient",
+            {
+              "command": "commands.showStatusBarNotification",
+              "args": {
+                "message": "$(warning) Pyrefly Basic: overridden wherever a pyrefly.toml applies",
+                "timeout": 6000
+              }
+            }
+          ]
+        },
+        "Default fallback": {
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  false
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": [
+                  ""
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": [
+                  "default"
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient",
+            {
+              "command": "commands.showStatusBarNotification",
+              "args": {
+                "message": "$(warning) Pyrefly Default: overridden wherever a pyrefly.toml applies",
+                "timeout": 6000
+              }
+            }
+          ]
+        },
+        "Strict fallback": {
+          "sequence": [
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.disableTypeErrors",
+                "value": [
+                  false
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.configPath",
+                "value": [
+                  ""
+                ],
+                "target": "workspace"
+              }
+            },
+            {
+              "command": "commands.toggleSetting",
+              "args": {
+                "setting": "python.pyrefly.typeCheckingMode",
+                "value": [
+                  "strict"
+                ],
+                "target": "workspace"
+              }
+            },
+            "pyrefly.restartClient",
+            {
+              "command": "commands.showStatusBarNotification",
+              "args": {
+                "message": "$(warning) Pyrefly Strict: overridden wherever a pyrefly.toml applies",
+                "timeout": 6000
+              }
+            }
+          ]
+        }
+      },
+      "statusBar": {
+        "alignment": "right",
+        "name": "Pyrefly type checking",
+        "text": "$(symbol-class) Pyrefly: ${config:python.pyrefly.disableTypeErrors} | fallback: ${config:python.pyrefly.typeCheckingMode}",
+        "tooltip": "Type-error enablement and fallback preset. A project pyrefly.toml takes precedence over the fallback.",
+        "replaceVariableValue": {
+          "config:python.pyrefly.disableTypeErrors": {
+            "true": "Off",
+            "false": "On"
+          },
+          "config:python.pyrefly.typeCheckingMode": {
+            "\"off\"": "Off",
+            "\"basic\"": "Basic",
+            "\"default\"": "Default",
+            "\"strict\"": "Strict",
+            "\"auto\"": "Auto",
+            "\"legacy\"": "Legacy",
+            "\"all\"": "All"
+          }
+        },
+        "updateEvents": [
+          {
+            "kind": "onDidConfigurationChange",
+            "settings": [
+              "python.pyrefly.disableTypeErrors",
+              "python.pyrefly.typeCheckingMode"
+            ]
+          }
+        ]
+      }
+    },
+    // =====================================
+    "Run current C# project": {
+      "command": "commands.runInTerminal",
+      "args": {
+        // Ctrl+C, find nearest .csproj, run newest matching bin EXE; no build.
+        "text": "\u0003@powershell -NoProfile -Command \"$dir = '${fileDirname}'; while ($dir -and -not (Get-ChildItem -LiteralPath $dir -Filter *.csproj -File -ErrorAction SilentlyContinue)) { $parent = Split-Path $dir -Parent; if ($parent -eq $dir) { break }; $dir = $parent }; $project = Get-ChildItem -LiteralPath $dir -Filter *.csproj -File | Select-Object -First 1; if (-not $project) { Write-Error 'No .csproj found above the active file'; exit 1 }; $exe = Get-ChildItem -LiteralPath (Join-Path $dir 'bin') -Filter ($project.BaseName + '.exe') -File -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $exe) { Write-Error 'No compiled EXE found. Build the project first.'; exit 1 }; $configuration = if ($exe.FullName -match '\\\\bin\\\\Debug\\\\') { 'Debug' } elseif ($exe.FullName -match '\\\\bin\\\\Release\\\\') { 'Release' } else { 'Unknown' }; Write-Host ''; Write-Host '============================================================'; Write-Host ('Running:    ' + $configuration); Write-Host ('Built:      ' + $exe.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')); Write-Host ('Path:       ' + $exe.FullName); Write-Host '============================================================'; Write-Host ''; & $exe.FullName\"",
+        "name": "C# EXE",
+        "reuse": "newest", // Reuse newest same-named terminal; create if absent.
+        "reveal": true // Show the terminal.
+      },
+      "activeEditorGlob": "**/*.{cs,csproj,xml,config,resx,props,targets,xaml}", // Show only for matching active files.
+      "statusBar": {
+        "text": "$(play) Run EXE",
+        "alignment": "right",
+        "priority": 100, // Higher = farther left within the group.
+        "tooltip": "Run the newest compiled EXE for the active C# project",
+        "activeEditorGlob": "**/*.{cs,csproj,xml,config,resx,props,targets,xaml}", // Show only for matching active files.
+      }
+    },
   },
+  // =====================================
+  // =====================================
+  // not general settings (not part of good_vscode_settings_simple)
+  // =====================================
+  // =====================================
+  // java
+  "js/ts.tsserver.watchOptions": "vscode", // Use VS Code file watching for JS/TS.
+  "jdk.telemetry.enabled": false,
+  "java.configuration.runtimes": [ // not synced; Local JDKs by Java execution environment.
+    {
+      "name": "JavaSE-25", // Java version supplied by this JDK.
+      "path": "D:/Programs/Java", // JDK root, not bin.
+      "default": true // Default JDK for standalone Java files.
+    }
+  ],
+  // =====================================
+  // C/C++
+  "[cpp]": { // C++-only overrides.
+    "editor.defaultFormatter": "ms-vscode.cpptools" // Microsoft C/C++ formatter.
+  }, // needs "C/C++" extension installed
+  "[c]": { // C-only overrides.
+    "editor.defaultFormatter": "ms-vscode.cpptools" // Microsoft C/C++ formatter.
+  }, // needs "C/C++" extension installed
+  // =====================================
+  // C#
+  "csharp.debug.console": "integratedTerminal", // C# debugger I/O in the terminal.
+  "dotnet.server.useOmnisharp": false, // Use the modern Roslyn language server
+  "[csharp]": { // C#-only overrides.
+    "editor.defaultFormatter": "ms-dotnettools.csharp", // Use Microsoft's C# formatter
+    "editor.formatOnSave": true,
+    "editor.inlayHints.enabled": "on", // "off"=Hide parameter and type hints inside the code
+    "editor.codeActionsOnSave": { // Code actions to run on save.
+      "source.organizeImports": "always" // "always"= automatically sort and remove unused "using"-directives on save
+    },
+    "editor.acceptSuggestionOnCommitCharacter": false, // Do not accept suggestions when typing punctuation
+  },
+  // =====================================
   // =====================================
   "NEW_SETTINGS_ARE_BELOW": "", // <-- NEW SETTING
 }
