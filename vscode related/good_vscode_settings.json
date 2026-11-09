@@ -197,8 +197,6 @@
   },
   // =====================================
   // Python
-  "python.venvPath": "D:/Users/IRScope/Documents/python_envs", // not synced; Virtual-environment search folder.
-  "python.defaultInterpreterPath": "D:/Users/IRScope/Documents/python_envs/default_env/Scripts/python.exe", // not synced; Initial default; does not override workspace selection.
   "python.analysis.inlayHints.variableTypes": false, // Hide inferred variable-type hints.
   "python.analysis.inlayHints.functionReturnTypes": true, // Show inferred return-type hints.
   "python.analysis.autoImportCompletions": false,
