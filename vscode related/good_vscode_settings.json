@@ -214,19 +214,19 @@
     }
   },
   // =====================================
-  // Ruff extension - formatter/linter settings (python)
+  // Ruff - extension - formatter/linter settings (python)
   "ruff.configuration": "D:/Users/IRScope/Documents/Repositories/utilities/python related/good_Ruff_settings.toml", // Shared Ruff config; precedence set below.
   "ruff.configurationPreference": "filesystemFirst", // Local TOML wins; editorFirst reverses, editorOnly skips TOML.
   "ruff.lint.enable": true, // Enable linting independently of formatting.
   "ruff.lint.preview": false,
   "ruff.logLevel": "info", // Log info, warnings, and errors.
   // =====================================
-  // pyrefly extension - type checker and LSP (alternative to pylance)
+  // pyrefly - extension - type checker and LSP (alternative to pylance)
   "python.languageServer": "None", // "Default"=Pylance "None"=Pyrefly
   "python.pyrefly.typeCheckingMode": "default", // Preset only when no pyrefly.toml applies.
   "python.pyrefly.disableTypeErrors": false, // Show type errors.
   // =====================================
-  // git extension
+  // git - extension
   "git.autoRepositoryDetection": true,
   "git.enableSmartCommit": true, // Allow committing all changes if none are staged.
   "git.autofetch": true, // Fetch periodically; does not merge.
@@ -235,7 +235,7 @@
   "git.openRepositoryInParentFolders": "always", // Open Git repositories above the workspace.
   "git.postCommitCommand": "push", // Push after commits made through VS Code.
   // =====================================
-  // github extension
+  // Github - extension
   "githubPullRequests.pushBranch": "always", // Push missing remote source branches when creating PRs.
   // =====================================
   // codex/chatgpt extensions
@@ -243,9 +243,37 @@
   "codexUsage.compactStatusBar": false, // Show full usage details.
   "chatgpt.openOnStartup": false, // Keep the Codex/ChatGPT view closed at startup.
   // =====================================
-  // claude extension
+  // Code Spell Checker - extension
+  "cSpell.enabled": true,
+  "cSpell.language": "en",
+  "cSpell.autocorrect": false, // Keep spelling corrections manual while typing.
+  "cSpell.diagnosticLevel": "Hint", // Show spelling hints in the editor; omit them from Problems.
+  "cSpell.hideIssuesWhileTyping": "Word", // Temporarily hide issues in the word currently being edited.
+  "cSpell.enabledSchemes": { // Enable checking by document URI scheme.
+    "vscode-scm": true // vscode GUI
+  },
+  "cSpell.enabledFileTypes": { // Enable checking by VS Code language ID.
+    "scminput": true // vscode GUI
+  },
+  "cSpell.userWords": [ // Personal accepted words shared across workspaces.
+    "NumPy",
+    "SciPy",
+    "Pyrefly",
+    "pytest",
+    "pybaselines",
+    "LightwaveExplorer",
+  ],
+  // =====================================
+  // Claude Code & Claude usage - extensions
   "claudeCode.preferredLocation": "panel",
   "claudeCode.hideOnboarding": true,
+  "claudeCode.archiveInactiveSessions": 0, // in days. 0 for disable
+  "claudeUsage.dangerThreshold": 75,
+  "claudeUsage.warningThreshold": 50,
+  "claudeUsage.showUsed": true,
+  "claudeCode.enableReopenClosedSessionShortcut": false,
+  "claudeCode.focusView": true,
+  "claudeCode.scrollToBottomOnSend": false,
   // =====================================
   // buttons in GUI using "Commands"-extension
   "commands.commands": { // Custom Commands actions, menus, and buttons.
@@ -453,7 +481,7 @@
       "statusBar": {
         "alignment": "right",
         "name": "Ruff rules",
-        "text": "$(checklist) Ruff: ${config:ruff.lint.enable} (${config:ruff.configurationPreference})",
+        "text": "Ruff:${config:ruff.configurationPreference}",
         "tooltip": "Configured Ruff lint state and configuration priority. Choose a preset; formatting stays enabled.",
         "replaceVariableValue": { // Short labels for expanded config values.
           "config:ruff.lint.enable": {
@@ -648,7 +676,7 @@
       "statusBar": {
         "alignment": "right",
         "name": "Pyrefly type checking",
-        "text": "$(symbol-class) Pyrefly: ${config:python.pyrefly.disableTypeErrors} | fallback: ${config:python.pyrefly.typeCheckingMode}",
+        "text": "Pyrefly:${config:python.pyrefly.typeCheckingMode}",
         "tooltip": "Type-error enablement and fallback preset. A project pyrefly.toml takes precedence over the fallback.",
         "replaceVariableValue": {
           "config:python.pyrefly.disableTypeErrors": {
@@ -697,11 +725,7 @@
     },
   },
   // =====================================
-  // =====================================
-  // not general settings (not part of good_vscode_settings_simple)
-  // =====================================
-  // =====================================
-  // java
+  // java - extension
   "js/ts.tsserver.watchOptions": "vscode", // Use VS Code file watching for JS/TS.
   "jdk.telemetry.enabled": false,
   "java.configuration.runtimes": [ // not synced; Local JDKs by Java execution environment.
@@ -712,15 +736,15 @@
     }
   ],
   // =====================================
-  // C/C++
+  // C/C++ - extension 
   "[cpp]": { // C++-only overrides.
     "editor.defaultFormatter": "ms-vscode.cpptools" // Microsoft C/C++ formatter.
-  }, // needs "C/C++" extension installed
+  },
   "[c]": { // C-only overrides.
     "editor.defaultFormatter": "ms-vscode.cpptools" // Microsoft C/C++ formatter.
-  }, // needs "C/C++" extension installed
+  },
   // =====================================
-  // C#
+  // C# - extension
   "csharp.debug.console": "integratedTerminal", // C# debugger I/O in the terminal.
   "dotnet.server.useOmnisharp": false, // Use the modern Roslyn language server
   "[csharp]": { // C#-only overrides.
