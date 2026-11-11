@@ -1,5 +1,23 @@
 @echo off
 setlocal enabledelayedexpansion
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Archive: Optimized create small folder exe%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 
 :: measure start time
 call :count_duration
@@ -8,7 +26,7 @@ call :count_duration
 for %%f in ("*.py") do (
     set "python_file=%%f"
     set "file_name=%%~nf"
-    echo Compiling to folder for small filesize: !python_file!
+    echo:%UTIL_UI_INFO%Compiling to folder for small filesize: !python_file!%UTIL_UI_RESET%
     echo.
     goto :found
 )
@@ -24,16 +42,16 @@ set "tmp_requirements_file=%temp%\tmp_requirements_for_compilation.txt"
 call :set_abs_path "%build_folder_path%" "build_folder_path"
 
 :: create clean virtual environment
-echo ====================================================
-echo Creating clean virual environment for compilation...
+echo:%UTIL_UI_INFO%====================================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Creating clean virual environment for compilation...%UTIL_UI_RESET%
 echo.
 rmdir /s /q "%tmp_venv_name%" > nul 2>&1  
 python -m venv "%tmp_venv_name%"
 call "%tmp_venv_name%\Scripts\activate.bat"
 
 :: install needed packages for compilation
-echo ============================================
-echo Installing pipreqs to find needed packages...
+echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Installing pipreqs to find needed packages...%UTIL_UI_RESET%
 echo.
 pip install pipreqs --disable-pip-version-check
 mkdir tmp_pipreqs
@@ -41,25 +59,25 @@ copy "%python_file%" tmp_pipreqs\
 python -m pipreqs.pipreqs tmp_pipreqs --force --savepath "%tmp_requirements_file%"
 rmdir /s /q tmp_pipreqs
 echo.
-echo ==========================================
-echo Required packages for code:
-echo ==========================================
+echo:%UTIL_UI_INFO%==========================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Required packages for code:%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%==========================================%UTIL_UI_RESET%
 type "%tmp_requirements_file%"
-echo ==========================================
+echo:%UTIL_UI_INFO%==========================================%UTIL_UI_RESET%
 echo.
-echo ============================================
-echo Installing required packages...
+echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Installing required packages...%UTIL_UI_RESET%
 echo.
 pip install -r "%tmp_requirements_file%"  --disable-pip-version-check
-echo ============================================
-echo Installing nuitka (compilation program)...
+echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Installing nuitka (compilation program)...%UTIL_UI_RESET%
 echo.
 pip install nuitka  --disable-pip-version-check
 
 :: compile
 echo.
-echo ==========
-echo Compiling:
+echo:%UTIL_UI_INFO%==========%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Compiling:%UTIL_UI_RESET%
 echo.
 REM MAX OPTIMIZATION FLAGS FOR SMALLEST SIZE:
 REM --onefile: Create a single compressed executable file (not a folder)
@@ -174,9 +192,9 @@ python -m nuitka ^
 --output-filename="run.exe" ^
 --standalone "%python_file%"
 echo.
-echo ===========================
-echo Compilation over
-echo ===========================
+echo:%UTIL_UI_INFO%===========================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Compilation over%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%===========================%UTIL_UI_RESET%
 echo.
 
 :: print execution duration
@@ -185,19 +203,19 @@ call :count_duration "Execution Time:"
 :: print end message
 echo.
 if exist "%build_folder_path%\%file_name%.dist" (
-    echo ============================================
-    echo EXE folder sucessfully created if no problems above: "%build_folder_path%\%file_name%.dist"
+    echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+    echo:%UTIL_UI_OK%EXE folder sucessfully created if no problems above: "%build_folder_path%\%file_name%.dist"%UTIL_UI_RESET%
     call :print_size "%build_folder_path%\%file_name%.dist"
-    echo =========================================
+    echo:%UTIL_UI_INFO%=========================================%UTIL_UI_RESET%
     echo.
-    echo Analyzing folder contents...
+    echo:%UTIL_UI_INFO%Analyzing folder contents...%UTIL_UI_RESET%
     call :analyze_dist_folder "%build_folder_path%\%file_name%.dist"
-    echo =========================================
+    echo:%UTIL_UI_INFO%=========================================%UTIL_UI_RESET%
 ) else (
-    echo ============================================
-    echo [Error] Compilation failed^! Check output above.
-    echo ============================================
-    echo Aborting. Press any key to exit
+    echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+    echo:%UTIL_UI_ERROR%[Error] Compilation failed^! Check output above.%UTIL_UI_RESET%
+    echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+    echo:%UTIL_UI_ERROR%Aborting. Press any key to exit%UTIL_UI_RESET%
     PAUSE > nul
     exit /b 1
 )
@@ -208,7 +226,7 @@ rmdir /s /q "%tmp_venv_name%" > nul 2>&1
 
 :: wait for user to press any key and exit
 echo.
-echo Press any key to exit
+echo:%UTIL_UI_WARN%Press any key to exit%UTIL_UI_RESET%
 PAUSE > nul
 exit /b 0
 
@@ -243,7 +261,7 @@ if "%count_time_s_start%"=="" (
     set /a CS=diff%%100
     if "%~1"=="" ( set "text=Duration:"
     ) else ( set "text=%~1" )
-    echo !text! !SEC!.!CS! s
+    echo:%UTIL_UI_INFO%!text! !SEC!.!CS! s%UTIL_UI_RESET%
     endlocal & set "count_time_s_start="
 )
 exit /b 0
@@ -258,13 +276,13 @@ setlocal enabledelayedexpansion
 rem %1 = path to the file or folder
 set "item_path=%~1"
 if not exist "%item_path%" (
-    echo File/Folder not found for size determination: %item_path%
+    echo:%UTIL_UI_INFO%File/Folder not found for size determination: %item_path%%UTIL_UI_RESET%
     exit /b 1
 )
 if "%~2"=="" ( set "text=Size:"
 ) else ( set "text=%~2" )
 FOR /F "usebackq tokens=*" %%G IN (`powershell -ExecutionPolicy Bypass -Command "$Path = '%item_path%'; $Item = Get-Item -LiteralPath $Path; $1MB = 1048576; $1GB = 1073741824; if ($Item.PSIsContainer) { $B = (Get-ChildItem -Recurse -File -LiteralPath $Path | Measure-Object -Sum Length).Sum; } else { $B = $Item.Length; } if (-not $B) { $B = 0 }; if ($B -ge $1GB) { '{0:N1} GB' -f ($B / $1GB) } elseif ($B -ge $1MB) { '{0:N1} MB' -f ($B / $1MB) } else { '{0:N0} Bytes' -f $B }"`) DO (
-    echo %text% %%G 
+    echo:%UTIL_UI_INFO%%text% %%G %UTIL_UI_RESET%
 )
 endlocal
 exit /b 0
@@ -278,8 +296,8 @@ exit /b 0
 ::::::::::::::::::::::::::::::::::::::::::::::::
 :set_abs_path
     if "%~2"=="" (
-        echo [Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). 
-        echo Aborting. Press any key to exit.
+        echo:%UTIL_UI_ERROR%[Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). %UTIL_UI_RESET%
+        echo:%UTIL_UI_ERROR%Aborting. Press any key to exit.%UTIL_UI_RESET%
         pause > nul
         exit /b 1
     )
@@ -299,7 +317,7 @@ goto :EOF
 setlocal
 set "dist_path=%~1"
 echo.
-echo Top 10 space-hogs in distribution:
+echo:%UTIL_UI_INFO%Top 10 space-hogs in distribution:%UTIL_UI_RESET%
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$path = '%dist_path%';" ^
     "Get-ChildItem -Path $path | Select-Object Name, @{Name='Size(MB)';Expression={ " ^

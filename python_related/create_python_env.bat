@@ -1,13 +1,31 @@
 @setlocal EnableExtensions DisableDelayedExpansion & @echo off
 REM=r""" <- lets Python ignore the batch part of this file.
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Create or update Python environment%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 :: The first line is skipped when this file is launched with `py -x`.
 :: The Python code starts near the bottom.
 :: The first part is normal batch code which will in the end launch the Python code.
 
 for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "ESC=%%E"
-set "GREEN=%ESC%[92m"
-set "RED=%ESC%[91m"
-set "RESET=%ESC%[0m"
+set "GREEN=%UTIL_UI_OK%"
+set "RED=%UTIL_UI_ERROR%"
+set "RESET=%UTIL_UI_RESET%"
 CALL :process_args %* || goto :fail
 
 :: ---------------------------------------------------------------------------
@@ -1164,9 +1182,9 @@ replace_existing = True
 import collections, hashlib, json, os, re, shlex, shutil, subprocess, sys, time
 from pathlib import Path
 
-RED = "\033[91m"
-GREEN = "\033[92m"
-RESET = "\033[0m"
+RED = os.environ.get("UTIL_UI_ERROR", "")
+GREEN = os.environ.get("UTIL_UI_OK", "")
+RESET = os.environ.get("UTIL_UI_RESET", "")
 
 action = os.environ.get("PY_ENV_HELPER_ACTION", "update_vscode_settings")
 os.system("")  # Turns on ANSI colors in consoles that start with them disabled.

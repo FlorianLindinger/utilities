@@ -1,4 +1,22 @@
 @echo off & setlocal enabledelayedexpansion
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Archive: Create exe that runs batch at rel path%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 
 :: ==============================================================================
 :: DESCRIPTION: Creates an EXE with a custom icon.
@@ -23,10 +41,10 @@ if "%target_batch%"=="" (
         )
     )
     if !b_count! equ 1 (
-        echo [+] Auto-detected Batch: !target_batch!
+        echo:%UTIL_UI_INFO%[+] Auto-detected Batch: !target_batch!%UTIL_UI_RESET%
     ) else (
-        echo [Error] No batch file specified and couldn't auto-detect a unique one.
-        echo Press any key to exit.
+        echo:%UTIL_UI_ERROR%[Error] No batch file specified and couldn't auto-detect a unique one.%UTIL_UI_RESET%
+        echo:%UTIL_UI_WARN%Press any key to exit.%UTIL_UI_RESET%
         pause > nul
         exit /b 1
     )
@@ -50,10 +68,10 @@ if "%target_icon%"=="" (
         set "target_icon=%%f"
     )
     if !i_count! equ 1 (
-        echo [+] Auto-detected Icon: !target_icon!
+        echo:%UTIL_UI_INFO%[+] Auto-detected Icon: !target_icon!%UTIL_UI_RESET%
     ) else (
-        echo [Error] No icon file specified and couldn't auto-detect a unique one.
-        echo Press any key to exit.
+        echo:%UTIL_UI_ERROR%[Error] No icon file specified and couldn't auto-detect a unique one.%UTIL_UI_RESET%
+        echo:%UTIL_UI_WARN%Press any key to exit.%UTIL_UI_RESET%
         pause > nul
         exit /b 1
     )
@@ -64,8 +82,8 @@ set "csc_path=C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 set "tmp_cs_file=%temp%\tmp_launcher_%random%.cs"
 
 if not exist "%csc_path%" (
-    echo [!] Error: C# Compiler (csc.exe^) not found. Ensure .NET 4.0+ is installed.
-    echo Press any key to exit.
+    echo:%UTIL_UI_ERROR%[!] Error: C# Compiler (csc.exe^) not found. Ensure .NET 4.0+ is installed.%UTIL_UI_RESET%
+    echo:%UTIL_UI_WARN%Press any key to exit.%UTIL_UI_RESET%
     pause > nul
     exit /b 1
 )
@@ -90,26 +108,26 @@ echo }
 
 :: --- 4. Compile ---
 echo.
-echo ===========================================
-echo Target: %target_batch%
-echo Icon:   %target_icon%
-echo Output: %output_exe%
-echo ===========================================
-echo Compiling...
+echo:%UTIL_UI_INFO%===========================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Target: %target_batch%%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Icon:   %target_icon%%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Output: %output_exe%%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%===========================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Compiling...%UTIL_UI_RESET%
 
 "%csc_path%" /out:"!output_exe!" /target:winexe /win32icon:"%target_icon%" "%tmp_cs_file%" /nologo
 
-echo ===========================================
+echo:%UTIL_UI_INFO%===========================================%UTIL_UI_RESET%
 
 if %errorlevel% equ 0 (
     echo.
-    echo [Success] "!output_exe!" created successfully.
+    echo:%UTIL_UI_OK%[Success] "!output_exe!" created successfully.%UTIL_UI_RESET%
 ) else (
     echo.
-    echo [Error] Compilation failed. Check if the icon is a valid .ico file.
+    echo:%UTIL_UI_ERROR%[Error] Compilation failed. Check if the icon is a valid .ico file.%UTIL_UI_RESET%
 )
 
 :: --- 5. Cleanup ---
 if exist "%tmp_cs_file%" del "%tmp_cs_file%"
-echo Press any key to exit.
+echo:%UTIL_UI_WARN%Press any key to exit.%UTIL_UI_RESET%
 pause > nul

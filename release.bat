@@ -1,5 +1,23 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Publish utilities release%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 rem Usage: release.bat major^|minor^|vMAJOR.MINOR [--dry-run]
 if /I "%~1"=="--help" goto :help
 if "%~1"=="/?" goto :help
@@ -19,19 +37,25 @@ exit /b 2
 
 :help
 echo Usage: release.bat major^|minor^|vMAJOR.MINOR [--dry-run]
-echo Examples: release.bat minor --dry-run
-echo           release.bat major
-echo           release.bat v1.2
-echo Uploads five local setup files and a freshly exported VS Code profile.
-echo Targets the current Git commit, which must already exist on GitHub.
-echo Requires GitHub CLI: install gh, then run gh auth login.
-echo Bumps use the highest remote version tag; no tags: minor = v0.1, major = v1.0.
-echo --dry-run previews without publishing; bumps still read remote Git tags.
+echo:%UTIL_UI_INFO%Examples: release.bat minor --dry-run%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%          release.bat major%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%          release.bat v1.2%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Uploads five local setup files and a freshly exported VS Code profile.%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Targets the current Git commit, which must already exist on GitHub.%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Requires GitHub CLI: install gh, then run gh auth login.%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Bumps use the highest remote version tag; no tags: minor = v0.1, major = v1.0.%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%--dry-run previews without publishing; bumps still read remote Git tags.%UTIL_UI_RESET%
 exit /b 0
 
 # POWERSHELL_PAYLOAD
 $ErrorActionPreference = 'Stop'
 try {
+    $infoStyle = @{}
+    $successStyle = @{}
+    if (-not $env:NO_COLOR -and $env:TERM -ne 'dumb') {
+        $infoStyle = @{ ForegroundColor = 'Cyan' }
+        $successStyle = @{ ForegroundColor = 'Green' }
+    }
     $root = $env:UTILITIES_RELEASE_ROOT
     $tag = $env:UTILITIES_RELEASE_TAG
     $relativePaths = @(
@@ -90,12 +114,12 @@ try {
     else { throw 'Python is required to export the VS Code profile.' }
     if ($LASTEXITCODE -ne 0) { throw 'VS Code profile export failed; release was not created.' }
     $sources += $profileAsset
-    Write-Host "Tag: $tag"
-    Write-Host "Commit: $commit"
-    Write-Host 'Assets (current local contents):'
-    $sources | ForEach-Object { Write-Host ('  ' + $_) }
+    Write-Host "Tag: $tag" @infoStyle
+    Write-Host "Commit: $commit" @infoStyle
+    Write-Host 'Assets (current local contents):' @infoStyle
+    $sources | ForEach-Object { Write-Host ('  ' + $_) @infoStyle }
     if ($env:UTILITIES_RELEASE_DRY_RUN -eq '--dry-run') {
-        Write-Host 'Dry run complete; nothing published.'
+        Write-Host 'Dry run complete; nothing published.' @successStyle
         exit 0
     }
     if (-not (Get-Command gh.exe -ErrorAction SilentlyContinue)) {
@@ -112,7 +136,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Release creation/upload failed. An existing release was not overwritten; check GitHub for a partial draft.' }
         & gh.exe release edit $tag --repo $repo --draft=false
         if ($LASTEXITCODE -ne 0) { throw 'Assets uploaded, but publishing failed. The release remains a draft.' }
-        Write-Host "Published: https://github.com/$repo/releases/tag/$tag"
+        Write-Host "Published: https://github.com/$repo/releases/tag/$tag" @successStyle
     }
     finally { Pop-Location }
     exit 0

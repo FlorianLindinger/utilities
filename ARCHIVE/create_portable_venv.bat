@@ -16,6 +16,24 @@
 
 :: dont print commands & make variables local & allow for delayed variable expansion
 @echo off & setlocal EnableDelayedExpansion
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Archive: Create portable venv%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 
 :: ==================
 :: ==== Settings ====
@@ -84,7 +102,7 @@ DEL "%tmp_file_path_for_code_execution%" >NUL 2>&1
 if not exist "%PYTHON_FOLDER%\python.exe" (
     echo: [Error] Relative path (<python_folder_rel_path>^) targets "%PYTHON_FOLDER%\python.exe" which does not exist. Aborting. 
     echo: Usage: create_portable_venv.bat "<target_dir>" "<python_folder_rel_path>"
-    echo: Press any key to exit.
+    echo:%UTIL_UI_WARN% Press any key to exit.%UTIL_UI_RESET%
     pause > NUL
     exit /b 1
 )
@@ -96,27 +114,27 @@ if not exist "%VENV_PATH%\" (
 )
 REM Check for Python venv markers
 if not exist "%VENV_PATH%\Scripts\activate.bat" (
-    echo: [Error] folder "%VENV_PATH%" does not appear to be a Python virtual environment. Delete manually after confirming. Aborting. Press any key to exit.
+    echo:%UTIL_UI_ERROR% [Error] folder "%VENV_PATH%" does not appear to be a Python virtual environment. Delete manually after confirming. Aborting. Press any key to exit.%UTIL_UI_RESET%
     pause > nul
     exit /b 1
 )
 REM delete folder
 rmdir /s /q "%VENV_PATH%"
 if exist "%VENV_PATH%\" (
-    echo: [Error] Failed to delete "%VENV_PATH%". Delete manually after confirming. Aborting. Press any key to exit.
+    echo:%UTIL_UI_ERROR% [Error] Failed to delete "%VENV_PATH%". Delete manually after confirming. Aborting. Press any key to exit.%UTIL_UI_RESET%
     pause > nul
     exit /b 1
 ) else (
-    echo: Deleted old virtual environment.
+    echo:%UTIL_UI_INFO% Deleted old virtual environment.%UTIL_UI_RESET%
 )
 :skip_delete_old_venv
 :: === [end] delete old venv ===============
 
 :: create venv
-echo: Creating virtual environment "%VENV_PATH%"
+echo:%UTIL_UI_INFO% Creating virtual environment "%VENV_PATH%"%UTIL_UI_RESET%
 "%PYTHON_FOLDER%\python.exe" -m venv "%VENV_PATH%"
 if errorlevel 1 (
-    echo: [Error] venv creation failed. Aborting. Press any key to exit.
+    echo:%UTIL_UI_ERROR% [Error] venv creation failed. Aborting. Press any key to exit.%UTIL_UI_RESET%
     pause > NUL
     exit /b 1
 )
@@ -133,7 +151,7 @@ mkdir "%portable_scripts_path%" >nul 2>&1
 :: upgrade pip
 "%VENV_PATH%\Scripts\python.exe" -m pip install --upgrade pip >nul 2>&1
 if errorlevel 1 (
-    echo [Warning] pip upgrade failed.
+    echo:%UTIL_UI_ERROR%[Warning] pip upgrade failed.%UTIL_UI_RESET%
 )
 
 :: create python.bat file that repairs paths if folder moved
@@ -185,7 +203,7 @@ echo(:: ================================================
 )
 :: check if python.bat file was created
 if not exist "%portable_scripts_path%\python.bat" (
-    ECHO: [Error] Failed to create "%portable_scripts_path%\python.bat" (see above^). Aborting. Press any key to exit.
+    echo:%UTIL_UI_ERROR% [Error] Failed to create "%portable_scripts_path%\python.bat" (see above^). Aborting. Press any key to exit.%UTIL_UI_RESET%
     pause > NUL
     exit /b 2
 )
@@ -244,7 +262,7 @@ echo ^)
 )
 REM check if activate.bat was modified
 if errorlevel 1 (
-    ECHO: [Error] Failed to modify "%VENV_PATH%\Scripts\activate.bat" (see above^). Aborting. Press any key to continue.
+    echo:%UTIL_UI_ERROR% [Error] Failed to modify "%VENV_PATH%\Scripts\activate.bat" (see above^). Aborting. Press any key to continue.%UTIL_UI_RESET%
     pause > NUL
     exit /b 2
 )
@@ -257,12 +275,12 @@ if errorlevel 1 (
 )
 :: check if created
 if not exist "%portable_scripts_path%\pip.bat" (
-    ECHO: [Error] Failed to create "%portable_scripts_path%\pip.bat" (see above^). Aborting. Press any key to continue.
+    echo:%UTIL_UI_ERROR% [Error] Failed to create "%portable_scripts_path%\pip.bat" (see above^). Aborting. Press any key to continue.%UTIL_UI_RESET%
     pause > NUL
 )
 
 :: print success and exit
-echo: Sucessfully created portable virtual environment.
+echo:%UTIL_UI_OK% Sucessfully created portable virtual environment.%UTIL_UI_RESET%
 exit /b 0
 
 :: ====================
@@ -276,8 +294,8 @@ exit /b 0
 ::::::::::::::::::::::::::::::::::::::::::::::::
 :set_abs_path
     if "%~2"=="" (
-        echo [Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). 
-        echo Aborting. Press any key to exit.
+        echo:%UTIL_UI_ERROR%[Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). %UTIL_UI_RESET%
+        echo:%UTIL_UI_ERROR%Aborting. Press any key to exit.%UTIL_UI_RESET%
         pause > nul
         exit /b 1
     )

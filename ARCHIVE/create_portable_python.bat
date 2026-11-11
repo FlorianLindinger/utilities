@@ -18,6 +18,24 @@
 
 :: dont print commands & make variables local & enable needed features
 @echo off & setlocal EnableExtensions EnableDelayedExpansion
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Archive: Create portable python%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 
 :: process args
 set "PY_VER=%~1"
@@ -89,16 +107,16 @@ for /f "usebackq delims=" %%A in (`
 :: abort if fail
 if "%FULL_VER%"==" " set "FULL_VER="
 if "%FULL_VER%"=="" (
-    echo [ERROR] Could not determine latest implemented version for specified version (%PY_VER%^) or download method not implemented for this version or no internet connection. This code needs "https://www.python.org/ftp/python/{full-python-version}/amd64/" to exist. Aborting. Press any key to exit.
+    echo:%UTIL_UI_ERROR%[ERROR] Could not determine latest implemented version for specified version (%PY_VER%^) or download method not implemented for this version or no internet connection. This code needs "https://www.python.org/ftp/python/{full-python-version}/amd64/" to exist. Aborting. Press any key to exit.%UTIL_UI_RESET%
     PAUSE > NUL
     exit /b 1
 )
 :: print success
-echo Found (msi-install-available) Python version %FULL_VER%
+echo:%UTIL_UI_INFO%Found (msi-install-available) Python version %FULL_VER%%UTIL_UI_RESET%
 
 :: define URL based on full version
 set "URL=https://www.python.org/ftp/python/%FULL_VER%/amd64/"
-ECHO Download URL: %URL%
+echo:%UTIL_UI_INFO%Download URL: %URL%%UTIL_UI_RESET%
 
 :: === [START] delete old python folder ==================
 :: Skip if folder doesn't exist
@@ -118,7 +136,7 @@ if exist "%PYTHON_FOLDER%\" (
     pause > nul
     exit /b 3
 ) else (
-    echo Deleted old python folder.
+    echo:%UTIL_UI_INFO%Deleted old python folder.%UTIL_UI_RESET%
 )
 :skip_delete_old
 :: === [END] delete old python folder ==================
@@ -152,7 +170,7 @@ powershell -NoLogo -NoProfile -Command ^
 :: install python files
 pushd "%DOWNLOAD_FOLDER%"
 for %%A in (*.msi) do (
-  echo Installing %%~nxA
+  echo:%UTIL_UI_INFO%Installing %%~nxA%UTIL_UI_RESET%
   REM /a option needed to not install paths globally
   msiexec /a "%%~fA" TARGETDIR="%PYTHON_FOLDER%" /qn
   if "%%~nxA"=="test.msi" (
@@ -173,14 +191,14 @@ if not "%DOWNLOAD_FOLDER%"=="" if exist "%DOWNLOAD_FOLDER%\" (
 
 :: verify installation via existing python.exe
 if not exist "%PYTHON_FOLDER%\python.exe" (
-  echo [Error] Python installation failed (see above^). Aborting. Press any key to exit.
+  echo:%UTIL_UI_ERROR%[Error] Python installation failed (see above^). Aborting. Press any key to exit.%UTIL_UI_RESET%
   PAUSE > NUL
   EXIT /B 4
 )
 
 :: verify functioning python.exe
 CALL "%PYTHON_FOLDER%\python.exe" -V > Nul || (
-  echo [Error] Python not runnable (see above^). Aborting. Press any key to exit.
+  echo:%UTIL_UI_ERROR%[Error] Python not runnable (see above^). Aborting. Press any key to exit.%UTIL_UI_RESET%
   PAUSE > NUL
   EXIT /B 5
 )
@@ -194,7 +212,7 @@ CALL "%PYTHON_FOLDER%\python.exe" -V > Nul || (
 :: install pip
 "%PYTHON_FOLDER%\python.exe" -m ensurepip --upgrade > nul 2>&1
 if errorlevel 1 (
-  echo [Error] Python not sucessfully installed (see above^). Aborting. Press any key to exit.
+  echo:%UTIL_UI_ERROR%[Error] Python not sucessfully installed (see above^). Aborting. Press any key to exit.%UTIL_UI_RESET%
   PAUSE > NUL
   EXIT /B 6
 )
@@ -207,7 +225,7 @@ if errorlevel 1 (
   REM retry with no "--progress-bar off" for pip versions before implemented
   "%PYTHON_FOLDER%\python.exe" -m pip install --upgrade pip --ignore-installed > nul
   if errorlevel 1 (
-    echo [Error] Python's pip not sucessfully installed (see above^). Aborting. Press any key to exit.
+    echo:%UTIL_UI_ERROR%[Error] Python's pip not sucessfully installed (see above^). Aborting. Press any key to exit.%UTIL_UI_RESET%
     PAUSE > NUL
     EXIT /B 7
   )
@@ -215,14 +233,14 @@ if errorlevel 1 (
 :: upgrade pip again because older pips don't manage to fully upgrade in one step
 "%PYTHON_FOLDER%\python.exe" -m pip install --upgrade pip > nul
   if errorlevel 1 (
-    echo [Error] Python's pip not sucessfully installed (see above^). Aborting. Press any key to exit.
+    echo:%UTIL_UI_ERROR%[Error] Python's pip not sucessfully installed (see above^). Aborting. Press any key to exit.%UTIL_UI_RESET%
     PAUSE > NUL
     EXIT /B 8
 )
 
 :: print success and exit
 echo.
-echo Sucessfully created portable Python (%FULL_VER%) at "%PYTHON_FOLDER%".
+echo:%UTIL_UI_OK%Sucessfully created portable Python (%FULL_VER%) at "%PYTHON_FOLDER%".%UTIL_UI_RESET%
 exit /b 0
 
 :: ====================
@@ -236,8 +254,8 @@ exit /b 0
 ::::::::::::::::::::::::::::::::::::::::::::::::
 :set_abs_path
     if "%~2"=="" (
-        echo [Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). 
-        echo Aborting. Press any key to exit.
+        echo:%UTIL_UI_ERROR%[Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). %UTIL_UI_RESET%
+        echo:%UTIL_UI_ERROR%Aborting. Press any key to exit.%UTIL_UI_RESET%
         pause > nul
         exit /b 1
     )

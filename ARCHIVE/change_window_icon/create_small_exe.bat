@@ -1,5 +1,23 @@
 @echo off
 setlocal enabledelayedexpansion
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Archive: Create small exe%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 
 :: measure start time
 call :count_duration
@@ -8,7 +26,7 @@ call :count_duration
 for %%f in ("*.py") do (
     set "python_file=%%f"
     set "file_name=%%~nf"
-    echo Compiling for small filesize: !python_file!
+    echo:%UTIL_UI_INFO%Compiling for small filesize: !python_file!%UTIL_UI_RESET%
     echo.
     goto :found
 )
@@ -24,8 +42,8 @@ set "exe_name=%file_name%%ending%.exe"
 call :set_abs_path "%output_path%" "output_path"
 
 :: install Nuitka and Zstandard
-echo ===========================
-echo Installing/Updating Nuitka:
+echo:%UTIL_UI_INFO%===========================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Installing/Updating Nuitka:%UTIL_UI_RESET%
 echo.
 python -m pip install nuitka zstandard --upgrade
 echo.
@@ -39,8 +57,8 @@ REM --deployment: Disables safety checks meant for development
 REM --python-flag=no_docstrings,no_asserts,-OO: Strip docstrings, asserts, and optimize bytecode
 REM --prefer-source-code: Keep some modules as bytecode instead of compiled (smaller)
 REM --nofollow-import-to: Don't follow imports to these modules (excludes them from exe)
-echo ===========================
-echo Compilation:
+echo:%UTIL_UI_INFO%===========================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Compilation:%UTIL_UI_RESET%
 echo.
 python -m nuitka ^
   --onefile ^
@@ -64,9 +82,9 @@ python -m nuitka ^
   --output-filename="%exe_name%" ^
   "%python_file%"
 echo.
-echo ===========================
-echo Compilation over
-echo ===========================
+echo:%UTIL_UI_INFO%===========================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Compilation over%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%===========================%UTIL_UI_RESET%
 echo.
 
 del "%output_path%\%exe_name%" > nul 2>&1
@@ -80,22 +98,22 @@ call :count_duration "Execution Time:"
 :: print end message
 echo.
 if exist "%output_path%\%exe_name%" (
-    echo ============================================
-    echo [Success] EXE created: "%output_path%\%exe_name%"
+    echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+    echo:%UTIL_UI_OK%[Success] EXE created: "%output_path%\%exe_name%"%UTIL_UI_RESET%
     call :print_size "%output_path%\%exe_name%"
-    echo ============================================
+    echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
 ) else (
-    echo ============================================
-    echo [Error] Compilation failed^! Check output above.
-    echo ============================================
-    echo Aborting. Press any key to exit
+    echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+    echo:%UTIL_UI_ERROR%[Error] Compilation failed^! Check output above.%UTIL_UI_RESET%
+    echo:%UTIL_UI_INFO%============================================%UTIL_UI_RESET%
+    echo:%UTIL_UI_ERROR%Aborting. Press any key to exit%UTIL_UI_RESET%
     PAUSE > nul
     exit /b 1
 )
 
 :: wait for user to press any key and exit
 echo.
-echo Press any key to exit
+echo:%UTIL_UI_WARN%Press any key to exit%UTIL_UI_RESET%
 PAUSE > nul
 exit /b 0
 
@@ -130,7 +148,7 @@ if "%count_time_s_start%"=="" (
     set /a CS=diff%%100
     if "%~1"=="" ( set "text=Duration:"
     ) else ( set "text=%~1" )
-    echo !text! !SEC!.!CS! s
+    echo:%UTIL_UI_INFO%!text! !SEC!.!CS! s%UTIL_UI_RESET%
     endlocal & set "count_time_s_start="
 )
 exit /b 0
@@ -145,13 +163,13 @@ setlocal enabledelayedexpansion
 rem %1 = path to the file or folder
 set "item_path=%~1"
 if not exist "%item_path%" (
-    echo File/Folder not found for size determination: %item_path%
+    echo:%UTIL_UI_INFO%File/Folder not found for size determination: %item_path%%UTIL_UI_RESET%
     exit /b 1
 )
 if "%~2"=="" ( set "text=Size:"
 ) else ( set "text=%~2" )
 FOR /F "usebackq tokens=*" %%G IN (`powershell -ExecutionPolicy Bypass -Command "$Path = '%item_path%'; $Item = Get-Item -LiteralPath $Path; $1MB = 1048576; $1GB = 1073741824; if ($Item.PSIsContainer) { $B = (Get-ChildItem -Recurse -File -LiteralPath $Path | Measure-Object -Sum Length).Sum; } else { $B = $Item.Length; } if (-not $B) { $B = 0 }; if ($B -ge $1GB) { '{0:N1} GB' -f ($B / $1GB) } elseif ($B -ge $1MB) { '{0:N1} MB' -f ($B / $1MB) } else { '{0:N0} Bytes' -f $B }"`) DO (
-    echo %text% %%G 
+    echo:%UTIL_UI_INFO%%text% %%G %UTIL_UI_RESET%
 )
 endlocal
 exit /b 0
@@ -165,8 +183,8 @@ exit /b 0
 ::::::::::::::::::::::::::::::::::::::::::::::::
 :set_abs_path
     if "%~2"=="" (
-        echo [Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). 
-        echo Aborting. Press any key to exit.
+        echo:%UTIL_UI_ERROR%[Error] Second argument is missing for :set_abs_path function in "%~f0". (First argument was "%~1"^). %UTIL_UI_RESET%
+        echo:%UTIL_UI_ERROR%Aborting. Press any key to exit.%UTIL_UI_RESET%
         pause > nul
         exit /b 1
     )

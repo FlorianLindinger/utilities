@@ -1,4 +1,22 @@
 @echo off & setlocal enabledelayedexpansion
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Archive: Convert batch to exe%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 
 :: ==============================================================================
 :: DESCRIPTION: Compiles a Batch file into a standalone EXE. 
@@ -22,10 +40,10 @@ if "%target_batch%"=="" (
         )
     )
     if !b_count! equ 1 (
-        echo [+] Auto-detected Batch: !target_batch!
+        echo:%UTIL_UI_INFO%[+] Auto-detected Batch: !target_batch!%UTIL_UI_RESET%
     ) else (
-        echo [Error] No batch file specified and couldn't auto-detect a unique one.
-        echo Press any key to exit.
+        echo:%UTIL_UI_ERROR%[Error] No batch file specified and couldn't auto-detect a unique one.%UTIL_UI_RESET%
+        echo:%UTIL_UI_WARN%Press any key to exit.%UTIL_UI_RESET%
         pause > nul
         exit /b 1
     )
@@ -47,10 +65,10 @@ if "%target_icon%"=="" (
         set "target_icon=%%f"
     )
     if !i_count! equ 1 (
-        echo [+] Auto-detected Icon: !target_icon!
+        echo:%UTIL_UI_INFO%[+] Auto-detected Icon: !target_icon!%UTIL_UI_RESET%
     ) else (
-        echo [Error] No icon file specified and couldn't auto-detect a unique one.
-        echo Press any key to exit.
+        echo:%UTIL_UI_ERROR%[Error] No icon file specified and couldn't auto-detect a unique one.%UTIL_UI_RESET%
+        echo:%UTIL_UI_WARN%Press any key to exit.%UTIL_UI_RESET%
         pause > nul
         exit /b 1
     )
@@ -61,8 +79,8 @@ set "csc_path=C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 set "tmp_cs_file=%temp%\embedded_maker_%random%.cs"
 
 if not exist "%csc_path%" (
-    echo [!] Error: C# Compiler not found.
-    echo Press any key to exit.
+    echo:%UTIL_UI_ERROR%[!] Error: C# Compiler not found.%UTIL_UI_RESET%
+    echo:%UTIL_UI_WARN%Press any key to exit.%UTIL_UI_RESET%
     pause > nul
     exit /b 1
 )
@@ -98,25 +116,25 @@ echo }
 
 :: --- 4. Compile with Resource Embedding ---
 echo.
-echo ===========================================
-echo EMBEDDING: %target_batch%
-echo ICON:      %target_icon%
-echo OUTPUT:    %output_exe%
-echo ===========================================
-echo Compiling standalone binary...
+echo:%UTIL_UI_INFO%===========================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%EMBEDDING: %target_batch%%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%ICON:      %target_icon%%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%OUTPUT:    %output_exe%%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%===========================================%UTIL_UI_RESET%
+echo:%UTIL_UI_INFO%Compiling standalone binary...%UTIL_UI_RESET%
 
 :: The /resource flag is what actually puts the batch file inside the EXE
 "%csc_path%" /out:"!output_exe!" /target:winexe /win32icon:"%target_icon%" /resource:"%target_batch%",Internal.bat "%tmp_cs_file%" /nologo
 
 if %errorlevel% equ 0 (
     echo.
-    echo [Success] Standalone "!output_exe!" created.
+    echo:%UTIL_UI_OK%[Success] Standalone "!output_exe!" created.%UTIL_UI_RESET%
 ) else (
     echo.
-    echo [Error] Compilation failed.
+    echo:%UTIL_UI_ERROR%[Error] Compilation failed.%UTIL_UI_RESET%
 )
 
 :: --- 5. Cleanup ---
 if exist "%tmp_cs_file%" del "%tmp_cs_file%"
-echo Press any key to exit.
+echo:%UTIL_UI_WARN%Press any key to exit.%UTIL_UI_RESET%
 pause > nul

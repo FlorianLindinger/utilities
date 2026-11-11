@@ -6,6 +6,24 @@
 
 @ECHO OFF
 setlocal EnableExtensions
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Archive: Safer delete folder%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 :: ====================
 :: ===== Settings =====
 :: ====================
@@ -90,7 +108,7 @@ FOR %%A IN (%TMP%) DO SET /A DEPTH+=1
 IF %MIN_DEPTH% GTR 0 IF %DEPTH% LSS %MIN_DEPTH% CALL :print_e "Path depth %DEPTH% is below minimum %MIN_DEPTH% for %abs_path%" & exit /b 10
 
 :: ==== get folder size ====
-ECHO: Measuring folder size ...
+echo:%UTIL_UI_INFO% Measuring folder size ...%UTIL_UI_RESET%
 for /f "usebackq delims=" %%A in (`
   powershell -NoProfile -Command ^
   "$s = Get-ChildItem -LiteralPath '%abs_path%' -Force -Recurse -ErrorAction SilentlyContinue | Measure-Object -Sum Length; [int64]$s.Sum"
@@ -107,13 +125,13 @@ IF %folder_size_GB% GTR %MAX_ALLOWED_FOLDER_SIZE_GB% CALL :print_e "Folder size 
 
 :: ===== User confirmation =====
 echo(
-echo %msg%
+echo:%UTIL_UI_INFO%%msg%%UTIL_UI_RESET%
 :ask
-ECHO Confirm deletion (Y/N):
+echo:%UTIL_UI_INFO%Confirm deletion (Y/N):%UTIL_UI_RESET%
 SET /P ANSW="":
 IF /I "%ANSW%"=="Y" GOTO yes
 IF /I "%ANSW%"=="N" GOTO no
-ECHO Please enter Y or N:
+echo:%UTIL_UI_INFO%Please enter Y or N:%UTIL_UI_RESET%
 GOTO ask
 :yes
 SET "confirmed=1"
@@ -133,7 +151,7 @@ powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic; [M
 IF EXIST "%abs_path%\*" CALL :print_e "Moving folder to Recycle Bin failed" & exit /b 13
 
 :: ==== exit success =====
-ECHO Folder successfully moved to Recycle Bin: %abs_path%
+echo:%UTIL_UI_OK%Folder successfully moved to Recycle Bin: %abs_path%%UTIL_UI_RESET%
 exit /b 0
 
 :: ================================
