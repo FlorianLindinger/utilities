@@ -24,7 +24,7 @@ def export(args: argparse.Namespace) -> Path:
     profile, _ = select_profile(user, storage, name)
     settings_dir = category_directory(user, profile, "settings")
     # The sync payload already excludes machine settings and user sync exclusions.
-    # Reuse its freshness check so an older snapshot cannot silently replace output.
+    # Compare synced values so comment/excluded-setting edits need no new snapshot.
     payload = synced_settings(user, profile, settings_dir / "settings.json")
     settings = json.loads(payload)["settings"]
     output = args.output.resolve()
