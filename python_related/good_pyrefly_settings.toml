@@ -31,8 +31,6 @@ not-required-key-access = "warn"
 # Warn when a typed function body is only `...`. Default: ignore.
 empty-body = "warn"
 # Warn when a non-boolean value is used directly as a condition. Default: ignore.
-implicit-bool = "warn"
-# Warn when importing a name that is not explicitly re-exported. Default: ignore.
 implicit-reexport = "warn"
 # Warn when equality compares built-in types that cannot be equal. Default: ignore.
 incompatible-comparison = "warn"
