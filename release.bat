@@ -35,7 +35,7 @@ try {
     $root = $env:UTILITIES_RELEASE_ROOT
     $tag = $env:UTILITIES_RELEASE_TAG
     $relativePaths = @(
-        'vscode_related\good_vscode_settings.json'
+        'vscode_related\output\user_settings.json'
         'python_related\good_pyrefly_settings.toml'
         'python_related\good_Ruff_settings.toml'
         'vscode_related\.vscode\extensions.json'
