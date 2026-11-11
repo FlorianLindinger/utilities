@@ -63,6 +63,11 @@ rem Check Windows Error Reporting crash dumps (1=yes, 0=no).
 rem This does NOT enable Windows crash dump generation.
 set "INCLUDE_DUMPS=1"
 
+rem Inspect the current process's newest dump for C++ allocation failures (1=yes).
+rem Uses an existing cdb.exe (PATH or Windows SDK); installs/downloads nothing.
+rem Optional analysis is limited to 15 seconds and never prevents the report.
+set "ANALYZE_DUMPS=1"
+
 rem Optional dump folder; AUTO checks the WER registry setting,
 rem falling back to %%LOCALAPPDATA%%\CrashDumps.
 set "DUMP_DIR=AUTO"
@@ -128,6 +133,82 @@ function Resolve-WatchPath([string]$value, [string]$root) {
 }
 
 function Is-Enabled([string]$value) { return $value -eq '1' }
+
+function Find-CrashDebugger {
+    $command = Get-Command cdb.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($command) { return $command.Source }
+    foreach ($root in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+        if (-not $root) { continue }
+        $candidate = Join-Path $root 'Windows Kits\10\Debuggers\x64\cdb.exe'
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+    }
+}
+
+function Test-DumpAllocationFailure([string]$text) {
+    # Require a throw on the crashed thread and an exception-record-derived type.
+    # Searching arbitrary dump strings would match unused C++ runtime messages.
+    return ($text -match '!CxxThrowException\b' -and
+        $text -match '(?m)^[0-9a-fA-F`]+\s+"\.\?AVbad_alloc@std@@"')
+}
+
+function Read-DumpMemoryEvidence([string]$debugger, [string]$dumpPath, [int]$timeoutMs = 15000) {
+    # MSVC x64 exception records may survive below terminate()/abort(). Decode
+    # their ThrowInfo -> catchable type -> RTTI name; no private PDBs are needed.
+    # These offsets are MSVC implementation details, so unsupported/missing data
+    # must yield an unknown diagnosis, never an inferred allocation failure.
+    # https://devblogs.microsoft.com/oldnewthing/20100730-00/?p=13273
+    $commands = '.ecxr; k; .if (@$ptrsize == 8) { .foreach (cw {s -[1]d @rsp L10000 e06d7363}) { .if ((dwo(${cw}+18)==4) and (poi(${cw}+20)==19930520)) { da poi(${cw}+38)+dwo(poi(${cw}+38)+dwo(poi(${cw}+38)+dwo(poi(${cw}+30)+c)+4)+4)+10 L80 } } }; q'
+    $reader = New-Object Diagnostics.Process
+    $reader.StartInfo.FileName = $debugger
+    # Ignore symbol-server environment settings and use a local-only symbol path.
+    $reader.StartInfo.Arguments = '-sins -y "." -z "' + $dumpPath + '" -c "' + $commands + '"'
+    $reader.StartInfo.UseShellExecute = $false
+    $reader.StartInfo.CreateNoWindow = $true
+    $reader.StartInfo.RedirectStandardOutput = $true
+    $reader.StartInfo.RedirectStandardError = $true
+    try {
+        $null = $reader.Start()
+        # Drain both streams concurrently so a verbose debugger cannot deadlock.
+        $stdout = $reader.StandardOutput.ReadToEndAsync()
+        $stderr = $reader.StandardError.ReadToEndAsync()
+        if (-not $reader.WaitForExit($timeoutMs)) {
+            $reader.Kill()
+            return [pscustomobject]@{ AllocationFailure = $false; Note = 'Dump analysis timed out; cause not determined.' }
+        }
+        $output = $stdout.GetAwaiter().GetResult()
+        $null = $stderr.GetAwaiter().GetResult()
+        $found = Test-DumpAllocationFailure $output
+        $note = if ($found) { "MSVC std::bad_alloc exception record on the crashed thread in $dumpPath" }
+                else { 'Dump inspection did not establish an allocation failure (missing data or unsupported runtimes may prevent detection).' }
+        return [pscustomobject]@{ AllocationFailure = $found; Note = $note }
+    } catch {
+        return [pscustomobject]@{ AllocationFailure = $false; Note = "Dump analysis unavailable: $($_.Exception.Message)" }
+    } finally {
+        $reader.Dispose()
+    }
+}
+
+function Get-CrashDiagnosis([string]$code, $memoryEvidence) {
+    # Generic fail-fast (C0000409) and C++ EH (E06D7363) are NOT OOM codes.
+    $memoryCodes = @{
+        '0xC0000017' = 'STATUS_NO_MEMORY'
+        '0xC000012D' = 'STATUS_COMMITMENT_LIMIT'
+        '0x8007000E' = 'E_OUTOFMEMORY'
+    }
+    if ($memoryCodes.ContainsKey($code)) {
+        'DIAGNOSIS: OUT OF MEMORY / MEMORY ALLOCATION FAILURE'
+        "Evidence: Exit status $code ($($memoryCodes[$code]))."
+    } elseif ($memoryEvidence.AllocationFailure) {
+        'DIAGNOSIS: LIKELY OUT OF MEMORY / MEMORY ALLOCATION FAILURE'
+        "Evidence: $($memoryEvidence.Note)"
+    } else {
+        'DIAGNOSIS: Cause not determined automatically.'
+        "Memory check: $($memoryEvidence.Note)"
+        return
+    }
+    'An allocation could not be satisfied; possible limits include RAM, paging-file/commit capacity, address space, or an oversized request.'
+    'Try reducing the workload/batch/grid size; check system memory and paging-file capacity.'
+}
 
 try {
     if ($env:APP_EXE.Trim().Trim('"') -ieq 'auto') {
@@ -495,6 +576,21 @@ if ((Is-Enabled $env:CONFIRMED_CRASH_ONLY) -and -not $launchError -and -not $has
     return
 }
 
+$memoryEvidence = [pscustomobject]@{ AllocationFailure = $false; Note = 'Dump analysis disabled.' }
+if (Is-Enabled $env:ANALYZE_DUMPS) {
+    # Other instances can crash during a long run. Never diagnose from their dumps.
+    $currentDump = $dumps | Where-Object { $_.Name -ieq "$appFileName.$processId.dmp" } | Select-Object -First 1
+    $memoryEvidence.Note = 'No recent dump matched this process ID.'
+    if ($currentDump) {
+        $debugger = Find-CrashDebugger
+        if ($debugger) {
+            $memoryEvidence = Read-DumpMemoryEvidence $debugger $currentDump.FullName
+        } else {
+            $memoryEvidence.Note = 'cdb.exe was not found; dump inspection skipped. Exit status alone may not identify out-of-memory failures.'
+        }
+    }
+}
+
 $requestedReportDirectory = Resolve-WatchPath $env:REPORT_DIR $scriptFolder
 if (-not $requestedReportDirectory) { $requestedReportDirectory = Join-Path $scriptFolder 'CrashReports' }
 try {
@@ -511,6 +607,8 @@ $elapsed = if ($finishedAt) { '{0:N1} seconds' -f ($finishedAt - $startedAt).Tot
 $reportLines = @(
     "$appFileName - unexpected termination report"
     ('=' * 60)
+    (Get-CrashDiagnosis $hexCode $memoryEvidence)
+    ''
     "Report created: $((Get-Date).ToString('o'))"
     "Executable: $exe"
     "Arguments: $($env:APP_ARGS)"
