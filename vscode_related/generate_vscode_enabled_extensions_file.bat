@@ -1,5 +1,23 @@
 @echo off
 setlocal
+rem --- Console presentation: NO_COLOR disables ANSI; UTILITIES_QUIET hides headings. ---
+set "UTIL_UI_ESC="
+set "UTIL_UI_INFO="
+set "UTIL_UI_OK="
+set "UTIL_UI_WARN="
+set "UTIL_UI_ERROR="
+set "UTIL_UI_RESET="
+if not defined NO_COLOR if /I not "%TERM%"=="dumb" for /F "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "UTIL_UI_ESC=%%E"
+if defined UTIL_UI_ESC set "UTIL_UI_INFO=%UTIL_UI_ESC%[96m"
+if defined UTIL_UI_ESC set "UTIL_UI_OK=%UTIL_UI_ESC%[92m"
+if defined UTIL_UI_ESC set "UTIL_UI_WARN=%UTIL_UI_ESC%[93m"
+if defined UTIL_UI_ESC set "UTIL_UI_ERROR=%UTIL_UI_ESC%[91m"
+if defined UTIL_UI_ESC set "UTIL_UI_RESET=%UTIL_UI_ESC%[0m"
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%  Export enabled VS Code extensions%UTIL_UI_RESET%
+if not defined UTILITIES_QUIET >&2 echo(%UTIL_UI_INFO%============================================================%UTIL_UI_RESET%
+rem --- End console presentation. ---
+
 REM Export installed extensions enabled for the current folder (or --workspace).
 REM Requires Python 3 on PATH, or the Windows py launcher. No extra packages.
 REM Optional: --profile "Profile Name", --user-data-dir PATH, --output PATH.
@@ -13,6 +31,11 @@ goto finish
 py -3 -c "import os,sys; from pathlib import Path; p=Path(os.environ['EXPORT_SELF']); exec(compile(p.read_text(encoding='utf-8').split(chr(10)+'# PYTHON_PAYLOAD'+chr(10),1)[1],str(p),'exec'))" %*
 :finish
 set "EXPORT_RESULT=%errorlevel%"
+if "%EXPORT_RESULT%"=="0" (
+    echo:%UTIL_UI_OK%[OK] Export completed.%UTIL_UI_RESET%
+) else (
+    >&2 echo:%UTIL_UI_ERROR%[ERROR] Export failed. Exit code: %EXPORT_RESULT%.%UTIL_UI_RESET%
+)
 if not defined EXPORT_NO_PAUSE pause
 exit /b %EXPORT_RESULT%
 # PYTHON_PAYLOAD

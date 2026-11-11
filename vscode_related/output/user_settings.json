@@ -121,7 +121,7 @@
   // diffs
   "diffEditor.ignoreTrimWhitespace": false, // Include edge-whitespace changes in diffs.
   "diffEditor.maxComputationTime": 0, // Diff timeout in ms; 0 = unlimited.
-  "diffEditor.hideUnchangedRegions.enabled": true, // not synced; Collapse unchanged diff sections.
+  // "diffEditor.hideUnchangedRegions.enabled": true, // not synced; ENABLE IF NEEDED; Collapse unchanged diff sections.
   // =====================================
   // notebooks
   "notebook.compactView": true, // Reduce cell spacing.
@@ -149,15 +149,15 @@
   },
   // =====================================
   // Python
-  "python-envs.globalSearchPaths": [
-    "D:\\Users\\IRScope\\Documents\\python_env"
-  ], // Virtual-environment search folders (if "python evnironments" extension on).
-  "python.venvPath": "D:/Users/IRScope/Documents/python_envs", // not synced; Virtual-environment search folder.
-  "python.defaultInterpreterPath": "D:\\Users\\IRScope\\Documents\\python_env\\test\\Scripts\\python.exe", // not synced; Initial default; does not override workspace selection.
+  // "python-envs.globalSearchPaths": [ // not synced; ENABLE IF NEEDED; Virtual-environment search folders (if "python evnironments" extension on).
+  //   "D:\\Users\\Username\\Documents\\python_envs"
+  // ],
+  // "python.venvPath": "C:/Users/Username/Documents/python_envs", // not synced; ENABLE IF NEEDED; Virtual-environment search folder.
+  // "python.defaultInterpreterPath": "C:\\Users\\Username\\Documents\\python_envs\\env_name\\Scripts\\python.exe", // not synced; ENABLE IF NEEDED; Initial default; does not override workspace selection.
+  // "python.useEnvironmentsExtension": false, // not synced; ENABLE IF NEEDED; Use Python extension environment handling. May reduce startup time.
   "python.analysis.inlayHints.variableTypes": false, // Hide inferred variable-type hints.
   "python.analysis.inlayHints.functionReturnTypes": true, // Show inferred return-type hints.
   "python.analysis.autoImportCompletions": false,
-  "python.useEnvironmentsExtension": false, // not synced; Use Python extension environment handling. May reduce startup time.
   "python.testing.pytestEnabled": false, // false = faster start
   "python.testing.unittestEnabled": false, // Disable unittest discovery/integration.
   "python.experiments.optOutFrom": [ // All opts out of every Python experiment.
@@ -743,13 +743,13 @@
   // java - extension
   "js/ts.tsserver.watchOptions": "vscode", // Use VS Code file watching for JS/TS.
   "jdk.telemetry.enabled": false,
-  "java.configuration.runtimes": [ // not synced; Local JDKs by Java execution environment.
-    {
-      "name": "JavaSE-25", // Java version supplied by this JDK.
-      "path": "D:/Programs/Java", // JDK root, not bin.
-      "default": true // Default JDK for standalone Java files.
-    }
-  ],
+  // "java.configuration.runtimes": [ // not synced; ENABLE IF NEEDED; Local JDKs by Java execution environment.
+  //   {
+  //     "name": "JavaSE-25", // Java version supplied by this JDK. ; CHANGE TO YOUR JAVA VERSION
+  //     "path": "C:/Program Files/Java", // JDK root, not bin.       CHANGE TO YOUR JAVA ROOT PATH
+  //     "default": true // Default JDK for standalone Java files.
+  //   }
+  // ],
   // =====================================
   // C/C++ - extension 
   "[cpp]": { // C++-only overrides.
@@ -773,5 +773,5 @@
   },
   // =====================================
   // =====================================
-  "NEW_SETTINGS_ARE_BELOW": "" // <-- NEW SETTING
+  "NEW_SETTINGS_ARE_BELOW": "", // <-- NEW SETTING
 }

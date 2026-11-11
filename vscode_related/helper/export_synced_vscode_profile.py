@@ -1,15 +1,17 @@
-"""Export a VS Code profile with the settings VS Code actually syncs."""
+"""Export a VS Code profile from a sync snapshot with current extension exclusions."""
 
 import argparse
-from contextlib import closing
-from datetime import datetime
 import json
 import os
-from pathlib import Path
 import re
 import sqlite3
 import sys
+from contextlib import closing
+from datetime import datetime
+from pathlib import Path
 from urllib.parse import unquote, urlparse
+
+from filter_sync_settings import extension_manifests, filter_settings, restore_section_comments, settings_values
 
 
 def read_json(path: Path):
@@ -70,7 +72,7 @@ def category_directory(user: Path, profile: dict, category: str) -> Path:
 
 
 def synced_settings(user: Path, profile: dict, settings_file: Path) -> str:
-    """Use VS Code's filtered sync payload, never a guessed machine-setting list."""
+    """Verify newer local content against sync, ignoring excluded values and comments."""
     if not settings_file.is_file():
         raise RuntimeError(f"Profile settings file is missing: {settings_file}")
     profile_id = "" if settings_file.parent == user else profile["location"]
@@ -78,15 +80,26 @@ def synced_settings(user: Path, profile: dict, settings_file: Path) -> str:
     snapshot = sync_root / "settings" / "lastSyncsettings.json"
     if not snapshot.is_file():
         raise RuntimeError(f"No synced settings snapshot for this profile: {snapshot}")
-    if snapshot.stat().st_mtime_ns < settings_file.stat().st_mtime_ns:
-        raise RuntimeError("Local settings are newer than Settings Sync. Let VS Code sync, then rerun.")
     content = read_json(snapshot).get("syncData", {}).get("content")
     if not isinstance(content, str):
         raise RuntimeError("The Settings Sync snapshot has no settings content.")
     payload = json.loads(content)
     if not isinstance(payload, dict) or not isinstance(payload.get("settings"), str):
         raise RuntimeError("The Settings Sync snapshot has an unexpected format.")
-    return content
+    with settings_file.open(encoding="utf-8-sig", newline="") as source:
+        local_settings = source.read()
+    manifests = list(extension_manifests())
+    snapshot_settings = filter_settings(payload["settings"], manifests, local_settings)
+    local_filtered = filter_settings(local_settings, manifests, local_settings)
+    if settings_values(local_filtered) == settings_values(snapshot_settings):
+        # Sync need not rewrite its snapshot after comment/excluded-setting edits.
+        # Prefer local text so all current headings, spacing and line endings survive.
+        payload["settings"] = local_filtered
+    elif snapshot.stat().st_mtime_ns < settings_file.stat().st_mtime_ns:
+        raise RuntimeError("Local synced setting values differ from Settings Sync. Let VS Code sync, then rerun.")
+    else:
+        payload["settings"] = restore_section_comments(snapshot_settings, local_settings)
+    return json.dumps(payload, ensure_ascii=False)
 
 
 def disabled_extensions(database: Path) -> set[str]:

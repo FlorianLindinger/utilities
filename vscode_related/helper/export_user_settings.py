@@ -29,7 +29,8 @@ def export(args: argparse.Namespace) -> Path:
     settings = json.loads(payload)["settings"]
     output = args.output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(settings.rstrip("\r\n") + "\n", encoding="utf-8")
+    # Sync text already has line endings; Windows translation would double CRs.
+    output.write_text(settings.rstrip("\r\n") + "\n", encoding="utf-8", newline="")
     print(f"Exported synced user settings for profile '{name}' to {output}")
     return output
 
