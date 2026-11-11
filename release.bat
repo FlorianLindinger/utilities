@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-rem Usage: release.bat TAG [--dry-run]
+rem Usage: release.bat major^|minor^|vMAJOR.MINOR [--dry-run]
 if /I "%~1"=="--help" goto :help
 if "%~1"=="/?" goto :help
 if "%~1"=="" goto :usage_error
@@ -14,16 +14,19 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$text = [IO.
 exit /b %errorlevel%
 
 :usage_error
-echo Usage: release.bat TAG [--dry-run] 1>&2
+echo Usage: release.bat major^|minor^|vMAJOR.MINOR [--dry-run] 1>&2
 exit /b 2
 
 :help
-echo Usage: release.bat TAG [--dry-run]
-echo Example: release.bat v1.0.0
-echo Uploads the five current local setup files as GitHub release assets.
+echo Usage: release.bat major^|minor^|vMAJOR.MINOR [--dry-run]
+echo Examples: release.bat minor --dry-run
+echo           release.bat major
+echo           release.bat v1.2
+echo Uploads five local setup files and a freshly exported VS Code profile.
 echo Targets the current Git commit, which must already exist on GitHub.
 echo Requires GitHub CLI: install gh, then run gh auth login.
-echo --dry-run validates inputs without contacting GitHub or publishing.
+echo Bumps use the highest remote version tag; no tags: minor = v0.1, major = v1.0.
+echo --dry-run previews without publishing; bumps still read remote Git tags.
 exit /b 0
 
 # POWERSHELL_PAYLOAD
@@ -32,22 +35,61 @@ try {
     $root = $env:UTILITIES_RELEASE_ROOT
     $tag = $env:UTILITIES_RELEASE_TAG
     $relativePaths = @(
-        'vscode related\good_vscode_settings.json'
-        'python related\good_pyrefly_settings.toml'
-        'python related\good_Ruff_settings.toml'
-        'vscode related\.vscode\extensions.json'
-        'python related\create_python_env.bat'
+        'vscode_related\good_vscode_settings.json'
+        'python_related\good_pyrefly_settings.toml'
+        'python_related\good_Ruff_settings.toml'
+        'vscode_related\.vscode\extensions.json'
+        'python_related\create_python_env.bat'
     )
     $sources = @($relativePaths | ForEach-Object { Join-Path $root $_ })
     $missing = @($sources | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) })
     if ($missing.Count) {
         throw ('Missing release files:' + [Environment]::NewLine + ($missing -join [Environment]::NewLine))
     }
+    $profileExporter = Join-Path $root 'vscode_related\helper\export_synced_vscode_profile.py'
+    if (-not (Test-Path -LiteralPath $profileExporter -PathType Leaf)) {
+        throw "Missing VS Code profile exporter: $profileExporter"
+    }
     if (-not (Get-Command git.exe -ErrorAction SilentlyContinue)) { throw 'Git is required.' }
+    if ($tag -in @('major', 'minor')) {
+        $bump = $tag.ToLowerInvariant()
+        # Read remote tags instead of relying on an outdated local tag cache.
+        $remoteTags = @(& git.exe -C $root ls-remote --tags --refs origin)
+        if ($LASTEXITCODE -ne 0) { throw 'Cannot read remote tags; version was not bumped.' }
+        $versions = @(
+            foreach ($line in $remoteTags) {
+                # Accept legacy patch tags as a baseline; always emit two-part tags.
+                if ($line -match '\srefs/tags/v?([0-9]+)\.([0-9]+)(?:\.[0-9]+)?$') {
+                    [pscustomobject]@{ Major = [long]$Matches[1]; Minor = [long]$Matches[2] }
+                }
+            }
+        )
+        $latest = $versions | Sort-Object Major, Minor -Descending | Select-Object -First 1
+        [long]$major = 0
+        [long]$minor = 0
+        if ($null -ne $latest) { $major = $latest.Major; $minor = $latest.Minor }
+        if ($bump -eq 'major') { $major = [long]($major + 1); $minor = 0 }
+        else { $minor = [long]($minor + 1) }
+        $tag = "v$major.$minor"
+    }
+    elseif ($tag -match '^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+        $tag = "v$($Matches[1]).$($Matches[2])"
+    }
+    else { throw 'Use major, minor, or a two-part version such as v1.2.' }
     & git.exe check-ref-format "refs/tags/$tag"
     if ($LASTEXITCODE -ne 0 -or $tag.StartsWith('-')) { throw 'Invalid release tag.' }
     $commit = & git.exe -C $root rev-parse --verify HEAD
     if ($LASTEXITCODE -ne 0) { throw 'Cannot read the current Git commit.' }
+    $profileAsset = Join-Path $root 'vscode_related\output\vscode_profile.code-profile'
+    if (Get-Command python.exe -ErrorAction SilentlyContinue) {
+        & python.exe $profileExporter --output $profileAsset --overwrite
+    }
+    elseif (Get-Command py.exe -ErrorAction SilentlyContinue) {
+        & py.exe -3 $profileExporter --output $profileAsset --overwrite
+    }
+    else { throw 'Python is required to export the VS Code profile.' }
+    if ($LASTEXITCODE -ne 0) { throw 'VS Code profile export failed; release was not created.' }
+    $sources += $profileAsset
     Write-Host "Tag: $tag"
     Write-Host "Commit: $commit"
     Write-Host 'Assets (current local contents):'

@@ -1,11 +1,11 @@
 @echo off
 setlocal
 
-:: Generate .vscode\extensions.json from installed extensions
-:: if .vscode is at workspace path, vscode will prompt user to install extensions in that file
+:: Generate output\all_extensions.json from installed extensions
+:: Copy the result to a workspace .vscode folder if extension recommendations are wanted there.
 
-set "OUTDIR=.vscode"
-set "OUTFILE=%OUTDIR%\extensions.json"
+set "OUTDIR=%~dp0output"
+set "OUTFILE=%OUTDIR%\all_extensions.json"
 
 REM Use PowerShell for JSON formatting.
 powershell -NoProfile -ExecutionPolicy Bypass ^
@@ -22,12 +22,12 @@ if errorlevel 1 (
   echo Failed to generate %OUTFILE%.
   echo: Press any key to exit
   pause > nul
-  exit \b 1
+  exit /b 1
 ) else (
-  echo: (Re^)generated .vscode\extensions.json
+  echo: (Re^)generated %OUTFILE%
   echo: Press any key to exit
   pause > nul
-  exit \b 0
+  exit /b 0
 )
 
 

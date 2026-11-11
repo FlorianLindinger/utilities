@@ -1,0 +1,27 @@
+{
+  "recommendations": [
+    "anthropic.claude-code",
+    "charliermarsh.ruff",
+    "donjayamanne.python-extension-pack",
+    "eamodio.gitlens",
+    "github.vscode-github-actions",
+    "kevinrose.vsc-python-indent",
+    "mcu-debug.debug-tracker-vscode",
+    "mechatroner.rainbow-csv",
+    "meta.pyrefly",
+    "mhelbich.claude-code-usage-status",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-toolsai.jupyter",
+    "ms-toolsai.jupyter-keymap",
+    "ms-toolsai.jupyter-renderers",
+    "nilssoderman.batch-runner",
+    "njqdev.vscode-python-typehint",
+    "oderwat.indent-rainbow",
+    "openai.chatgpt",
+    "saysaeqo.python-cprofile",
+    "streetsidesoftware.code-spell-checker",
+    "tamasfe.even-better-toml",
+    "usernamehw.commands"
+  ]
+}

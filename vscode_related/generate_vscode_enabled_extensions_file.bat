@@ -117,7 +117,7 @@ def main():
                         help="Folder or .code-workspace file (default: current folder)")
     parser.add_argument("--profile", help="Profile name (default: saved workspace association)")
     parser.add_argument("--user-data-dir", type=Path, help="Custom VS Code user-data directory")
-    parser.add_argument("--output", type=Path, default=Path(".vscode/extensions.json"))
+    parser.add_argument("--output", type=Path, default=Path(os.environ["EXPORT_SELF"]).parent / "output" / "enabled_extensions.json")
     args = parser.parse_args()
     try:
         export(args)

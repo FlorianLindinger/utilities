@@ -27,6 +27,7 @@ CALL :process_args %* || goto :fail
 :: derived from the environment path.
 :: A search path is added to the existing list instead of replacing it.
 :: python.venvPath holds only one folder, so it is replaced and the old value is printed.
+:: Before any change, a dated copy is saved in the settings_backups folder next to the file.
 :: It also moves the deprecated python.venvFolders setting to absolute search paths.
 ::
 :: After installing packages, the exact versions are saved in the environment
@@ -101,10 +102,10 @@ SET "validate_jupyter_kernel=N"
 :: gpu packages are left out automatically on computers without an NVIDIA GPU.
 :: The jupyter profile installs last so later installs cannot replace its dependencies.
 SET "def_profile_basic=numpy matplotlib pandas types-python-dateutil pillow tqdm types-tqdm pyyaml types-PyYAML rich pytest platformdirs openpyxl pyarrow py7zr html5lib"
-SET "def_profile_science=scipy scipy-stubs numba scikit-image opencv-python tifffile jax"
-SET "def_profile_physics=lightwaveexplorer pyserial types-pyserial nptdms"
+SET "def_profile_science=scipy scipy-stubs numba scikit-learn scikit-image opencv-python h5py tifffile jax"
+SET "def_profile_physics=lightwaveexplorer pybaselines chemometrics jcamp binreduce@git+https://gitlab.com/leberwurscht/binreduce.git@b2168ac053b0e7156e913a1cbb0b0c6d3e5532ff pyserial types-pyserial nptdms"
 SET "def_profile_gpu=cupy-cuda12x nvmath-python"
-SET "def_profile_apps=pyside6 pywin32 types-pywin32 pyautogui types-PyAutoGUI pywinauto nuitka"
+SET "def_profile_apps=pyside6 PyQt5 pywin32 types-pywin32 pyautogui types-PyAutoGUI pywinauto nuitka"
 SET "def_profile_jupyter=ipykernel ipywidgets ipympl"
 SET "def_packages=%def_profile_basic% %def_profile_science% %def_profile_physics% %def_profile_gpu% %def_profile_apps%"
 
@@ -176,6 +177,7 @@ IF NOT DEFINED vscode_env_search_path SET "vscode_env_search_path=%env_parent_pa
 :: Keep the default cache on the environment drive so uv can hardlink wheels.
 :: An explicitly configured cache directory takes precedence.
 IF NOT DEFINED UV_CACHE_DIR SET "UV_CACHE_DIR=%env_parent_path%\.uv-cache"
+CALL :use_pip_index_for_uv
 CALL :ensure_uv_tool || goto :fail
 CALL :resolve_python_version || goto :fail
 
@@ -269,6 +271,8 @@ SET "terminal_launcher_cmd=%env_path%\%terminal_launcher_name%.cmd"
 > "%terminal_launcher_cmd%" echo @echo off
 >> "%terminal_launcher_cmd%" echo title Terminal - %env_name% - Python !env_python_version!
 >> "%terminal_launcher_cmd%" echo if not defined UV_CACHE_DIR set "UV_CACHE_DIR=%%~dp0..\.uv-cache"
+>> "%terminal_launcher_cmd%" echo if defined PIP_INDEX_URL if not defined UV_DEFAULT_INDEX set "UV_DEFAULT_INDEX=%%PIP_INDEX_URL%%"
+>> "%terminal_launcher_cmd%" echo if not defined UV_DEFAULT_INDEX for /f "delims=" %%%%I in ('"%%~dp0Scripts\python.exe" -m pip config get global.index-url 2^^^>nul') do set "UV_DEFAULT_INDEX=%%%%I"
 >> "%terminal_launcher_cmd%" echo call "%%~dp0Scripts\activate.bat"
 :: /k keeps this window open at a prompt with the environment active.
 CALL :create_launcher terminal "%terminal_launcher_name%" "%terminal_launcher_cmd%" /k ""
@@ -643,6 +647,16 @@ exit /b 0
   )
   CALL :print_red [Error] %yn_name% must be Y or N.
   exit /b 1
+
+:: uv ignores pip's settings, so a company package server set up for pip would be
+:: bypassed. Later values in pip's own lookup order win, so check those files first.
+:: The address can contain a password, so it is never printed or written to a file.
+:use_pip_index_for_uv
+  IF DEFINED UV_DEFAULT_INDEX exit /b 0
+  IF DEFINED UV_INDEX_URL exit /b 0
+  for /f "delims=" %%I in ('powershell -NoProfile -Command "if ($env:PIP_INDEX_URL) { $env:PIP_INDEX_URL; exit 0 }; $files=@($env:PIP_CONFIG_FILE,(Join-Path $env:APPDATA 'pip\pip.ini'),(Join-Path $env:USERPROFILE 'pip\pip.ini'),(Join-Path $env:ProgramData 'pip\pip.ini')) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }; foreach ($f in $files) { $section=''; $found=@{}; foreach ($l in Get-Content -LiteralPath $f) { if ($l -match '^\s*\[(.+?)\]') { $section=$Matches[1].ToLower() } elseif ($l -match '^\s*index[-_]url\s*[=:]\s*(\S+)') { $found[$section]=$Matches[1] } }; $url=$found['install']; if (-not $url) { $url=$found['global'] }; if ($url) { $url; exit 0 } }"') do set "UV_DEFAULT_INDEX=%%I"
+  IF DEFINED UV_DEFAULT_INDEX echo:!GREEN!Using the package index configured for pip.!RESET!
+  exit /b 0
 
 :ensure_uv_tool
   set "uv_exe="
@@ -1147,7 +1161,7 @@ Write-Output 'dialog_completed=1'
 # and VS Code settings are edited here because they are comment-preserving JSONC.
 
 replace_existing = True
-import collections, hashlib, json, os, re, shlex, subprocess, sys
+import collections, hashlib, json, os, re, shlex, shutil, subprocess, sys, time
 from pathlib import Path
 
 RED = "\033[91m"
@@ -1163,6 +1177,7 @@ NVIDIA_ONLY_PACKAGES = re.compile(
     r"^(cupy(-cuda\d+x)?|nvmath-python|pycuda|cudf|cuml|nvidia-.+|onnxruntime-gpu|tensorflow-gpu)$"
 )
 JsoncMember = collections.namedtuple("JsoncMember", "key key_start value_start value_end")
+SETTINGS_BACKUPS_TO_KEEP = 10
 
 
 def say(message, color=GREEN):
@@ -1406,19 +1421,38 @@ def set_venv_path(jsonc, path):
     return set_key_value(jsonc, "python.venvPath", json.dumps(path), replace_existing)
 
 
+def backup_settings(path):
+    """Save a dated copy; an error here stops the update before the file is touched."""
+    source = Path(path)
+    if not source.exists():
+        return
+    folder = source.parent / "settings_backups"
+    folder.mkdir(exist_ok=True)
+    backup = folder / "settings-{0}.json".format(time.strftime("%Y%m%d-%H%M%S"))
+    shutil.copy2(source, backup)
+    # The dated names sort oldest first.
+    for old_backup in sorted(folder.glob("settings-*.json"))[:-SETTINGS_BACKUPS_TO_KEEP]:
+        old_backup.unlink()
+    say(" Backed up VS Code settings: " + str(backup))
+
+
 def update_vscode_settings():
     interpreter = os.environ.get("PY_ENV_HELPER_VSCODE_PYTHON")
     search_path = os.environ.get("PY_ENV_HELPER_VSCODE_SEARCH_PATH")
     if not interpreter and not search_path:
         return
     path = os.path.join(os.environ["APPDATA"], "Code", "User", "settings.json")
-    text = read_text(path)
+    original = text = read_text(path)
     text = migrate_array_setting(text, "python.venvFolders", "python-envs.globalSearchPaths")
     if interpreter:
         text = set_key_value(text, "python.defaultInterpreterPath", json.dumps(interpreter), replace_existing)
     if search_path:
         text = add_path_to_array(text, "python-envs.globalSearchPaths", search_path)
         text = set_venv_path(text, search_path)
+    if text == original:
+        say(" --VS Code user settings were already up to date--")
+        return
+    backup_settings(path)
     write_text(path, text)
     say(" --Updated VS Code user settings: " + path + "--")
 
@@ -1893,9 +1927,23 @@ def handle(line):
     return True
 
 
+def use_pip_index_for_uv():
+    """Give uv the index configured for pip; looked up here so no password is saved to a file."""
+    if os.environ.get("UV_DEFAULT_INDEX") or os.environ.get("UV_INDEX_URL"):
+        return
+    index = os.environ.get("PIP_INDEX_URL")
+    if not index:
+        result = subprocess.run([PYTHON, "-m", "pip", "config", "list"], capture_output=True, text=True)
+        settings = dict(re.findall(r"^(global|install)\.index[-_]url='(.*)'$", result.stdout, re.M))
+        index = settings.get("install") or settings.get("global")
+    if index:
+        os.environ["UV_DEFAULT_INDEX"] = index
+
+
 def main():
     os.system("")  # Turns on ANSI colors in consoles that start with them disabled.
     os.environ.setdefault("UV_CACHE_DIR", str(ENV_DIR.parent / ".uv-cache"))
+    use_pip_index_for_uv()
     ctypes.windll.kernel32.SetConsoleTitleW("Packages - {0} - Python {1}".format(ENV_DIR.name, platform.python_version()))
     say("Manage packages in python environment " + ENV_DIR.name)
     print(HELP)

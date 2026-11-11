@@ -2,7 +2,7 @@
   // =====================================
   // general 
   "settingsSync.ignoredSettings": [ // Exclude from sync; -setting re-enables a default exclusion.
-    "diffEditor.hideUnchangedRegions.enabled",
+    "diffEditor.hideUnchangedRegions.enabled"
   ],
   "settingsSync.ignoredExtensions": [],
   "workbench.startupEditor": "welcomePage", // Show Welcome when no editor is restored.
@@ -81,7 +81,7 @@
     "**/.ruff_cache": true,
     "**/.codex": true, // Codex config and support files.
     "**/.pytest_cache": true, // Pytest cache, including previous failures.
-    "**/*.pyc": true, // Compiled Python bytecode.
+    "**/*.pyc": true // Compiled Python bytecode.
   },
   "search.exclude": { // inherits all from "files.exclude"
   },
@@ -104,6 +104,8 @@
   },
   // =====================================
   // editor
+  "editor.hover.sticky": true,
+  "editor.hover.hidingDelay": 500,
   "editor.accessibilitySupport": "off", // Disable screen-reader optimizations.
   "editor.codeLens": false, // Hide inline actions/reference counts.
   "editor.showFoldingControls": "always", // Always show folding arrows.
@@ -144,6 +146,29 @@
     "editor.insertSpaces": true, // Tab inserts spaces; auto-detection may override.
     "editor.folding": true,
     "editor.showFoldingControls": "always" // Always show folding arrows.
+  },
+  // =====================================
+  // Python
+  "python-envs.globalSearchPaths": [
+    "D:\\Users\\IRScope\\Documents\\python_env"
+  ], // Virtual-environment search folders (if "python evnironments" extension on).
+  "python.venvPath": "D:/Users/IRScope/Documents/python_envs", // not synced; Virtual-environment search folder.
+  "python.defaultInterpreterPath": "D:\\Users\\IRScope\\Documents\\python_env\\test\\Scripts\\python.exe", // not synced; Initial default; does not override workspace selection.
+  "python.analysis.inlayHints.variableTypes": false, // Hide inferred variable-type hints.
+  "python.analysis.inlayHints.functionReturnTypes": true, // Show inferred return-type hints.
+  "python.analysis.autoImportCompletions": false,
+  "python.useEnvironmentsExtension": false, // not synced; Use Python extension environment handling. May reduce startup time.
+  "python.testing.pytestEnabled": false, // false = faster start
+  "python.testing.unittestEnabled": false, // Disable unittest discovery/integration.
+  "python.experiments.optOutFrom": [ // All opts out of every Python experiment.
+    "All"
+  ],
+  "[python]": { // Python-only overrides.
+    "editor.defaultFormatter": "charliermarsh.ruff", // Ruff formatter.
+    "editor.codeActionsOnSave": { // Code actions to run on save.
+      "source.organizeImports.ruff": "explicit", // Sort imports on explicit saves only.
+      "source.addMissingImports": "never" // Do not add imports on save.
+    }
   },
   // =====================================
   // jupyter (notebooks)
@@ -196,26 +221,8 @@
     "strings": false // No automatic suggestions in strings.
   },
   // =====================================
-  // Python
-  "python.analysis.inlayHints.variableTypes": false, // Hide inferred variable-type hints.
-  "python.analysis.inlayHints.functionReturnTypes": true, // Show inferred return-type hints.
-  "python.analysis.autoImportCompletions": false,
-  "python.useEnvironmentsExtension": false, // not synced; Use Python extension environment handling. May reduce startup time.
-  "python.testing.pytestEnabled": false, // false = faster start
-  "python.testing.unittestEnabled": false, // Disable unittest discovery/integration.
-  "python.experiments.optOutFrom": [ // All opts out of every Python experiment.
-    "All"
-  ],
-  "[python]": { // Python-only overrides.
-    "editor.defaultFormatter": "charliermarsh.ruff", // Ruff formatter.
-    "editor.codeActionsOnSave": { // Code actions to run on save.
-      "source.organizeImports.ruff": "explicit", // Sort imports on explicit saves only.
-      "source.addMissingImports": "never" // Do not add imports on save.
-    }
-  },
-  // =====================================
   // Ruff - extension - formatter/linter settings (python)
-  "ruff.configuration": "D:/Users/IRScope/Documents/Repositories/utilities/python related/good_Ruff_settings.toml", // Shared Ruff config; precedence set below.
+  "ruff.configuration": "D:/Users/IRScope/Documents/Repositories/utilities/python_related/good_Ruff_settings.toml", // Shared Ruff config; precedence set below.
   "ruff.configurationPreference": "filesystemFirst", // Local TOML wins; editorFirst reverses, editorOnly skips TOML.
   "ruff.lint.enable": true, // Enable linting independently of formatting.
   "ruff.lint.preview": false,
@@ -235,6 +242,13 @@
   "git.openRepositoryInParentFolders": "always", // Open Git repositories above the workspace.
   "git.postCommitCommand": "push", // Push after commits made through VS Code.
   // =====================================
+  "gitlens.currentLine.enabled": true, // Show Git blame for the current line
+  "gitlens.codeLens.enabled": false, // Hide Git annotations above functions/classes
+  "gitlens.hovers.enabled": true, // Enable Git commit information on hover
+  "gitlens.hovers.currentLine.over": "annotation", // Show hover only over blame annotation
+  "gitlens.statusBar.enabled": false, // Hide GitLens information in the status bar
+  "gitlens.blame.compact": true, // Reduce repeated author information in file blame
+  // =====================================
   // Github - extension
   "githubPullRequests.pushBranch": "always", // Push missing remote source branches when creating PRs.
   // =====================================
@@ -242,6 +256,17 @@
   "codexUsage.showRemaining": true, // Show quota remaining, not used.
   "codexUsage.compactStatusBar": false, // Show full usage details.
   "chatgpt.openOnStartup": false, // Keep the Codex/ChatGPT view closed at startup.
+  // =====================================
+  // Claude Code & Claude usage - extensions
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.hideOnboarding": true,
+  "claudeCode.archiveInactiveSessions": 0, // in days. 0 for disable
+  "claudeUsage.dangerThreshold": 75,
+  "claudeUsage.warningThreshold": 50,
+  "claudeUsage.showUsed": true,
+  "claudeCode.enableReopenClosedSessionShortcut": false,
+  "claudeCode.focusView": true,
+  "claudeCode.scrollToBottomOnSend": false,
   // =====================================
   // Code Spell Checker - extension
   "cSpell.enabled": true,
@@ -255,25 +280,15 @@
   "cSpell.enabledFileTypes": { // Enable checking by VS Code language ID.
     "scminput": true // vscode GUI
   },
-  "cSpell.userWords": [ // Personal accepted words shared across workspaces.
+  "cSpell.userWords": [
+    "DONT_CHANGE",
+    "LightwaveExplorer",
     "NumPy",
-    "SciPy",
+    "pybaselines",
     "Pyrefly",
     "pytest",
-    "pybaselines",
-    "LightwaveExplorer",
+    "SciPy"
   ],
-  // =====================================
-  // Claude Code & Claude usage - extensions
-  "claudeCode.preferredLocation": "panel",
-  "claudeCode.hideOnboarding": true,
-  "claudeCode.archiveInactiveSessions": 0, // in days. 0 for disable
-  "claudeUsage.dangerThreshold": 75,
-  "claudeUsage.warningThreshold": 50,
-  "claudeUsage.showUsed": true,
-  "claudeCode.enableReopenClosedSessionShortcut": false,
-  "claudeCode.focusView": true,
-  "claudeCode.scrollToBottomOnSend": false,
   // =====================================
   // buttons in GUI using "Commands"-extension
   "commands.commands": { // Custom Commands actions, menus, and buttons.
@@ -720,9 +735,9 @@
         "alignment": "right",
         "priority": 100, // Higher = farther left within the group.
         "tooltip": "Run the newest compiled EXE for the active C# project",
-        "activeEditorGlob": "**/*.{cs,csproj,xml,config,resx,props,targets,xaml}", // Show only for matching active files.
+        "activeEditorGlob": "**/*.{cs,csproj,xml,config,resx,props,targets,xaml}" // Show only for matching active files.
       }
-    },
+    }
   },
   // =====================================
   // java - extension
@@ -754,9 +769,9 @@
     "editor.codeActionsOnSave": { // Code actions to run on save.
       "source.organizeImports": "always" // "always"= automatically sort and remove unused "using"-directives on save
     },
-    "editor.acceptSuggestionOnCommitCharacter": false, // Do not accept suggestions when typing punctuation
+    "editor.acceptSuggestionOnCommitCharacter": false // Do not accept suggestions when typing punctuation
   },
   // =====================================
   // =====================================
-  "NEW_SETTINGS_ARE_BELOW": "", // <-- NEW SETTING
+  "NEW_SETTINGS_ARE_BELOW": "" // <-- NEW SETTING
 }

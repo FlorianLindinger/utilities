@@ -1,0 +1,14 @@
+title = "Repository scan with LightwaveExplorer WebDAV variable exception"
+
+[extend]
+useDefault = true
+
+# Only the literal shell variable in these five known source locations is benign.
+# Keep every other curl-auth-user result and every other rule active.
+[[allowlists]]
+description = "LightwaveExplorer reads the WebDAV token at runtime; this is a variable, not a committed token"
+targetRules = ["curl-auth-user"]
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^\$webdav_token:nopass$''']
+paths = ['''(?:^|/)LightwaveExplorer/Source/(?:BuildResources/ClusterScripts/(?:filesend|fileget|lweget)\.sh|LightwaveExplorerInterfaceClasses\.cpp)$''', '''^Source/(?:BuildResources/ClusterScripts/(?:filesend|fileget|lweget)\.sh|LightwaveExplorerInterfaceClasses\.cpp)$''']
