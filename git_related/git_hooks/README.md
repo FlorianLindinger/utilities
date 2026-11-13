@@ -119,15 +119,21 @@ To accept one line for good, put `pragma: allowlist secret` (or `hooks: ignore`)
 ## How it looks
 
 ```text
-Commit blocked: secrets: app.py:1  GitHub token  ghp_…r8  (see the Git output for details)
-── pre-commit ──────────────────────────────────────────────────
+Commit blocked: secrets: app.py:1  GitHub token  ghp_…r8. Click "Show Command Output" for details.
+
+── pre-commit ──────────────────────────────────────────────────────
   ✗ secrets           1 problem
       app.py:1  GitHub token  ghp_…r8
+        | token = "ghp_…r8"
+        file:///D:/projects/app/app.py#L1
   ! whitespace        1 warning
       app.py:2: trailing whitespace.
+        file:///D:/projects/app/app.py#L2
   ✓ 9 other checks passed
+  Ctrl+click a file:/// link to open its line (in VS Code and most terminals).
+
 ✗ Commit blocked (0.4 s). Fix it and try again, or once:
-    skip these checks:  git -c hooks.secrets=off commit …
+    skip these checks:  git -c hooks.secrets=off commit -m "..."
     skip all checks:    git commit --no-verify
     turn a check off:   git config hooks.secrets off
 ```
@@ -135,7 +141,9 @@ Commit blocked: secrets: app.py:1  GitHub token  ghp_…r8  (see the Git output 
 In a terminal it is colored and a passing commit shows a single `✓ pre-commit: 11 checks passed
 (0.3 s)`. Outside a terminal (VS Code, other Git tools) the report starts with a one-line
 summary, because those tools show only a short error message; the full report is under
-**Show Command Output** in VS Code.
+**Show Command Output** in VS Code. Each finding in a file shows its line (secrets masked) and a
+`file:///…#L<line>` link, because that page is plain text where only full links can be clicked.
+Findings in commits being pushed get no link: the file on disk may have changed since.
 
 ## More hook ideas
 

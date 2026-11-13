@@ -124,6 +124,33 @@ def config_list(name: str, default: str) -> List[str]:
 class Problem(NamedTuple):
     text: str
     severity: str = ""  # "" = the check's own severity; WARN makes a finding only a warning
+    source: str = ""  # the line it is about, secrets masked
+    link: str = ""  # file:///...#L12: Ctrl+click opens the line from VS Code's "Show Command Output"
+
+
+def repo_root() -> Path:
+    return Path(git("rev-parse", "--show-toplevel").strip())
+
+
+def file_link(path: str, number: int = 0) -> str:
+    """A link to a file of the working tree, at a line if given ("" if the file is not there).
+
+    VS Code shows a blocked commit's output as plain text, where "app.py:12" cannot be clicked
+    but a full file:/// link can; terminals and other editors open them too.
+    """
+    target = repo_root() / path
+    if not target.is_file():
+        return ""
+    return target.resolve().as_uri() + (f"#L{number}" if number else "")
+
+
+def at_line(line: Line, text: str, severity: str = "", source: str = "") -> Problem:
+    """A finding on an added line: with the line itself and, for staged changes, a link to it.
+
+    A line of a pushed commit gets no link: the file on disk may have changed since.
+    """
+    link = "" if line.commit else file_link(line.path, line.number)
+    return Problem(text, severity, (source if source else line.text).strip()[:160], link)
 
 
 class Check(NamedTuple):
@@ -299,6 +326,13 @@ def ignored(line: Line) -> bool:
     return any(marker in line.text for marker in IGNORE_MARKERS)
 
 
+def masked_line(text: str) -> str:
+    """The line with every recognized secret masked, so it can be shown."""
+    for _label, pattern in SECRET_PATTERNS:
+        text = pattern.sub(lambda match: mask(match.group(0)), text)
+    return ASSIGNED_SECRET.sub(lambda match: match.group(0).replace(match.group(1), mask(match.group(1))), text)
+
+
 def check_secrets(context: Context) -> List[Problem]:
     problems: List[Problem] = []
     for line in context.added_lines():
@@ -307,7 +341,9 @@ def check_secrets(context: Context) -> List[Problem]:
         for label, pattern in SECRET_PATTERNS:
             match = pattern.search(line.text)
             if match:
-                problems.append(Problem(f"{line.where()}  {label}  {mask(match.group(0))}"))
+                problems.append(
+                    at_line(line, f"{line.where()}  {label}  {mask(match.group(0))}", source=masked_line(line.text))
+                )
                 break
         else:
             match = ASSIGNED_SECRET.search(line.text)
@@ -316,9 +352,8 @@ def check_secrets(context: Context) -> List[Problem]:
                 and not PLACEHOLDER.match(match.group(1))
                 and not re.search(r"(?i)environ|getenv|secrets\.|vault", line.text)
             ):
-                problems.append(
-                    Problem(f"{line.where()}  value assigned to a secret-like name  {mask(match.group(1))}", WARN)
-                )
+                text = f"{line.where()}  value assigned to a secret-like name  {mask(match.group(1))}"
+                problems.append(at_line(line, text, WARN, masked_line(line.text)))
     return problems
 
 
@@ -332,7 +367,8 @@ def check_personal_paths(context: Context) -> List[Problem]:
             name = match.group(1).lower()
             if name not in GENERIC_USER_FOLDERS:
                 mine = " (your user name)" if name in me else ""
-                problems.append(Problem(f"{line.where()}  home folder path{mine}: {match.group(0)}…"))
+                text = f"{line.where()}  home folder path{mine}: {match.group(0)}…"
+                problems.append(at_line(line, text, source=masked_line(line.text)))
                 break
     return problems
 
@@ -370,7 +406,9 @@ def check_secret_files(context: Context) -> List[Problem]:
         if any(fnmatch.fnmatch(name, p) for p in SECRET_FILES) and not any(
             fnmatch.fnmatch(name, p) for p in SAFE_FILES
         ):
-            found.append(Problem(f"{path}  (a file that usually holds secrets; add it to .gitignore)"))
+            found.append(
+                Problem(f"{path}  (a file that usually holds secrets; add it to .gitignore)", link=file_link(path))
+            )
     return found
 
 
@@ -383,7 +421,7 @@ TEXT_DOCUMENTS = (".md", ".rst", ".txt", ".adoc")
 
 def check_conflict_markers(context: Context) -> List[Problem]:
     return [
-        Problem(f"{line.where()}  {line.text.strip()[:20]}")
+        at_line(line, f"{line.where()}  conflict marker")
         for line in context.added_lines()
         if CONFLICT.match(line.text) or (SEPARATOR.match(line.text) and not line.path.endswith(TEXT_DOCUMENTS))
     ]
@@ -391,7 +429,12 @@ def check_conflict_markers(context: Context) -> List[Problem]:
 
 def check_whitespace(context: Context) -> List[Problem]:
     out = git("diff", "--cached", "--check", "--no-color", check=False)
-    return [Problem(row) for row in out.splitlines() if re.match(r"^.+:\d+: ", row)]
+    problems: List[Problem] = []
+    for row in out.splitlines():
+        location = re.match(r"^(.+):(\d+): ", row)
+        if location:
+            problems.append(Problem(row, link=file_link(location.group(1), int(location.group(2)))))
+    return problems
 
 
 DEBUG_PATTERNS = (
@@ -405,7 +448,7 @@ def check_debug_statements(context: Context) -> List[Problem]:
     for line in context.added_lines():
         for suffixes, pattern in DEBUG_PATTERNS:
             if line.path.endswith(suffixes) and pattern.match(line.text) and not ignored(line):
-                problems.append(Problem(f"{line.where()}  {line.text.strip()}"))
+                problems.append(at_line(line, f"{line.where()}  debug statement"))
     return problems
 
 
@@ -418,9 +461,8 @@ def check_large_files(context: Context) -> List[Problem]:
     for path in context.staged_paths("AM"):
         size = git("cat-file", "-s", f":{path}", check=False).strip()
         if size.isdigit() and int(size) > limit_mb * 1024 * 1024:
-            problems.append(
-                Problem(f"{path}  {int(size) / 1024 / 1024:.1f} MB (limit {limit_mb:g} MB: git config hooks.maxFileMB)")
-            )
+            text = f"{path}  {int(size) / 1024 / 1024:.1f} MB (limit {limit_mb:g} MB: git config hooks.maxFileMB)"
+            problems.append(Problem(text, link=file_link(path)))
     return problems
 
 
@@ -466,7 +508,8 @@ def check_notebook_outputs(context: Context) -> List[Problem]:
         if cells:
             problems.append(
                 Problem(
-                    f"{path}  {len(cells)} cell(s) with output (clear them, or: git config hooks.notebook-outputs off)"
+                    f"{path}  {len(cells)} cell(s) with output (clear them, or: git config hooks.notebook-outputs off)",
+                    link=file_link(path),
                 )
             )
     return problems
@@ -494,7 +537,9 @@ def run_ruff(arguments: List[str], path: str, content: bytes) -> Tuple[int, str]
     return completed.returncode, (completed.stdout + completed.stderr).decode("utf-8", "replace").strip()
 
 
-def ruff_problems(context: Context, arguments: List[str], describe: Callable[[str, str], List[str]]) -> List[Problem]:
+def ruff_problems(
+    context: Context, arguments: List[str], describe: Callable[[str, str], List[Problem]]
+) -> List[Problem]:
     names = [p for p in context.staged_paths("ACMR") if p.endswith((".py", ".pyi"))]
     if not names:
         return []
@@ -509,21 +554,30 @@ def ruff_problems(context: Context, arguments: List[str], describe: Callable[[st
     for name in names:
         code, output = run_ruff(arguments, name, git_bytes("show", f":{name}"))
         if code:
-            problems.extend(Problem(text) for text in describe(name, output))
+            problems.extend(describe(name, output))
     return problems
 
 
+def ruff_diagnostics(name: str, output: str) -> List[Problem]:
+    """One problem per "path:row:col: CODE message" line, with a link to that row."""
+    problems: List[Problem] = []
+    for row in output.splitlines():
+        if not row.strip():
+            continue
+        location = re.match(r"^.+?:(\d+):\d+: ", row)
+        problems.append(Problem(row, link=file_link(name, int(location.group(1))) if location else ""))
+    return problems or [Problem(f"{name}: Ruff failed", link=file_link(name))]
+
+
 def check_ruff(context: Context) -> List[Problem]:
-    return ruff_problems(
-        context,
-        ["check", "--no-fix", "--output-format", "concise", "--quiet"],
-        lambda name, output: [row for row in output.splitlines() if row.strip()] or [f"{name}: Ruff failed"],
-    )
+    return ruff_problems(context, ["check", "--no-fix", "--output-format", "concise", "--quiet"], ruff_diagnostics)
 
 
 def check_ruff_format(context: Context) -> List[Problem]:
     return ruff_problems(
-        context, ["format", "--check", "--quiet"], lambda name, _output: [f"{name}  not formatted (ruff format {name})"]
+        context,
+        ["format", "--check", "--quiet"],
+        lambda name, _output: [Problem(f"{name}  not formatted (ruff format {name})", link=file_link(name))],
     )
 
 
@@ -769,8 +823,10 @@ def report(hook: str, results: List[Result], notes: List[str], seconds: float, v
     if blocked and not INTERACTIVE:
         # Editors such as VS Code show only one line of a failed hook: name the problem in it.
         first = blocked[0]
-        say(f"{action} blocked: {first[0].title}: {first[2][0].text}  (see the Git output for details)")
-    say(paint(f"── {hook} " + "─" * 50, "head"))
+        # "Show Command Output" is the button of VS Code's error message that opens the full report.
+        say(f'{action} blocked: {first[0].title}: {first[2][0].text}. Click "Show Command Output" for details.')
+        say()
+    say(paint(f"── {hook} " + "─" * max(3, 66 - len(hook)), "head"))
     width = max(len(check.title) for check, *_ in results) if results else 0
     for check, status, problems, check_seconds in results:
         if status == "ok" and not verbose:
@@ -786,6 +842,10 @@ def report(hook: str, results: List[Result], notes: List[str], seconds: float, v
         say(f"  {symbol} {check.title.ljust(width)}  {detail}  {timing}".rstrip())
         for problem in problems[:20]:
             say(f"      {problem.text}")
+            if problem.source:
+                say(paint(f"        | {problem.source}", "dim"))
+            if problem.link:
+                say(paint(f"        {problem.link}", "dim"))
         if len(problems) > 20:
             say(paint(f"      … and {len(problems) - 20} more", "dim"))
     passed = sum(1 for r in results if r[1] == "ok")
@@ -795,12 +855,15 @@ def report(hook: str, results: List[Result], notes: List[str], seconds: float, v
         say(paint(f"  note: {note}", "dim"))
     if refreshed:
         say(paint(f"  note: {refreshed}", "dim"))
+    if any(problem.link for _check, _status, problems, _ in results for problem in problems):
+        say(paint("  Ctrl+click a file:/// link to open its line (in VS Code and most terminals).", "dim"))
+    say()
     if blocked:
         # "git -c" works in every shell and only for that one command (hooks see it through Git).
         once = " ".join(f"-c hooks.{check.name}=off" for check, *_ in blocked)
-        verb = "push" if hook == "pre-push" else "commit"
+        command = "push" if hook == "pre-push" else 'commit -m "..."'
         say(paint(f"{SYMBOLS[BLOCK]} {action} blocked ({seconds:.1f} s). Fix it and try again, or once:", "block"))
-        say(f"    skip these checks:  git {once} {verb} …")
+        say(f"    skip these checks:  git {once} {command}")
         say(f"    skip all checks:    {BYPASS[hook]}")
         say(paint(f"    turn a check off:   git config hooks.{blocked[0][0].name} off", "dim"))
     else:

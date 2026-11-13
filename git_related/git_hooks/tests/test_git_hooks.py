@@ -148,6 +148,9 @@ class PreCommitTest(HookTest):
         self.assertIn("Commit blocked: secrets", result.stderr)
         self.assertIn("config.py:1", result.stderr)
         self.assertNotIn(FAKE_TOKEN, result.stderr)
+        # The line itself (masked), and a link that opens it from VS Code's "Show Command Output".
+        self.assertIn("| TOKEN = 'ghp_", result.stderr)
+        self.assertIn((self.repo / "config.py").resolve().as_uri() + "#L1", result.stderr)
 
     def test_a_check_can_be_skipped_once_or_a_line_accepted(self):
         result = self.commit({"config.py": f"TOKEN = '{FAKE_TOKEN}'\n"}, "Change", "-c", "hooks.secrets=off")
