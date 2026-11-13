@@ -1,0 +1,34 @@
+# Secret scan with Gitleaks over the whole history, on every push and pull request.
+# Copy to .github/workflows/ in your repository. Findings are reported with the value redacted.
+# Accept a false positive with "gitleaks:allow" on that line, or a .gitleaks.toml / .gitleaksignore.
+name: Leak check
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GITLEAKS_VERSION: 8.30.1  # https://github.com/gitleaks/gitleaks/releases
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0  # the whole history: a secret removed later is still readable there
+          persist-credentials: false
+      - name: Install Gitleaks (checksum verified)
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLO "$base/$archive"
+          curl -fsSLO "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          sha256sum --check --ignore-missing "gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          tar -xzf "$archive" gitleaks
+      - name: Scan the history
+        run: ./gitleaks git --redact --verbose --exit-code 1 .

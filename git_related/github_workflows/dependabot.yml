@@ -1,0 +1,16 @@
+# Keeps the versions in .github/workflows (and Python dependencies) up to date with weekly pull requests.
+# Copy to .github/dependabot.yml (next to the workflows folder, not into it). Remove the ecosystems you
+# do not use; "uv" also covers uv.lock, "pip" covers requirements.txt.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly

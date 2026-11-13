@@ -1,0 +1,44 @@
+# pytest on Windows and Linux with several Python versions, on every push and pull request.
+# Copy to .github/workflows/ and adjust the matrix. Works with uv projects (uv.lock or pyproject.toml)
+# and with a plain requirements.txt.
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:  # a new push cancels the run for the previous one
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    name: ${{ matrix.os }}, Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python: ["3.10", "3.14"]
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: Run the tests
+        shell: bash
+        run: |
+          if [ -f uv.lock ]; then
+            uv run --locked --python "${{ matrix.python }}" --with pytest pytest
+          elif [ -f pyproject.toml ]; then
+            uv run --python "${{ matrix.python }}" --with pytest pytest
+          elif [ -f requirements.txt ]; then
+            uv run --no-project --python "${{ matrix.python }}" --with-requirements requirements.txt --with pytest pytest
+          else
+            uv run --no-project --python "${{ matrix.python }}" --with pytest pytest
+          fi

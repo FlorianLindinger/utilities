@@ -118,11 +118,15 @@ SET "uv_sha256_arm64=505d9e65e7692bac3ddf98c66754aa26c5050c409c184af30a881a0a72c
 SET "validate_jupyter_kernel=N"
 :: Each profile is one checkbox and editable list in the settings dialog.
 :: gpu packages are left out automatically on computers without an NVIDIA GPU.
+:: cupy-cuda auto-selects the driver-reported CUDA major (e.g. cupy-cuda13x).
+:: To force a CUDA build, enter cupy-cuda12x or cupy-cuda13x in the GPU list
+:: or --packages; explicit versions are preserved. This checks driver support,
+:: not the installed Toolkit, runtime libraries, or available package wheels.
 :: The jupyter profile installs last so later installs cannot replace its dependencies.
 SET "def_profile_basic=numpy matplotlib pandas types-python-dateutil pillow tqdm types-tqdm pyyaml types-PyYAML rich pytest platformdirs openpyxl pyarrow py7zr html5lib"
 SET "def_profile_science=scipy scipy-stubs numba scikit-learn scikit-image opencv-python h5py tifffile jax"
-SET "def_profile_physics=lightwaveexplorer pybaselines chemometrics jcamp binreduce@git+https://gitlab.com/leberwurscht/binreduce.git@b2168ac053b0e7156e913a1cbb0b0c6d3e5532ff pyserial types-pyserial nptdms"
-SET "def_profile_gpu=cupy-cuda12x nvmath-python"
+SET "def_profile_physics=lightwaveexplorer pybaselines chemometrics jcamp pyserial types-pyserial nptdms git+https://gitlab.com/leberwurscht/binreduce.git git+https://gitlab.com/leberwurscht/fourioso.git"
+SET "def_profile_gpu=cupy-cuda nvmath-python"
 SET "def_profile_apps=pyside6 PyQt5 pywin32 types-pywin32 pyautogui types-PyAutoGUI pywinauto nuitka"
 SET "def_profile_jupyter=ipykernel ipywidgets ipympl"
 SET "def_packages=%def_profile_basic% %def_profile_science% %def_profile_physics% %def_profile_gpu% %def_profile_apps%"
@@ -1192,7 +1196,7 @@ os.system("")  # Turns on ANSI colors in consoles that start with them disabled.
 # These have no CPU code path unless a CPU extra is requested. jax, numba and
 # similar packages are deliberately absent because they also run on the CPU.
 NVIDIA_ONLY_PACKAGES = re.compile(
-    r"^(cupy(-cuda\d+x)?|nvmath-python|pycuda|cudf|cuml|nvidia-.+|onnxruntime-gpu|tensorflow-gpu)$"
+    r"^(cupy(-cuda(\d+x)?)?|nvmath-python|pycuda|cudf|cuml|nvidia-.+|onnxruntime-gpu|tensorflow-gpu)$"
 )
 JsoncMember = collections.namedtuple("JsoncMember", "key key_start value_start value_end")
 SETTINGS_BACKUPS_TO_KEEP = 10
@@ -1505,25 +1509,35 @@ def needs_nvidia_gpu(spec):
 
 def nvidia_cuda_major():
     try:
-        output = subprocess.run(["nvidia-smi"], capture_output=True, text=True, timeout=30).stdout
+        result = subprocess.run(["nvidia-smi"], capture_output=True, text=True, timeout=30)
     except (OSError, subprocess.SubprocessError):
         return None
+    if result.returncode != 0:
+        return None
     # Newer drivers print "CUDA UMD Version" instead of "CUDA Version".
-    match = re.search(r"CUDA(?: UMD)? Version:\s*(\d+)", output)
+    match = re.search(r"CUDA(?: UMD)? Version:\s*(\d+)", result.stdout)
     return int(match.group(1)) if match else None
 
 
 def choose_cupy_build(specs):
-    """Point cupy-cudaNNx at the build this driver supports; newer drivers run CUDA 12 builds."""
-    major = nvidia_cuda_major()
-    if major is None or major < 11:
+    """Resolve only the cupy-cuda placeholder; explicit CUDA builds are overrides."""
+    automatic = re.compile(r"^cupy[-_.]cuda(?=\[|[<>=!~;\s]|$)", re.I)
+    if not any(automatic.match(spec) for spec in specs):
         return specs
-    wanted = "cupy-cuda11x" if major == 11 else "cupy-cuda12x"
+    major = nvidia_cuda_major()
     chosen = []
     for spec in specs:
-        replaced = re.sub(r"^cupy[-_.]cuda\d+x", wanted, spec, flags=re.I)
-        if replaced.lower() != spec.lower():
-            say("Driver supports CUDA {0}, so using {1} instead of {2}.".format(major, replaced, spec))
+        if not automatic.match(spec):
+            chosen.append(spec)
+            continue
+        if major is None or major < 11:
+            say(" [Warning] Cannot select a CuPy CUDA build from this driver; skipping " + spec
+                + ". To force a build, use e.g. cupy-cuda12x in the GPU list or --packages.", RED)
+            continue
+        # nvidia-smi reports driver support, not an installed CUDA Toolkit.
+        replaced = automatic.sub("cupy-cuda{0}x".format(major), spec, count=1)
+        say("Driver reports CUDA {0}; auto-selected {1}. To force a build, use e.g. "
+            "cupy-cuda12x in the GPU list or --packages.".format(major, replaced))
         chosen.append(replaced)
     return chosen
 
