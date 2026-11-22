@@ -123,13 +123,14 @@ SET "validate_jupyter_kernel=N"
 :: or --packages; explicit versions are preserved. This checks driver support,
 :: not the installed Toolkit, runtime libraries, or available package wheels.
 :: The jupyter profile installs last so later installs cannot replace its dependencies.
-SET "def_profile_basic=numpy matplotlib pandas types-python-dateutil pillow tqdm types-tqdm pyyaml types-PyYAML rich pytest platformdirs openpyxl pyarrow py7zr html5lib"
-SET "def_profile_science=scipy scipy-stubs numba scikit-learn scikit-image opencv-python h5py tifffile jax"
+SET "def_profile_basic=numpy matplotlib pandas types-python-dateutil tqdm types-tqdm pyyaml types-PyYAML rich pytest platformdirs openpyxl pyarrow py7zr html5lib"
+SET "def_profile_science=scipy scipy-stubs numba scikit-learn h5py"
+SET "def_profile_image=pillow scikit-image opencv-python tifffile imageio-ffmpeg"
 SET "def_profile_physics=lightwaveexplorer pybaselines chemometrics jcamp pyserial types-pyserial nptdms git+https://gitlab.com/leberwurscht/binreduce.git git+https://gitlab.com/leberwurscht/fourioso.git"
-SET "def_profile_gpu=cupy-cuda nvmath-python"
-SET "def_profile_apps=pyside6 PyQt5 pywin32 types-pywin32 pyautogui types-PyAutoGUI pywinauto nuitka"
+SET "def_profile_gpu=cupy-cuda nvmath-python jax"
+SET "def_profile_apps=pyside6 PyQt5 pywin32 pyqtgraph types-pywin32 pyautogui types-PyAutoGUI pywinauto nuitka"
 SET "def_profile_jupyter=ipykernel ipywidgets ipympl"
-SET "def_packages=%def_profile_basic% %def_profile_science% %def_profile_physics% %def_profile_gpu% %def_profile_apps%"
+SET "def_packages=%def_profile_basic% %def_profile_science% %def_profile_image% %def_profile_physics% %def_profile_gpu% %def_profile_apps%"
 
 :: ---------------------------------------------------------------------------
 :: Resolve configuration
@@ -970,7 +971,7 @@ $form.StartPosition='CenterScreen';
 $form.FormBorderStyle='FixedDialog';
 $form.MaximizeBox=$false;
 $form.MinimizeBox=$false;
-$form.ClientSize=New-Object System.Drawing.Size(1240,590);
+$form.ClientSize=New-Object System.Drawing.Size(1240,636);
 $form.Font=New-Object System.Drawing.Font('Segoe UI',9);
 $sectionFont=New-Object System.Drawing.Font('Segoe UI',10,[System.Drawing.FontStyle]::Bold);
 # A 2-pixel label with a 3D border is the standard WinForms divider line.
@@ -996,8 +997,8 @@ $addSection={ param($title,$x,$y,$width)
 & $addSection 'VS Code' 620 10 605;
 & $addSection 'Shortcuts' 620 156 605;
 & $addSection 'Default Python' 620 300 605;
-& $addLine 606 10 2 526;
-& $addLine 12 544 1213 2;
+& $addLine 606 10 2 572;
+& $addLine 12 590 1213 2;
 $pathLabel=New-Object System.Windows.Forms.Label;
 $pathLabel.Text='Environment path (an existing environment with a compatible Python is reused):';
 $pathLabel.Location=New-Object System.Drawing.Point(12,40);
@@ -1026,7 +1027,7 @@ $form.Controls.Add($profilesHint);
 $profileBoxes=@();
 $packagesPreset=($env:packages_was_set -eq 'Y');
 $rowY=186;
-foreach ($name in @('basic','science','physics','gpu','apps','jupyter')) {
+foreach ($name in @('basic','science','image','physics','gpu','apps','jupyter')) {
   $box=New-Object System.Windows.Forms.CheckBox;
   $box.Text=$name;
   $box.Location=New-Object System.Drawing.Point(15,($rowY+2));
@@ -1055,7 +1056,7 @@ foreach ($name in @('basic','science','physics','gpu','apps','jupyter')) {
 }
 $kernelBox=New-Object System.Windows.Forms.CheckBox;
 $kernelBox.Text='Register this environment as a Jupyter kernel';
-$kernelBox.Location=New-Object System.Drawing.Point(110,460);
+$kernelBox.Location=New-Object System.Drawing.Point(110,506);
 $kernelBox.Size=New-Object System.Drawing.Size(485,24);
 $kernelBox.Checked=($env:register_kernel -ieq 'Y' -or $env:register_kernel -ieq 'YES');
 $kernelBox.Enabled=$j.Checked;
@@ -1063,11 +1064,11 @@ $j.Add_CheckedChanged({ $kernelBox.Enabled=$j.Checked });
 $form.Controls.Add($kernelBox);
 $extraLabel=New-Object System.Windows.Forms.Label;
 $extraLabel.Text='Other:';
-$extraLabel.Location=New-Object System.Drawing.Point(12,494);
+$extraLabel.Location=New-Object System.Drawing.Point(12,540);
 $extraLabel.AutoSize=$true;
 $form.Controls.Add($extraLabel);
 $extraText=New-Object System.Windows.Forms.TextBox;
-$extraText.Location=New-Object System.Drawing.Point(110,490);
+$extraText.Location=New-Object System.Drawing.Point(110,536);
 $extraText.Size=New-Object System.Drawing.Size(485,42);
 $extraText.Multiline=$true;
 $extraText.ScrollBars='Vertical';
@@ -1139,13 +1140,13 @@ $form.Controls.Add($pathHelp);
 $ok=New-Object System.Windows.Forms.Button;
 $ok.Text='Create / Update';
 $ok.Size=New-Object System.Drawing.Size(110,23);
-$ok.Location=New-Object System.Drawing.Point(1022,556);
+$ok.Location=New-Object System.Drawing.Point(1022,602);
 $ok.DialogResult=[System.Windows.Forms.DialogResult]::OK;
 $form.AcceptButton=$ok;
 $form.Controls.Add($ok);
 $cancel=New-Object System.Windows.Forms.Button;
 $cancel.Text='Cancel';
-$cancel.Location=New-Object System.Drawing.Point(1140,556);
+$cancel.Location=New-Object System.Drawing.Point(1140,602);
 $cancel.DialogResult=[System.Windows.Forms.DialogResult]::Cancel;
 $form.CancelButton=$cancel;
 $form.Controls.Add($cancel);
