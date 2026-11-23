@@ -125,7 +125,7 @@ SET "validate_jupyter_kernel=N"
 :: The jupyter profile installs last so later installs cannot replace its dependencies.
 SET "def_profile_basic=numpy matplotlib pandas types-python-dateutil tqdm types-tqdm pyyaml types-PyYAML rich pytest platformdirs openpyxl pyarrow py7zr html5lib"
 SET "def_profile_science=scipy scipy-stubs numba scikit-learn h5py"
-SET "def_profile_image=pillow scikit-image opencv-python tifffile imageio-ffmpeg pyspin"
+SET "def_profile_image=pillow scikit-image opencv-python tifffile imageio-ffmpeg"
 SET "def_profile_physics=lightwaveexplorer pybaselines chemometrics jcamp pyserial types-pyserial nptdms git+https://gitlab.com/leberwurscht/binreduce.git git+https://gitlab.com/leberwurscht/fourioso.git"
 SET "def_profile_gpu=cupy-cuda nvmath-python jax"
 SET "def_profile_apps=pyside6 PyQt5 pywin32 pyqtgraph types-pywin32 pyautogui types-PyAutoGUI pywinauto nuitka"
